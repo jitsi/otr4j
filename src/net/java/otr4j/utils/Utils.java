@@ -6,6 +6,10 @@ import java.lang.reflect.Modifier;
 
 public final class Utils {
 
+    public static Boolean IsNullOrEmpty(String s){
+        return s == null || s.length() < 1;
+    }
+
 	private static String byteToHex(byte b) {
 		return "0x" + Integer.toString((b & 0xff) + 0x100, 16).substring(1);
 	}

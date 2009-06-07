@@ -2,3 +2,6 @@ syntax:glob
 .settings/*
 bin/*
 doc/*
+uml/*
+nbproject/*
+nb-build.xml

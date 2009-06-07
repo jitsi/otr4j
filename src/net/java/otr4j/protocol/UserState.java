@@ -1,47 +1,27 @@
 package net.java.otr4j.protocol;
 
-import java.security.KeyPair;
-import java.util.Hashtable;
-import javax.crypto.interfaces.DHPublicKey;
+import java.util.Vector;
+import net.java.otr4j.utils.Utils;
 
 public final class UserState {
-	MessageState messageState;
-	AuthenticationState authenticationState;
 
-	private Hashtable<Integer, KeyPair> our_dh;
-	private Hashtable<Integer, DHPublicKey> their_y;
+    private Vector<ConnContext> contextPool = new Vector<ConnContext>();
 
-	public Hashtable<Integer, KeyPair> getOur_dh() {
-		if (our_dh == null)
-			our_dh = new Hashtable<Integer, KeyPair>();
-		return our_dh;
-	}
+    public ConnContext getConnContext(String user, String account, String protocol) {
 
-	public Hashtable<Integer, DHPublicKey> getTheir_y() {
-		if (their_y == null)
-			their_y = new Hashtable<Integer, DHPublicKey>();
+        if (Utils.IsNullOrEmpty(user) || Utils.IsNullOrEmpty(account) || Utils.IsNullOrEmpty(protocol)) {
+            throw new IllegalArgumentException();
+        }
 
-		return their_y;
-	}
+        for (ConnContext connContext : contextPool) {
+            if (connContext.getAccount().equals(account) && connContext.getUser().equals(user) && connContext.getProtocol().equals(protocol)) {
+                return connContext;
+            }
+        }
 
-	private int policy;
-	public Boolean getAllowV1() {
-		return (this.policy & Policy.ALLOW_V1) != 0;
-	}
+        ConnContext context = new ConnContext(user, account, protocol);
+        contextPool.add(context);
 
-	public Boolean getAllowV2() {
-		return (this.policy & Policy.ALLOW_V2) != 0;
-	}
-
-	public Boolean getRequireEncryption() {
-		return (this.policy & Policy.REQUIRE_ENCRYPTION) != 0;
-	}
-	
-	public Boolean getWhiteSpaceStartsAKE(){
-		return (this.policy & Policy.WHITESPACE_START_AKE) != 0;
-	}
-	
-	public Boolean getErrorStartsAKE(){
-		return (this.policy & Policy.ERROR_START_AKE) != 0;
-	}
+        return context;
+    }
 }

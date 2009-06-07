@@ -4,4 +4,5 @@ public interface OTR4jListener {
 	public void injectMessage(String msg);
 	public void showWarning(String warning);
 	public void showError(String error);
+    public int getPolicy(ConnContext ctx);
 }
