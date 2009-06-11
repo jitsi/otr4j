@@ -2,108 +2,70 @@ package net.java.otr4j.message.encoded;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import javax.crypto.interfaces.DHPublicKey;
-import net.java.otr4j.message.MessageHeader;
-import net.java.otr4j.message.MessageType;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
-/**
- * <pre>
- * D-H Key Message
- * 
- * This is the second message of the AKE. Alice sends it to Bob, and it simply consists of Alice's D-H encryption key.
- * 
- * Protocol version (SHORT)
- *     The version number of this protocol is 0x0002.
- * Message type (BYTE)
- *     The D-H Key Message has type 0x0a.
- * gy (MPI)
- *     Choose a random value y (at least 320 bits), and calculate gy.
- * </pre>
- * 
- * @author george
- * 
- */
+import javax.crypto.interfaces.DHPublicKey;
+import net.java.otr4j.message.MessageType;
+import net.java.otr4j.protocol.crypto.CryptoUtils;
+
 public final class DHKeyMessage extends EncodedMessageBase {
 
-	private DHPublicKey gy;
-
+	public DHPublicKey gy;
+	
 	private DHKeyMessage() {
 		super(MessageType.DH_KEY);
 	}
-
-	private void setGy(DHPublicKey gy) {
+	
+	public DHKeyMessage(int protocolVersion, DHPublicKey gy){
+		this();
+		
 		this.gy = gy;
+		this.protocolVersion = protocolVersion;
 	}
-
-	public DHPublicKey getGy() {
-		return gy;
-	}
-
-	public static DHKeyMessage create(int protocolVersion, DHPublicKey gy) {
-
-		DHKeyMessage msg = new DHKeyMessage();
-
-		msg.setGy(gy);
-		msg.setProtocolVersion(protocolVersion);
-
-		return msg;
-	}
-
-	public static String assemble(DHKeyMessage msg) {
-		if (msg == null)
-			return "";
-
+	
+	public String toString(){
 		int len = 0;
 		// Protocol version (SHORT)
-		byte[] protocolVersion = Utils.serializeShort(msg.getProtocolVersion());
+		byte[] protocolVersion = EncodedMessageUtils.serializeShort(this.protocolVersion);
 		len += protocolVersion.length;
-
+	
 		// Message type (BYTE)
-		byte[] messageType = Utils.serializeByte(msg.getProtocolVersion());
+		byte[] messageType = EncodedMessageUtils.serializeByte(this.protocolVersion);
 		len += messageType.length;
-
+	
 		// gy (MPI)
-		byte[] gyMpiSerialized = Utils.serializeDHPublicKey(msg.getGy());
+		byte[] gyMpiSerialized = EncodedMessageUtils.serializeDHPublicKey(this.gy);
 		len += gyMpiSerialized.length;
-
+	
 		ByteBuffer buff = ByteBuffer.allocate(len);
 		buff.put(protocolVersion);
 		buff.put(messageType);
 		buff.put(gyMpiSerialized);
-
-		String encodedMessage = Utils.encodeMessage(buff.array());
+	
+		String encodedMessage = EncodedMessageUtils.encodeMessage(buff.array());
 		return encodedMessage;
 	}
-
-	public static DHKeyMessage disassemble(String msgText)
-			throws MessageDisassembleException {
-		if (msgText == null || !msgText.startsWith(MessageHeader.DH_KEY))
-			return null;
-
-		byte[] decodedMessage = Utils.decodeMessage(msgText);
+	
+	public DHKeyMessage(String msgText) throws NoSuchAlgorithmException, InvalidKeySpecException{
+		this();
+		
+		byte[] decodedMessage = EncodedMessageUtils.decodeMessage(msgText);
 		ByteBuffer buff = ByteBuffer.wrap(decodedMessage);
-
+	
 		// Protocol version (SHORT)
-		int protocolVersion = Utils.deserializeShort(buff);
-
+		int protocolVersion = EncodedMessageUtils.deserializeShort(buff);
+	
 		// Message type (BYTE)
-		int msgType = Utils.deserializeByte(buff);
+		int msgType = EncodedMessageUtils.deserializeByte(buff);
 		if (msgType != MessageType.DH_KEY)
-			return null;
-
+			return;
+	
 		// gy (MPI)
-		BigInteger gyMpi = Utils.deserializeMpi(buff);
-		DHPublicKey gyKey = null;
-		try {
-			gyKey = Utils.getDHPublicKey(gyMpi);
-		} catch (Exception e) {
-			throw new MessageDisassembleException(e);
-		}
-
-		DHKeyMessage msg = new DHKeyMessage();
-		msg.setProtocolVersion(protocolVersion);
-		msg.setGy(gyKey);
-
-		return msg;
+		BigInteger gyMpi = EncodedMessageUtils.deserializeMpi(buff);
+		DHPublicKey gy = CryptoUtils.getDHPublicKey(gyMpi);
+		
+		this.protocolVersion = protocolVersion;
+		this.gy = gy;
 	}
 }

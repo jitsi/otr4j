@@ -1,12 +1,11 @@
 package net.java.otr4j.message.unencoded;
 
-public class ErrorMessageTest extends UnencodedMessageTestBase {
+import junit.framework.TestCase;
 
-	private static String ErrorMessageText = "?OTR Error:This is a nasty error.";
+public class ErrorMessageTest extends TestCase {
 
-	@Override
 	public void testDisassemble() {
-		ErrorMessage errorMessage = ErrorMessage.disassemble(ErrorMessageText);
+		ErrorMessage errorMessage = new ErrorMessage(UnencodedMessageTextSample.ErrorMessageText);
 		assertNotNull(errorMessage);
 	}
 }

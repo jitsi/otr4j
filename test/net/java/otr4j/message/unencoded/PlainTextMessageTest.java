@@ -1,8 +1,9 @@
 package net.java.otr4j.message.unencoded;
 
-public class PlainTextMessageTest extends UnencodedMessageTestBase {
+import junit.framework.TestCase;
 
-	@Override
+public class PlainTextMessageTest extends TestCase {
+
 	public void testDisassemble() {
 		// TODO Implement
 		

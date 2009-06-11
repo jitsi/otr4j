@@ -9,6 +9,7 @@ import org.junit.Test;
 import junit.framework.TestCase;
 
 import net.java.otr4j.message.encoded.DHKeyMessage;
+import net.java.otr4j.protocol.crypto.CryptoUtils;
 
 public class DHKeyMessageTest extends TestCase {
 
@@ -16,20 +17,18 @@ public class DHKeyMessageTest extends TestCase {
 	public void testCreate() throws Exception {
 
 		// Prepare parameters.
-		KeyPair keyPair = Utils.generateDHKeyPair();
+		KeyPair keyPair = CryptoUtils.generateDHKeyPair();
 		int protocolVersion = 2;
 
-		DHKeyMessage dhKeyMessage = DHKeyMessage.create(protocolVersion,
+		DHKeyMessage dhKeyMessage = new DHKeyMessage(protocolVersion,
 				(DHPublicKey) keyPair.getPublic());
 
 		assertNotNull(dhKeyMessage);
 	}
 
-	private static String DHKeyMessageText = "?OTR:AAIKAAAAwDQlc11etGIBTSMB/rI9hgRTWfIfWhA+jmgDwpUDjdh8uilY0UXPrcH17+/9cRUjWxQdObavVNICPpuwHra2Xnz0S9nq6IRW2Fq9yaH51vg8AEliqHaDqfr5cMBFEAIqfJFC8v5IvMN4pfehHWgh+fjMHujXZYzJOTv2KXwq8GtD9kq2xIsCOglZ6aQ/jpHq0PoGdLfw1oD8DBvjWI7iJcg7pu2jL4WeEp6bxLcJqrYHob18qxCmKAwYvj8ScIkgPA==.";
-
 	@Test
 	public void testDisassemble() throws Exception {
-		DHKeyMessage dhKeyMessage = DHKeyMessage.disassemble(DHKeyMessageText);
+		DHKeyMessage dhKeyMessage = new DHKeyMessage(EncodedMessageTextSample.DHKeyMessageText);
 		assertNotNull(dhKeyMessage);
 	}
 

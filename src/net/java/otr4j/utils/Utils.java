@@ -3,6 +3,7 @@ package net.java.otr4j.utils;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Random;
 
 public final class Utils {
 
@@ -127,5 +128,44 @@ public final class Utils {
 			buffer.append(" }");
 		}
 		return buffer.toString();
+	}
+
+	public static byte[] intToByteArray(int value, int length) {
+		byte[] b = new byte[length];
+		for (int i = 0; i < length; i++) {
+			int offset = (b.length - 1 - i) * 8;
+			b[i] = (byte) ((value >>> offset) & 0xFF);
+		}
+		return b;
+	}
+
+	public static int byteArrayToInt(byte[] b) {
+		int value = 0;
+		for (int i = 0; i < b.length; i++) {
+			int shift = (b.length - 1 - i) * 8;
+			value += (b[i] & 0x000000FF) << shift;
+		}
+		return value;
+	}
+
+	public static byte[] trim(byte[] b) {
+		// find leading zero count
+		int i = 0;
+		while ((int) b[i] == 0)
+			i++;
+	
+		// remove leading 0's
+		byte[] tmp = new byte[b.length - i];
+		for (int j = 0; j < tmp.length; j++)
+			tmp[j] = b[j + i];
+	
+		return tmp;
+	}
+
+	public static byte[] getRandomBytes(int length) {
+		byte[] b = new byte[length];
+		Random rnd = new Random();
+		rnd.nextBytes(b);
+		return b;
 	}
 }

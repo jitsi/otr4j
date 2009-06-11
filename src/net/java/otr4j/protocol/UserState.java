@@ -14,7 +14,7 @@ public final class UserState {
         }
 
         for (ConnContext connContext : contextPool) {
-            if (connContext.getAccount().equals(account) && connContext.getUser().equals(user) && connContext.getProtocol().equals(protocol)) {
+            if (connContext.account.equals(account) && connContext.user.equals(user) && connContext.protocol.equals(protocol)) {
                 return connContext;
             }
         }
