@@ -13,7 +13,7 @@ public class DummyOTR4jListener implements OTR4jListener {
 		this.policy = policy;
 	}
 	
-	private Logger logger = Logger.getLogger(DummyOTR4jListener.class);
+	private static Logger logger = Logger.getLogger(DummyOTR4jListener.class);
 	private int policy;
 	
 	@Override
@@ -23,7 +23,8 @@ public class DummyOTR4jListener implements OTR4jListener {
 
 	@Override
 	public void injectMessage(String msg) {
-		logger.debug("Dummy message injection: " + msg);
+		String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10) + "..." : msg;
+		logger.debug("Dummy message injection: " + msgDisplay);
 	}
 
 	@Override

@@ -25,6 +25,9 @@ public class ConnContext {
     public LinkedList<DHPublicKeyContainer> their_y;
     public byte[] r;
     
+    public byte[] their_yEncrypted;
+    public byte[] their_yHash;
+    
     public ConnContext(String user, String account, String protocol){
         this.user = user;
         this.account = account;
