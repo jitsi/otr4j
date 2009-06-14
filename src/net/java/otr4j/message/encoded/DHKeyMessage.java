@@ -31,7 +31,7 @@ public final class DHKeyMessage extends EncodedMessageBase {
 		len += protocolVersion.length;
 	
 		// Message type (BYTE)
-		byte[] messageType = EncodedMessageUtils.serializeByte(this.protocolVersion);
+		byte[] messageType = EncodedMessageUtils.serializeByte(this.messageType);
 		len += messageType.length;
 	
 		// gy (MPI)
