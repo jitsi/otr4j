@@ -39,11 +39,10 @@ public final class RevealSignatureMessage extends SignatureMessageBase {
 
 		byte[] mac = CryptoUtils.sha256Hmac160(XBEncrypted, m2);
 
-		RevealSignatureMessage msg = new RevealSignatureMessage();
-		msg.protocolVersion = protocolVersion;
-		msg.signatureMac = mac;
-		msg.encryptedSignature = XBEncrypted;
-		msg.revealedKey = r;
+		this.protocolVersion = protocolVersion;
+		this.signatureMac = mac;
+		this.encryptedSignature = XBEncrypted;
+		this.revealedKey = r;
 	}
 	
 	private RevealSignatureMessage() {
