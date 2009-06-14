@@ -54,7 +54,7 @@ public final class EncodedMessageUtils {
 	}
 
 	static byte[] serializeByte(int n) {
-		return Utils.intToByteArray(n, DataLength.SHORT);
+		return Utils.intToByteArray(n, DataLength.BYTE);
 	}
 
 	private static byte[] serializeInt(int n) {
@@ -62,7 +62,7 @@ public final class EncodedMessageUtils {
 	}
 
 	static byte[] serializeData(byte[] b) {
-		byte[] len = Utils.intToByteArray(b.length, DataLength.SHORT);
+		byte[] len = Utils.intToByteArray(b.length, DataLength.DATALEN);
 
 		ByteBuffer buff = ByteBuffer.allocate(b.length + len.length);
 		buff.put(len);
@@ -126,7 +126,7 @@ public final class EncodedMessageUtils {
 
 	static byte[] deserializeData(ByteBuffer buff) {
 		int len = deserializeDataLen(buff);
-
+		
 		byte[] b = new byte[len];
 		buff.get(b);
 		return b;
