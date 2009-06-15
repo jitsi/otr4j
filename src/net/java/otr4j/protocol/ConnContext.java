@@ -4,10 +4,10 @@
  */
 package net.java.otr4j.protocol;
 
+import java.security.KeyPair;
 import java.util.LinkedList;
 
-import net.java.otr4j.protocol.crypto.DHPublicKeyContainer;
-import net.java.otr4j.protocol.crypto.DHKeyPairContainer;
+import javax.crypto.interfaces.DHPublicKey;
 
 /**
  *
@@ -19,20 +19,16 @@ public class ConnContext {
 	public String protocol;
 	public MessageState messageState;
 	
-    public AuthenticationState authenticationState;
+    public AuthenticationInfo authenticationInfo;
     
-    public LinkedList<DHKeyPairContainer> our_dh;
-    public LinkedList<DHPublicKeyContainer> their_y;
-    public byte[] r;
-    
-    public byte[] their_yEncrypted;
-    public byte[] their_yHash;
+    public LinkedList<KeyPair> our_dh;
+    public LinkedList<DHPublicKey> their_y;
     
     public ConnContext(String user, String account, String protocol){
         this.user = user;
         this.account = account;
         this.protocol = protocol;
         this.messageState = MessageState.PLAINTEXT;
-        this.authenticationState = AuthenticationState.NONE;
+        this.authenticationInfo = new AuthenticationInfo();
     }
 }

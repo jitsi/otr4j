@@ -1,51 +1,57 @@
 package net.java.otr4j.protocol;
 
 import org.apache.log4j.Logger;
-
-import net.java.otr4j.message.encoded.EncodedMessageTextSample;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
 import junit.framework.TestCase;
 
 public class StateMachineTest extends TestCase {
+	class MessageInfo {
+		public MessageInfo(String user, String account, String protocol) {
+			this.user = user;
+			this.account = account;
+			this.protocol = protocol;
+		}
+
+		public String account;
+		public String user;
+		public String protocol;
+	}
+
 	private static Logger logger = Logger.getLogger(StateMachine.class);
-	private static final String user = "Superman";
-	private static final String account = "LoisLane@Metropolis";
-	private static final String protocol = "gtalk";
-	private static final UserState userState = new UserState();
 
-	public void testReceivingPlainTextMessage() throws Exception {
-		/*
-		 * StateMachine.receivingMessage(listener, userState, user, account,
-		 * protocol, "");
-		 */
-	}
+	public void testReceivingMessage() throws Exception {
+		
+		DummyOTR4jListener listener = new DummyOTR4jListener(Policy.ALLOW_V2
+				| Policy.ERROR_START_AKE);
+		UserState usAlice = new UserState();
+		UserState usBob = new UserState();
+		MessageInfo miFromBob = new MessageInfo("bob", "alice@proto", "proto");
+		MessageInfo miFromAlice = new MessageInfo("alice", "alice@proto",
+				"proto");
 
-	public void testReceivingErrorMessage() throws Exception {
-		logger.debug("-");
-		DummyOTR4jListener listener = new DummyOTR4jListener(Policy.ALLOW_V2 | Policy.ERROR_START_AKE);
-		StateMachine.receivingMessage(listener, userState, user, account,
-				protocol, UnencodedMessageTextSample.ErrorMessageText);
-	}
+		// Alice sends a query
+		logger.debug("-Alice.");
+		StateMachine.receivingMessage(listener, usAlice, miFromBob.user,
+				miFromBob.account, miFromBob.protocol,
+				UnencodedMessageTextSample.QueryMessage_V12);
 
-	public void testReceivingQueryMessage() throws Exception {
-		logger.debug("-");
-		DummyOTR4jListener listener = new DummyOTR4jListener(Policy.ALLOW_V2);
-		StateMachine.receivingMessage(listener, userState, user, account,
-				protocol, UnencodedMessageTextSample.QueryMessage_V12);
-	}
+		// Bob sends a D-H commit
+		logger.debug("-Bob.");
+		StateMachine.receivingMessage(listener, usBob, miFromAlice.user,
+				miFromAlice.account, miFromAlice.protocol,
+				listener.lastInjectedMessage);
 
-	public void testReceivingDHCommitMessage() throws Exception {
-		logger.debug("-");
-		DummyOTR4jListener listener = new DummyOTR4jListener(Policy.ALLOW_V2);
-		StateMachine.receivingMessage(listener, userState, user, account,
-				protocol, EncodedMessageTextSample.DHCommitMessageText);
-	}
+		// Alice sends D-H key
+		logger.debug("-Alice.");
+		StateMachine.receivingMessage(listener, usAlice, miFromBob.user,
+				miFromBob.account, miFromBob.protocol,
+				listener.lastInjectedMessage);
 
-	public void testReceivingDHKeyMessage() throws Exception {
-		logger.debug("-");
-		DummyOTR4jListener listener = new DummyOTR4jListener(Policy.ALLOW_V2);
-		StateMachine.receivingMessage(listener, userState, user, account,
-				protocol, EncodedMessageTextSample.DHKeyMessageText);
+		// Bob sends reveal signature.
+		logger.debug("-Bob.");
+		StateMachine.receivingMessage(listener, usBob, miFromAlice.user,
+				miFromAlice.account, miFromAlice.protocol,
+				listener.lastInjectedMessage);
 	}
 
 }

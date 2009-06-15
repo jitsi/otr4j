@@ -44,7 +44,7 @@ public final class RevealSignatureMessage extends SignatureMessageBase {
 		this.encryptedSignature = XBEncrypted;
 		this.revealedKey = r;
 	}
-	
+
 	private RevealSignatureMessage() {
 		super(MessageType.REVEALSIG);
 	}
@@ -59,8 +59,8 @@ public final class RevealSignatureMessage extends SignatureMessageBase {
 		len += protocolVersion.length;
 
 		// Message type (BYTE)
-		byte[] messageType = EncodedMessageUtils.serializeByte(this
-				.getMessageType());
+		byte[] messageType = EncodedMessageUtils
+				.serializeByte(this.messageType);
 		len += messageType.length;
 
 		// Revealed key (DATA)

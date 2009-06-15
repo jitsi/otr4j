@@ -15,7 +15,7 @@ public class DummyOTR4jListener implements OTR4jListener {
 	
 	private static Logger logger = Logger.getLogger(DummyOTR4jListener.class);
 	private int policy;
-	
+	public String lastInjectedMessage;
 	@Override
 	public int getPolicy(ConnContext ctx) {
 		return this.policy;
@@ -24,22 +24,24 @@ public class DummyOTR4jListener implements OTR4jListener {
 	@Override
 	public void injectMessage(String msg) {
 		String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10) + "..." : msg;
-		logger.debug("Dummy message injection: " + msgDisplay);
+		this.lastInjectedMessage = msg;
+		logger.debug("IM injects message: " + msgDisplay);
 	}
 
 	@Override
 	public void showError(String error) {
-		logger.debug("Dummy error display: " + error);
+		logger.debug("IM shows error to user: " + error);
 	}
 
 	@Override
 	public void showWarning(String warning) {
-		logger.debug("Dummy warning display: " + warning);
+		logger.debug("IM shows warning to user: " + warning);
 	}
 
 	@Override
 	public KeyPair createPrivateKey(String account, String protocol)
 			throws NoSuchAlgorithmException {
+		logger.debug("IM generates a DSA key pair.");
 		return CryptoUtils.generateDsaKeyPair();
 	}
 

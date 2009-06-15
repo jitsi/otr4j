@@ -104,6 +104,22 @@ public class CryptoUtils {
 		return sha256.digest();
 	}
 
+	public static byte[] aesDescrypt(byte[] key, byte[] b)
+			throws NoSuchAlgorithmException, NoSuchPaddingException,
+			InvalidKeyException, InvalidAlgorithmParameterException,
+			IllegalBlockSizeException, BadPaddingException{
+		// Create cipher KeySpec based on r.
+		SecretKeySpec keyspec = new SecretKeySpec(key, "AES");
+		// Create initial counter value 0.
+		IvParameterSpec spec = new IvParameterSpec(CryptoConstants.ZERO_CTR);
+
+		// Initialize cipher.
+		Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
+		cipher.init(Cipher.DECRYPT_MODE, keyspec, spec);
+
+		return cipher.doFinal(b);
+	}
+	
 	public static byte[] aesEncrypt(byte[] key, byte[] b)
 			throws NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidKeyException, InvalidAlgorithmParameterException,

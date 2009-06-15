@@ -19,10 +19,9 @@ public class DHCommitMessageTest extends TestCase {
 				.getPublic();
 		byte[] r = Utils.getRandomBytes(CryptoConstants.AES_KEY_BYTE_LENGTH);
 		int protocolVersion = 2;
-		byte[] keyHash = CryptoUtils.sha256Hash(key.getEncoded());
 
 		DHCommitMessage dhCommitMessage = new DHCommitMessage(protocolVersion,
-				r, key, keyHash);
+				r, key);
 
 		assertNotNull(dhCommitMessage);
 

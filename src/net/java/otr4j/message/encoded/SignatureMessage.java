@@ -37,7 +37,7 @@ public final class SignatureMessage extends SignatureMessageBase {
 		this.signatureMac = mac;
 		this.encryptedSignature = XBEncrypted;
 	}
-	
+
 	private SignatureMessage() {
 		super(MessageType.SIGNATURE);
 	}
@@ -51,8 +51,8 @@ public final class SignatureMessage extends SignatureMessageBase {
 		len += protocolVersion.length;
 
 		// Message type (BYTE)
-		byte[] messageType = EncodedMessageUtils.serializeByte(this
-				.getMessageType());
+		byte[] messageType = EncodedMessageUtils
+				.serializeByte(this.messageType);
 		len += messageType.length;
 
 		// Encrypted signature (DATA)
