@@ -5,7 +5,9 @@ import java.security.NoSuchAlgorithmException;
 
 import org.apache.log4j.Logger;
 
-import net.java.otr4j.protocol.crypto.CryptoUtils;
+import net.java.otr4j.OTR4jListener;
+import net.java.otr4j.context.ConnContext;
+import net.java.otr4j.crypto.CryptoUtils;
 
 public class DummyOTR4jListener implements OTR4jListener {
 	

@@ -1,4 +1,4 @@
-package net.java.otr4j.protocol;
+package net.java.otr4j;
 
 /**
  * OTR clients can set different policies for different correspondents. For

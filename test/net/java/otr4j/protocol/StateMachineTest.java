@@ -1,6 +1,10 @@
 package net.java.otr4j.protocol;
 
 import org.apache.log4j.Logger;
+
+import net.java.otr4j.Policy;
+import net.java.otr4j.StateMachine;
+import net.java.otr4j.UserState;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
 import junit.framework.TestCase;
 

@@ -2,6 +2,7 @@ package net.java.otr4j.utils;
 
 import java.lang.reflect.Field;
 
+import net.java.otr4j.Utils;
 import net.java.otr4j.message.MessageType;
 import junit.framework.TestCase;
 

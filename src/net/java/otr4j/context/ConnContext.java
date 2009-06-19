@@ -1,13 +1,11 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package net.java.otr4j.protocol;
+package net.java.otr4j.context;
 
 import java.security.KeyPair;
 import java.util.LinkedList;
 
 import javax.crypto.interfaces.DHPublicKey;
+
+import net.java.otr4j.context.auth.AuthenticationInfo;
 
 /**
  *

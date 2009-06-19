@@ -1,4 +1,4 @@
-package net.java.otr4j.protocol;
+package net.java.otr4j;
 
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -17,12 +17,15 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPublicKey;
 
 import org.apache.log4j.Logger;
+
+import net.java.otr4j.context.ConnContext;
+import net.java.otr4j.context.auth.AuthenticationInfo;
+import net.java.otr4j.context.auth.AuthenticationInfoUtils;
+import net.java.otr4j.crypto.CryptoConstants;
+import net.java.otr4j.crypto.CryptoUtils;
 import net.java.otr4j.message.*;
 import net.java.otr4j.message.encoded.*;
 import net.java.otr4j.message.unencoded.*;
-import net.java.otr4j.protocol.crypto.CryptoConstants;
-import net.java.otr4j.protocol.crypto.CryptoUtils;
-import net.java.otr4j.utils.Utils;
 
 public final class StateMachine {
 

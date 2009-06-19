@@ -6,8 +6,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.interfaces.DHPublicKey;
+
+import net.java.otr4j.crypto.CryptoUtils;
 import net.java.otr4j.message.MessageType;
-import net.java.otr4j.protocol.crypto.CryptoUtils;
 
 public final class DHKeyMessage extends EncodedMessageBase {
 

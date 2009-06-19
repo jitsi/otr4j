@@ -8,8 +8,8 @@ import org.junit.Test;
 
 import junit.framework.TestCase;
 
+import net.java.otr4j.crypto.CryptoUtils;
 import net.java.otr4j.message.encoded.DHKeyMessage;
-import net.java.otr4j.protocol.crypto.CryptoUtils;
 
 public class DHKeyMessageTest extends TestCase {
 

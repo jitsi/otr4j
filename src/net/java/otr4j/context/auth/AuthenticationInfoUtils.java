@@ -1,4 +1,4 @@
-package net.java.otr4j.protocol;
+package net.java.otr4j.context.auth;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -11,9 +11,9 @@ import java.security.SignatureException;
 
 import javax.crypto.interfaces.DHPublicKey;
 
+import net.java.otr4j.crypto.CryptoConstants;
+import net.java.otr4j.crypto.CryptoUtils;
 import net.java.otr4j.message.encoded.EncodedMessageUtils;
-import net.java.otr4j.protocol.crypto.CryptoConstants;
-import net.java.otr4j.protocol.crypto.CryptoUtils;
 
 public class AuthenticationInfoUtils {
 	private static byte[] sign(byte[] b, PrivateKey privateKey)

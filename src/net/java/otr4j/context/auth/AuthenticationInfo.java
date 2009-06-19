@@ -1,4 +1,4 @@
-package net.java.otr4j.protocol;
+package net.java.otr4j.context.auth;
 
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -8,15 +8,16 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SignatureException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPublicKey;
 import org.apache.log4j.Logger;
-import net.java.otr4j.protocol.crypto.CryptoConstants;
-import net.java.otr4j.protocol.crypto.CryptoUtils;
-import net.java.otr4j.utils.Utils;
+
+import net.java.otr4j.AuthenticationState;
+import net.java.otr4j.Utils;
+import net.java.otr4j.crypto.CryptoConstants;
+import net.java.otr4j.crypto.CryptoUtils;
 
 public class AuthenticationInfo {
 

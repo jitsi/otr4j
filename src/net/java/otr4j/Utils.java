@@ -1,4 +1,4 @@
-package net.java.otr4j.utils;
+package net.java.otr4j;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;

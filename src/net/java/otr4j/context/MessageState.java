@@ -1,4 +1,4 @@
-package net.java.otr4j.protocol;
+package net.java.otr4j.context;
 
 /**
  * The message state variable, msgstate, controls what happens to outgoing

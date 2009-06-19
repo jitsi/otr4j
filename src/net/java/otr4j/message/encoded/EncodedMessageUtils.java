@@ -7,9 +7,10 @@ import java.security.PublicKey;
 import java.security.interfaces.DSAParams;
 import java.security.interfaces.DSAPublicKey;
 import javax.crypto.interfaces.DHPublicKey;
+
+import net.java.otr4j.Utils;
+import net.java.otr4j.crypto.CryptoConstants;
 import net.java.otr4j.message.MessageHeader;
-import net.java.otr4j.protocol.crypto.CryptoConstants;
-import net.java.otr4j.utils.Utils;
 import org.apache.commons.codec.binary.Base64;
 
 public final class EncodedMessageUtils {

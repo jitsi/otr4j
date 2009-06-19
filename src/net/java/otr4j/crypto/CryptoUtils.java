@@ -1,4 +1,4 @@
-package net.java.otr4j.protocol.crypto;
+package net.java.otr4j.crypto;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
