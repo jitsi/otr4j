@@ -14,7 +14,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPublicKey;
 import org.apache.log4j.Logger;
 
-import net.java.otr4j.AuthenticationState;
 import net.java.otr4j.Utils;
 import net.java.otr4j.crypto.CryptoConstants;
 import net.java.otr4j.crypto.CryptoUtils;

@@ -1,11 +1,11 @@
-package net.java.otr4j.message.unencoded;
+package net.java.otr4j.message.unencoded.query;
 
 import java.util.Vector;
 
 import net.java.otr4j.message.MessageHeader;
 import net.java.otr4j.message.MessageType;
 
-public final class QueryMessage extends DiscoveryMessageBase {
+public final class QueryMessage extends QueryMessageBase {
 
 	private QueryMessage() {
 		super(MessageType.QUERY);

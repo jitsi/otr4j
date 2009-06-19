@@ -1,4 +1,4 @@
-package net.java.otr4j.message.encoded;
+package net.java.otr4j.message.encoded.signature;
 
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
@@ -10,6 +10,8 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import net.java.otr4j.message.MessageHeader;
 import net.java.otr4j.message.MessageType;
+import net.java.otr4j.message.encoded.DataLength;
+import net.java.otr4j.message.encoded.EncodedMessageUtils;
 
 public final class SignatureMessage extends SignatureMessageBase {
 

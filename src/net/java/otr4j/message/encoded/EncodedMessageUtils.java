@@ -15,7 +15,7 @@ import org.apache.commons.codec.binary.Base64;
 
 public final class EncodedMessageUtils {
 
-	static byte[] decodeMessage(String msg) {
+	public static byte[] decodeMessage(String msg) {
 		int end = msg.lastIndexOf(".");
 
 		if (msg.indexOf(MessageHeader.ENCODED_MESSAGE) != 0
@@ -28,7 +28,7 @@ public final class EncodedMessageUtils {
 		return decodedMessage;
 	}
 
-	static String encodeMessage(byte[] msg) {
+	public static String encodeMessage(byte[] msg) {
 		if (msg == null || msg.length < 1)
 			return "";
 
@@ -36,11 +36,11 @@ public final class EncodedMessageUtils {
 		return MessageHeader.ENCODED_MESSAGE + new String(encodedMessage) + ".";
 	}
 
-	static byte[] serializeShort(int n) {
+	public static byte[] serializeShort(int n) {
 		return Utils.intToByteArray(n, DataLength.SHORT);
 	}
 
-	static byte[] serializeByte(int n) {
+	public static byte[] serializeByte(int n) {
 		return Utils.intToByteArray(n, DataLength.BYTE);
 	}
 
@@ -48,7 +48,7 @@ public final class EncodedMessageUtils {
 		return Utils.intToByteArray(n, DataLength.INT);
 	}
 
-	static byte[] serializeData(byte[] b) {
+	public static byte[] serializeData(byte[] b) {
 		byte[] len = Utils.intToByteArray(b.length, DataLength.DATALEN);
 
 		ByteBuffer buff = ByteBuffer.allocate(b.length + len.length);
@@ -93,13 +93,13 @@ public final class EncodedMessageUtils {
 		return buff.array();
 	}
 
-	static int deserializeShort(ByteBuffer buff) {
+	public static int deserializeShort(ByteBuffer buff) {
 		byte[] b = new byte[DataLength.SHORT];
 		buff.get(b);
 		return Utils.byteArrayToInt(b);
 	}
 
-	static int deserializeByte(ByteBuffer buff) {
+	public static int deserializeByte(ByteBuffer buff) {
 		byte[] b = new byte[DataLength.BYTE];
 		buff.get(b);
 		return Utils.byteArrayToInt(b);
@@ -111,7 +111,7 @@ public final class EncodedMessageUtils {
 		return Utils.byteArrayToInt(b);
 	}
 
-	static byte[] deserializeData(ByteBuffer buff) {
+	public static byte[] deserializeData(ByteBuffer buff) {
 		int len = deserializeDataLen(buff);
 		
 		byte[] b = new byte[len];
@@ -119,7 +119,7 @@ public final class EncodedMessageUtils {
 		return b;
 	}
 
-	static byte[] deserializeMac(ByteBuffer buff) {
+	public static byte[] deserializeMac(ByteBuffer buff) {
 		byte[] b = new byte[DataLength.MAC];
 		buff.get(b);
 		return b;

@@ -21,11 +21,16 @@ import org.apache.log4j.Logger;
 import net.java.otr4j.context.ConnContext;
 import net.java.otr4j.context.auth.AuthenticationInfo;
 import net.java.otr4j.context.auth.AuthenticationInfoUtils;
+import net.java.otr4j.context.auth.AuthenticationState;
 import net.java.otr4j.crypto.CryptoConstants;
 import net.java.otr4j.crypto.CryptoUtils;
 import net.java.otr4j.message.*;
 import net.java.otr4j.message.encoded.*;
+import net.java.otr4j.message.encoded.signature.RevealSignatureMessage;
+import net.java.otr4j.message.encoded.signature.SignatureMessage;
 import net.java.otr4j.message.unencoded.*;
+import net.java.otr4j.message.unencoded.query.PlainTextMessage;
+import net.java.otr4j.message.unencoded.query.QueryMessage;
 
 public final class StateMachine {
 

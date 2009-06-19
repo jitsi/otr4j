@@ -1,7 +1,9 @@
-package net.java.otr4j.message.encoded;
+package net.java.otr4j.message.encoded.signature;
 
 import java.nio.ByteBuffer;
 import net.java.otr4j.message.MessageType;
+import net.java.otr4j.message.encoded.DataLength;
+import net.java.otr4j.message.encoded.EncodedMessageUtils;
 
 public final class RevealSignatureMessage extends SignatureMessageBase {
 

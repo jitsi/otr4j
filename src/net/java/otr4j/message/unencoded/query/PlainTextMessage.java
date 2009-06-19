@@ -1,10 +1,11 @@
-package net.java.otr4j.message.unencoded;
+package net.java.otr4j.message.unencoded.query;
 
 import java.util.Vector;
 
 import net.java.otr4j.message.MessageType;
+import net.java.otr4j.message.unencoded.WhiteSpaceTag;
 
-public final class PlainTextMessage extends DiscoveryMessageBase {
+public final class PlainTextMessage extends QueryMessageBase {
 
 	private PlainTextMessage() {
 		super(MessageType.PLAINTEXT);

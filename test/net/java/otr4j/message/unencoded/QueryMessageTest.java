@@ -1,5 +1,6 @@
 package net.java.otr4j.message.unencoded;
 
+import net.java.otr4j.message.unencoded.query.QueryMessage;
 import junit.framework.TestCase;
 
 public class QueryMessageTest extends TestCase {

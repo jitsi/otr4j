@@ -1,4 +1,4 @@
-package net.java.otr4j;
+package net.java.otr4j.context.auth;
 
 /**
  * 

@@ -1,5 +1,7 @@
 package net.java.otr4j.message.encoded;
 
+import net.java.otr4j.message.encoded.signature.SignatureMessage;
+
 import org.junit.Test;
 import junit.framework.TestCase;
 
