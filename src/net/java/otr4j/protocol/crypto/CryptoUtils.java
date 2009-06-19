@@ -10,9 +10,10 @@ import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -24,12 +25,10 @@ import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 public class CryptoUtils {
 
 	static {
-		Security.addProvider(new BouncyCastleProvider());
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
 	public static KeyPair generateDsaKeyPair() throws NoSuchAlgorithmException {
@@ -48,6 +47,11 @@ public class CryptoUtils {
 		keyGen.initialize(dhSpec);
 
 		return keyGen.generateKeyPair();
+	}
+
+	public static DHPublicKey getDHPublicKey(byte[] mpiBytes)
+			throws NoSuchAlgorithmException, InvalidKeySpecException {
+		return getDHPublicKey(new BigInteger(mpiBytes));
 	}
 
 	public static DHPublicKey getDHPublicKey(BigInteger mpi)
@@ -104,10 +108,10 @@ public class CryptoUtils {
 		return sha256.digest();
 	}
 
-	public static byte[] aesDescrypt(byte[] key, byte[] b)
+	public static byte[] aesDecrypt(byte[] key, byte[] b)
 			throws NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException{
+			IllegalBlockSizeException, BadPaddingException {
 		// Create cipher KeySpec based on r.
 		SecretKeySpec keyspec = new SecretKeySpec(key, "AES");
 		// Create initial counter value 0.
@@ -119,7 +123,7 @@ public class CryptoUtils {
 
 		return cipher.doFinal(b);
 	}
-	
+
 	public static byte[] aesEncrypt(byte[] key, byte[] b)
 			throws NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
@@ -137,11 +141,11 @@ public class CryptoUtils {
 		return cipher.doFinal(b);
 	}
 
-	public static BigInteger generateSecret(KeyPair pair)
+	public static BigInteger generateSecret(PrivateKey privKey, PublicKey pubKey)
 			throws NoSuchAlgorithmException, InvalidKeyException {
 		KeyAgreement ka = KeyAgreement.getInstance("DH");
-		ka.init(pair.getPrivate());
-		ka.doPhase(pair.getPublic(), true);
+		ka.init(privKey);
+		ka.doPhase(pubKey, true);
 		BigInteger s = new BigInteger(ka.generateSecret());
 		return s;
 	}

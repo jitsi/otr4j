@@ -18,37 +18,47 @@ public class StateMachineTest extends TestCase {
 	}
 
 	private static Logger logger = Logger.getLogger(StateMachine.class);
-
-	public void testReceivingMessage() throws Exception {
-		
+	
+	public void testReceivingMessage_2() throws Exception {
 		DummyOTR4jListener listener = new DummyOTR4jListener(Policy.ALLOW_V2
 				| Policy.ERROR_START_AKE);
+
+		runAKE(listener, UnencodedMessageTextSample.QueryMessage_V12);
+		
+		listener.lastInjectedMessage = null;
+		runAKE(listener, "Hello World.");
+		
+		listener.lastInjectedMessage = null;
+		runAKE(listener, UnencodedMessageTextSample.ErrorMessageText);
+	}
+
+	private void runAKE(DummyOTR4jListener listener, String initialMessage)
+			throws Exception {
+
+		logger.debug("- RUNNING AKE.");
+		
 		UserState usAlice = new UserState();
 		UserState usBob = new UserState();
-		MessageInfo miFromBob = new MessageInfo("bob", "alice@proto", "proto");
-		MessageInfo miFromAlice = new MessageInfo("alice", "alice@proto",
+		MessageInfo miFromBob = new MessageInfo("Bob", "Alice@Wonderland",
+				"proto");
+		MessageInfo miFromAlice = new MessageInfo("Alice", "Bob@Wonderland",
 				"proto");
 
-		// Alice sends a query
-		logger.debug("-Alice.");
+		StateMachine.receivingMessage(listener, usBob, miFromAlice.user,
+				miFromAlice.account, miFromAlice.protocol, initialMessage);
+
 		StateMachine.receivingMessage(listener, usAlice, miFromBob.user,
 				miFromBob.account, miFromBob.protocol,
-				UnencodedMessageTextSample.QueryMessage_V12);
+				listener.lastInjectedMessage);
 
-		// Bob sends a D-H commit
-		logger.debug("-Bob.");
 		StateMachine.receivingMessage(listener, usBob, miFromAlice.user,
 				miFromAlice.account, miFromAlice.protocol,
 				listener.lastInjectedMessage);
 
-		// Alice sends D-H key
-		logger.debug("-Alice.");
 		StateMachine.receivingMessage(listener, usAlice, miFromBob.user,
 				miFromBob.account, miFromBob.protocol,
 				listener.lastInjectedMessage);
 
-		// Bob sends reveal signature.
-		logger.debug("-Bob.");
 		StateMachine.receivingMessage(listener, usBob, miFromAlice.user,
 				miFromAlice.account, miFromAlice.protocol,
 				listener.lastInjectedMessage);

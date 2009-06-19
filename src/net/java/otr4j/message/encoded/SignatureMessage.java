@@ -4,34 +4,21 @@ import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.SignatureException;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.interfaces.DHPublicKey;
-
 import net.java.otr4j.message.MessageHeader;
 import net.java.otr4j.message.MessageType;
-import net.java.otr4j.protocol.crypto.CryptoUtils;
 
 public final class SignatureMessage extends SignatureMessageBase {
 
-	public SignatureMessage(int protocolVersion, DHPublicKey pubKeyX,
-			DHPublicKey pubKeyY, int keyidB, PrivateKey privKey,
-			PublicKey pubKey, byte[] cp, byte[] m1p, byte[] m2p)
+	public SignatureMessage(int protocolVersion, byte[] mac,
+			byte[] XBEncrypted)
 			throws NoSuchAlgorithmException, InvalidKeyException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException, SignatureException {
 		this();
-		byte[] MB = EncodedMessageUtils.computeMB(pubKeyX, pubKeyY, keyidB,
-				pubKey, m1p);
-		byte[] XB = EncodedMessageUtils.computeXB(privKey, pubKey, keyidB, MB);
-		byte[] XBEncrypted = CryptoUtils.aesEncrypt(cp, XB);
-
-		byte[] mac = CryptoUtils.sha256Hmac160(XBEncrypted, m2p);
 
 		this.protocolVersion = protocolVersion;
 		this.signatureMac = mac;

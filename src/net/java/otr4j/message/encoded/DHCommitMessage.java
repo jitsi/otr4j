@@ -1,18 +1,8 @@
 package net.java.otr4j.message.encoded;
 
 import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.interfaces.DHPublicKey;
-
 import net.java.otr4j.message.MessageHeader;
 import net.java.otr4j.message.MessageType;
-import net.java.otr4j.protocol.crypto.CryptoUtils;
 
 public final class DHCommitMessage extends EncodedMessageBase {
 
@@ -84,20 +74,9 @@ public final class DHCommitMessage extends EncodedMessageBase {
 		this.gxHash = gxHash;
 	}
 
-	public DHCommitMessage(int protocolVersion, byte[] r, DHPublicKey gxKey)
-			throws InvalidKeyException, NoSuchAlgorithmException,
-			NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException {
+	public DHCommitMessage(int protocolVersion, byte[] gxHash, byte[] gxEncrypted) {
 		this();
 
-		// Get gx.
-		byte[] gx = ((DHPublicKey) gxKey).getY().toByteArray();
-
-		byte[] gxHash = CryptoUtils.sha256Hash(gx);
-		
-		// Encrypt gx.
-		byte[] gxEncrypted = CryptoUtils.aesEncrypt(r, gx);
-		
 		this.protocolVersion = protocolVersion;
 		this.gxEncrypted = gxEncrypted;
 		this.gxHash = gxHash;

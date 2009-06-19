@@ -1,43 +1,13 @@
 package net.java.otr4j.message.encoded;
 
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SignatureException;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.interfaces.DHPublicKey;
-
 import net.java.otr4j.message.MessageType;
-import net.java.otr4j.protocol.crypto.CryptoUtils;
 
 public final class RevealSignatureMessage extends SignatureMessageBase {
 
-	public RevealSignatureMessage(int protocolVersion, BigInteger s,
-			DHPublicKey gxKey, DHPublicKey gyKey, int keyidB,
-			PrivateKey privKey, PublicKey pubKey, byte[] r)
-			throws InvalidKeyException, NoSuchAlgorithmException,
-			SignatureException, NoSuchPaddingException,
-			InvalidAlgorithmParameterException, IllegalBlockSizeException,
-			BadPaddingException {
+	public RevealSignatureMessage(int protocolVersion, byte[] r, byte[] mac,
+			byte[] XBEncrypted) {
 		this();
-
-		byte[] c = EncodedMessageUtils.getC(s);
-		byte[] m1 = EncodedMessageUtils.getM1(s);
-		byte[] m2 = EncodedMessageUtils.getM2(s);
-
-		byte[] MB = EncodedMessageUtils.computeMB(gxKey, gyKey, keyidB, pubKey,
-				m1);
-		byte[] XB = EncodedMessageUtils.computeXB(privKey, pubKey, keyidB, MB);
-		byte[] XBEncrypted = CryptoUtils.aesEncrypt(c, XB);
-
-		byte[] mac = CryptoUtils.sha256Hmac160(XBEncrypted, m2);
 
 		this.protocolVersion = protocolVersion;
 		this.signatureMac = mac;

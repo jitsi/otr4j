@@ -6,8 +6,6 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
@@ -38,16 +36,24 @@ public final class StateMachine {
 			IllegalBlockSizeException, BadPaddingException,
 			NoSuchProviderException, SignatureException {
 
+		if (Utils.IsNullOrEmpty(msgText))
+			return msgText;
+
+		logger
+				.debug("-- " + account + " received a message from " + user
+						+ ".");
 		ConnContext ctx = userState.getConnContext(user, account, protocol);
 		int policy = listener.getPolicy(ctx);
 
 		if (!PolicyUtils.getAllowV1(policy) && !PolicyUtils.getAllowV2(policy)) {
+			logger
+					.debug("Policy does not allow neither V1 not V2, ignoring message.");
 			return msgText;
 		}
 
 		if (!msgText.startsWith(MessageHeader.BASE)) {
-			PlainTextMessage plainTextMessage = new PlainTextMessage(msgText);
-			return receivingPlainTextMessage(ctx, listener, plainTextMessage);
+			return receivingPlainTextMessage(ctx, listener,
+					new PlainTextMessage(msgText));
 		} else if (msgText.startsWith(MessageHeader.QUERY1)
 				|| msgText.startsWith(MessageHeader.QUERY2)) {
 			receivingQueryMessage(ctx, listener, new QueryMessage(msgText));
@@ -60,9 +66,10 @@ public final class StateMachine {
 					account, protocol);
 		} else if (msgText.startsWith(MessageHeader.REVEALSIG)) {
 			receivingRevealSignatureMessage(ctx, listener,
-					new RevealSignatureMessage(msgText));
+					new RevealSignatureMessage(msgText), account, protocol);
 		} else if (msgText.startsWith(MessageHeader.SIGNATURE)) {
-			throw new UnsupportedOperationException();
+			receivingSignatureMessage(ctx, listener, new SignatureMessage(
+					msgText));
 		} else if (msgText.startsWith(MessageHeader.V1_KEY_EXCHANGE)) {
 			throw new UnsupportedOperationException();
 		} else if (msgText.startsWith(MessageHeader.DATA1)
@@ -72,21 +79,27 @@ public final class StateMachine {
 			receivingErrorMessage(ctx, listener, new ErrorMessage(msgText));
 			// User needs to know nothing about Error messages.
 		} else {
-			logger.debug("Uknown message type.");
+			logger.debug("Oups.. Uknown message type :S");
 		}
 
 		return msgText;
 	}
 
+	private static void receivingSignatureMessage(ConnContext ctx,
+			OTR4jListener listener, SignatureMessage signatureMessage) {
+		logger.debug("Received signature message. Not Implemented Yet.");
+	}
+
 	private static void receivingRevealSignatureMessage(ConnContext ctx,
-			OTR4jListener listener, RevealSignatureMessage msg)
-			throws InvalidKeyException, NoSuchAlgorithmException,
-			NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException {
+			OTR4jListener listener, RevealSignatureMessage msg, String account,
+			String protocol) throws InvalidKeyException,
+			NoSuchAlgorithmException, NoSuchPaddingException,
+			InvalidAlgorithmParameterException, IllegalBlockSizeException,
+			BadPaddingException, SignatureException, InvalidKeySpecException {
+
 		logger.debug("Received reveal signature message.");
 		int policy = listener.getPolicy(ctx);
-		if (!PolicyUtils.getAllowV2(policy))
-		{
+		if (!PolicyUtils.getAllowV2(policy)) {
 			logger.debug("Policy does not allow OTRv2, ignoring message.");
 			return;
 		}
@@ -95,15 +108,62 @@ public final class StateMachine {
 		switch (auth.authenticationState) {
 		case AWAITING_REVEALSIG:
 			byte[] r = msg.revealedKey;
-			byte[] encryptedSignature = msg.encryptedSignature;
-			byte[] signatureMac = msg.signatureMac;
-			byte[] gx = CryptoUtils.aesDescrypt(r, auth.their_yEncrypted);
+			byte[] gx = CryptoUtils.aesDecrypt(r,
+					auth.theirDHPublicKeyEncrypted);
 
 			byte[] gxHash = CryptoUtils.sha256Hash(gx);
-			if (!Arrays.equals(gxHash, auth.their_yHash)) {
+			if (!Arrays.equals(gxHash, auth.theirDHPublicKeyHash)) {
 				logger.debug("Hashes don't match, ignoring message.");
 				return;
 			}
+
+			// Verifies that Bob's gx is a legal value (2 <= gx <= modulus-2)
+			BigInteger gxmpi = new BigInteger(gx);
+			if (gxmpi.compareTo(CryptoConstants.MODULUS_MINUS_TWO) > 0) {
+				logger.debug("gx <= modulus-2, ignoring message.");
+				return;
+			} else if (gxmpi.compareTo(CryptoConstants.BIGINTEGER_TWO) < 0) {
+				logger.debug("2 <= gx, ignoring message.");
+				return;
+			}
+
+			int protocolVersion = 2;
+			
+			auth.theirDHPublicKey = CryptoUtils.getDHPublicKey(gxmpi);
+			logger.debug("Calculating secret key.");
+			auth.s = CryptoUtils.generateSecret(auth.ourDHKeyPair.getPrivate(),
+					auth.theirDHPublicKey);
+
+			// TODO load private key from disk or request it from host
+			// application
+			KeyPair pair = listener.createPrivateKey(account, protocol);
+			auth.ourLongTermPublicKey = pair.getPublic();
+			auth.ourLongTermPrivateKey = pair.getPrivate();
+
+			auth.c = AuthenticationInfoUtils.getC(auth.s);
+			auth.cp = AuthenticationInfoUtils.getCp(auth.s);
+			auth.m1 = AuthenticationInfoUtils.getM1(auth.s);
+			auth.m1p = AuthenticationInfoUtils.getM1p(auth.s);
+			auth.m2 = AuthenticationInfoUtils.getM2(auth.s);
+			auth.m2p = AuthenticationInfoUtils.getM2p(auth.s);
+
+			byte[] signature = CryptoUtils.aesDecrypt(auth.c, msg.encryptedSignature);
+			
+			logger.debug("Calculating our M and our X.");
+			DHPublicKey ourDHPublicKey = (DHPublicKey) auth.ourDHKeyPair
+					.getPublic();
+			auth.m = AuthenticationInfoUtils.computeM(ourDHPublicKey,
+					auth.theirDHPublicKey, auth.ourDHPrivateKeyID,
+					auth.ourLongTermPublicKey, auth.m1p);
+			auth.x = AuthenticationInfoUtils.computeX(
+					auth.ourLongTermPrivateKey, auth.ourLongTermPublicKey,
+					auth.ourDHPrivateKeyID, auth.m);
+			auth.xEncrypted = CryptoUtils.aesEncrypt(auth.cp, auth.x);
+			auth.xMac = CryptoUtils.sha256Hmac160(auth.xEncrypted, auth.m2p);
+
+			SignatureMessage msgSig = new SignatureMessage(protocolVersion,
+					auth.ourXMac, auth.ourXEncrypted);
+			listener.injectMessage(msgSig.toString());
 			break;
 		default:
 			break;
@@ -116,7 +176,6 @@ public final class StateMachine {
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
 			NoSuchProviderException {
-
 		Vector<Integer> versions = msg.versions;
 		int policy = listener.getPolicy(ctx);
 		if (versions.size() < 1) {
@@ -165,11 +224,11 @@ public final class StateMachine {
 				if (versions.contains(2) && PolicyUtils.getAllowV2(policy)) {
 					logger.debug("V2 tag found, starting v2 AKE.");
 					AuthenticationInfo auth = ctx.authenticationInfo;
-
-					authInitialize(auth);
+					auth.initialize();
 
 					DHCommitMessage dhCommitMessage = new DHCommitMessage(2,
-							auth.r, (DHPublicKey) auth.our_dh.getPublic());
+							auth.ourDHPublicKeyHash,
+							auth.ourDHPublicKeyEncrypted);
 					auth.authenticationState = AuthenticationState.AWAITING_DHKEY;
 
 					logger.debug("Sending D-H Commit.");
@@ -194,12 +253,13 @@ public final class StateMachine {
 		Vector<Integer> versions = msg.versions;
 		int policy = listener.getPolicy(ctx);
 		if (versions.contains(2) && PolicyUtils.getAllowV2(policy)) {
-			logger.debug("Query message with V2 support found, starting V2 AKE.");
+			logger
+					.debug("Query message with V2 support found, starting V2 AKE.");
 			AuthenticationInfo auth = ctx.authenticationInfo;
-			authInitialize(auth);
+			auth.initialize();
 
-			DHCommitMessage dhCommitMessage = new DHCommitMessage(2, auth.r,
-					(DHPublicKey) auth.our_dh.getPublic());
+			DHCommitMessage dhCommitMessage = new DHCommitMessage(2,
+					auth.ourDHPublicKeyHash, auth.ourDHPublicKeyEncrypted);
 			auth.authenticationState = AuthenticationState.AWAITING_DHKEY;
 
 			logger.debug("Sending D-H Commit.");
@@ -217,17 +277,21 @@ public final class StateMachine {
 		if (PolicyUtils.getErrorStartsAKE(policy)) {
 			logger.debug("Error message starts AKE.");
 			Vector<Integer> versions = new Vector<Integer>();
-			if (PolicyUtils.getAllowV1(policy)) {
+			if (PolicyUtils.getAllowV1(policy))
 				versions.add(1);
-			}
-			if (PolicyUtils.getAllowV2(policy)) {
+
+			if (PolicyUtils.getAllowV2(policy))
 				versions.add(2);
-			}
+
 			QueryMessage queryMessage = new QueryMessage(versions);
 
 			logger.debug("Sending Query");
 			listener.injectMessage(queryMessage.toString());
 		}
+	}
+
+	private enum ReceivingDHCommitMessageActions {
+		RETRANSMIT_OLD_DH_KEY, SEND_NEW_DH_KEY, RETRANSMIT_DH_COMMIT,
 	}
 
 	private static void receivingDHCommitMessage(ConnContext ctx,
@@ -236,76 +300,71 @@ public final class StateMachine {
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeyException, NoSuchPaddingException,
 			IllegalBlockSizeException, BadPaddingException {
+
 		logger.debug("Received D-H Commit.");
+
 		if (!PolicyUtils.getAllowV2(listener.getPolicy(ctx))) {
 			logger.debug("ALLOW_V2 is not set, ignore this message.");
 			return;
 		}
 
+		// Set SEND_DH_KEY as default action.
+		ReceivingDHCommitMessageActions action = ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY;
+
 		AuthenticationInfo auth = ctx.authenticationInfo;
 		switch (auth.authenticationState) {
-		case NONE: {
-			logger.debug("Storing encrypted gx and encrypted gx hash.");
-			auth.their_yEncrypted = msg.gxEncrypted;
-			auth.their_yHash = msg.gxHash;
-
-			authInitialize(auth);
-
-			DHKeyMessage dhKey = new DHKeyMessage(2, (DHPublicKey) auth.our_dh
-					.getPublic());
-			auth.authenticationState = AuthenticationState.AWAITING_REVEALSIG;
-
-			logger.debug("Sending D-H key.");
-			listener.injectMessage(dhKey.toString());
+		case NONE:
+			action = ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY;
 			break;
-		}
-		case AWAITING_DHKEY: {
-			BigInteger ourHash = new BigInteger(auth.hashgx);
+
+		case AWAITING_DHKEY:
+			BigInteger ourHash = new BigInteger(auth.ourDHPublicKeyHash);
 			BigInteger theirHash = new BigInteger(msg.gxHash);
 
 			if (theirHash.abs().compareTo(ourHash.abs()) == -1) {
-				logger
-						.debug("Ignore the incoming D-H Commit message, but resend your D-H Commit message.");
-				DHCommitMessage dhCommit = new DHCommitMessage(2, auth.r,
-						(DHPublicKey) auth.our_dh.getPublic());
-
-				logger.debug("Sending D-H Commit.");
-				listener.injectMessage(dhCommit.toString());
+				action = ReceivingDHCommitMessageActions.RETRANSMIT_DH_COMMIT;
 			} else {
-				logger.debug("Storing encrypted gx and encrypted gx hash.");
-
-				auth.their_yEncrypted = msg.gxEncrypted;
-				auth.their_yHash = msg.gxHash;
-
-				authInitialize(auth);
-
-				DHKeyMessage dhKey = new DHKeyMessage(2,
-						(DHPublicKey) auth.our_dh.getPublic());
-				auth.authenticationState = AuthenticationState.AWAITING_REVEALSIG;
-
-				logger.debug("Sending D-H key.");
-				listener.injectMessage(dhKey.toString());
+				action = ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY;
 			}
 			break;
+
+		case AWAITING_REVEALSIG:
+			action = ReceivingDHCommitMessageActions.RETRANSMIT_OLD_DH_KEY;
+			break;
+		case AWAITING_SIG:
+			action = ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY;
+			break;
+		case V1_SETUP:
+			throw new UnsupportedOperationException();
 		}
-		case AWAITING_REVEALSIG: {
+
+		if (action == ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY)
+			auth.initialize();
+
+		switch (action) {
+		case RETRANSMIT_DH_COMMIT:
+			logger
+					.debug("Ignore the incoming D-H Commit message, but resend your D-H Commit message.");
+			DHCommitMessage dhCommit = new DHCommitMessage(2,
+					auth.ourDHPublicKeyHash, auth.ourDHPublicKeyEncrypted);
+
+			logger.debug("Sending D-H Commit.");
+			listener.injectMessage(dhCommit.toString());
+			break;
+		case RETRANSMIT_OLD_DH_KEY:
+		case SEND_NEW_DH_KEY:
 			logger.debug("Storing encrypted gx and encrypted gx hash.");
-			auth.their_yEncrypted = msg.gxEncrypted;
-			auth.their_yHash = msg.gxHash;
+			auth.theirDHPublicKeyEncrypted = msg.gxEncrypted;
+			auth.theirDHPublicKeyHash = msg.gxHash;
 
-			DHKeyMessage dhKey = new DHKeyMessage(ctx.our_dh.size() - 1,
-					(DHPublicKey) auth.our_dh.getPublic());
-
+			DHKeyMessage dhKey = new DHKeyMessage(2,
+					(DHPublicKey) auth.ourDHKeyPair.getPublic());
 			auth.authenticationState = AuthenticationState.AWAITING_REVEALSIG;
 
 			logger.debug("Sending D-H key.");
 			listener.injectMessage(dhKey.toString());
+		default:
 			break;
-		}
-		case AWAITING_SIG:
-		case V1_SETUP: {
-			throw new UnsupportedOperationException();
-		}
 		}
 	}
 
@@ -317,7 +376,7 @@ public final class StateMachine {
 			IllegalBlockSizeException, BadPaddingException {
 		logger.debug("Received D-H Key.");
 		if (!PolicyUtils.getAllowV2(listener.getPolicy(ctx))) {
-			// If ALLOW_V2 is not set, ignore this message.
+			logger.debug("If ALLOW_V2 is not set, ignore this message.");
 			return;
 		}
 
@@ -326,7 +385,43 @@ public final class StateMachine {
 		AuthenticationInfo auth = ctx.authenticationInfo;
 		switch (auth.authenticationState) {
 		case AWAITING_DHKEY:
-			auth.their_pub = msg.gy;
+			// Verifies that Alice's gy is a legal value (2 <= gy <= modulus-2)
+			if (msg.gy.getY().compareTo(CryptoConstants.MODULUS_MINUS_TWO) > 0) {
+				return;
+			} else if (msg.gy.getY().compareTo(CryptoConstants.BIGINTEGER_TWO) < 0) {
+				return;
+			}
+
+			// TODO load private key from disk or request it from host
+			// application
+			KeyPair pair = listener.createPrivateKey(account, protocol);
+
+			logger.debug("Calculating secret key.");
+			auth.s = CryptoUtils.generateSecret(auth.ourDHKeyPair.getPrivate(),
+					msg.gy);
+
+			auth.theirDHPublicKey = msg.gy;
+			auth.ourLongTermPublicKey = pair.getPublic();
+			auth.ourLongTermPrivateKey = pair.getPrivate();
+
+			auth.c = AuthenticationInfoUtils.getC(auth.s);
+			auth.cp = AuthenticationInfoUtils.getCp(auth.s);
+			auth.m1 = AuthenticationInfoUtils.getM1(auth.s);
+			auth.m1p = AuthenticationInfoUtils.getM1p(auth.s);
+			auth.m2 = AuthenticationInfoUtils.getM2(auth.s);
+			auth.m2p = AuthenticationInfoUtils.getM2p(auth.s);
+
+			logger.debug("Calculating our M and our X.");
+			DHPublicKey ourDHPublicKey = (DHPublicKey) auth.ourDHKeyPair
+					.getPublic();
+			auth.m = AuthenticationInfoUtils.computeM(ourDHPublicKey,
+					auth.theirDHPublicKey, auth.ourDHPrivateKeyID,
+					auth.ourLongTermPublicKey, auth.m1);
+			auth.x = AuthenticationInfoUtils.computeX(
+					auth.ourLongTermPrivateKey, auth.ourLongTermPublicKey,
+					auth.ourDHPrivateKeyID, auth.m);
+			auth.xEncrypted = CryptoUtils.aesEncrypt(auth.c, auth.x);
+			auth.xMac = CryptoUtils.sha256Hmac160(auth.xEncrypted, auth.m2);
 
 			replyRevealSig = true;
 			break;
@@ -341,37 +436,14 @@ public final class StateMachine {
 
 		if (replyRevealSig) {
 			int protocolVersion = 2;
-			// TODO load private key from disk
-			KeyPair pair = listener.createPrivateKey(account, protocol);
-			PrivateKey privKey = pair.getPrivate();
-			PublicKey pubKey = pair.getPublic();
 
-			KeyPair our_pair = auth.our_dh;
-			DHPublicKey gxKey = (DHPublicKey) our_pair.getPublic();
-			DHPublicKey gyKey = auth.their_pub;
-			int keyidB = auth.our_keyid;
-			BigInteger s = CryptoUtils.generateSecret(our_pair);
-			byte[] r = auth.r;
 			RevealSignatureMessage revealSignatureMessage = new RevealSignatureMessage(
-					protocolVersion, s, gxKey, gyKey, keyidB, privKey, pubKey,
-					r);
+					protocolVersion, auth.r, auth.xMac, auth.xEncrypted);
 
 			auth.authenticationState = AuthenticationState.AWAITING_SIG;
 			logger.debug("Sending Reveal Signature.");
 			listener.injectMessage(revealSignatureMessage.toString());
 		}
 
-	}
-
-	private static void authInitialize(AuthenticationInfo auth)
-			throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException {
-
-		logger.debug("Picking random key r.");
-		byte[] r = Utils.getRandomBytes(CryptoConstants.AES_KEY_BYTE_LENGTH);
-		auth.r = r;
-		logger.debug("Generating own D-H key pair.");
-		auth.our_dh = CryptoUtils.generateDHKeyPair();
-		auth.our_keyid = 1;
 	}
 }
