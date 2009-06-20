@@ -3,13 +3,18 @@ package net.java.otr4j.message.encoded;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.DSAParams;
 import java.security.interfaces.DSAPublicKey;
-import javax.crypto.interfaces.DHPublicKey;
+import java.security.spec.DSAPublicKeySpec;
+import java.security.spec.InvalidKeySpecException;
 
+import net.java.otr4j.MysteriousM;
 import net.java.otr4j.Utils;
 import net.java.otr4j.crypto.CryptoConstants;
+import net.java.otr4j.crypto.CryptoUtils;
 import net.java.otr4j.message.MessageHeader;
 import org.apache.commons.codec.binary.Base64;
 
@@ -57,19 +62,27 @@ public final class EncodedMessageUtils {
 		return buff.array();
 	}
 
-	public static byte[] serializeDHPublicKey(DHPublicKey pubKey) {
-		return serializeMpi(((DHPublicKey) pubKey).getY());
-	}
-
 	public static byte[] serializeMpi(BigInteger i) {
 		return serializeData(i.toByteArray());
 	}
 
-	public static byte[] serializeDsaPublicKey(PublicKey pubKey)
+	public static PublicKey deserializeDsaPublicKey(ByteBuffer buff)
+			throws NoSuchAlgorithmException, InvalidKeySpecException {
+		deserializeShort(buff);
+		BigInteger p = deserializeMpi(buff);
+		BigInteger q = deserializeMpi(buff);
+		BigInteger g = deserializeMpi(buff);
+		BigInteger y = deserializeMpi(buff);
+		DSAPublicKeySpec keySpec = new DSAPublicKeySpec(y, p, q, g);
+		KeyFactory keyFactory = KeyFactory.getInstance("DSA");
+		return keyFactory.generatePublic(keySpec);
+	}
+
+	public static byte[] serializePublicKey(PublicKey pubKey)
 			throws InvalidKeyException {
 
 		if (!(pubKey instanceof DSAPublicKey))
-			throw new InvalidKeyException();
+			throw new UnsupportedOperationException();
 
 		DSAPublicKey dsaKey = (DSAPublicKey) pubKey;
 
@@ -113,7 +126,7 @@ public final class EncodedMessageUtils {
 
 	public static byte[] deserializeData(ByteBuffer buff) {
 		int len = deserializeDataLen(buff);
-		
+
 		byte[] b = new byte[len];
 		buff.get(b);
 		return b;
@@ -137,15 +150,37 @@ public final class EncodedMessageUtils {
 		return new BigInteger(1, bTrimmed);
 	}
 
-	static int deserializeInt(ByteBuffer buff) {
+	public static int deserializeInt(ByteBuffer buff) {
 		byte[] b = new byte[DataLength.INT];
 		buff.get(b);
 		return Utils.byteArrayToInt(b);
 	}
 
-	static byte[] deserializeCtr(ByteBuffer buff) {
+	public static byte[] deserializeCtr(ByteBuffer buff) {
 		byte[] b = new byte[DataLength.CTR];
 		buff.get(b);
 		return b;
+	}
+
+	public static byte[] serializeM(MysteriousM m) throws InvalidKeyException,
+			NoSuchAlgorithmException {
+		byte[] gxSerialized = EncodedMessageUtils.serializeMpi(m.ourDHPublicKey
+				.getY());
+		byte[] gySerialized = EncodedMessageUtils
+				.serializeMpi(m.theirDHPublicKey.getY());
+		byte[] pubKeySerialized = EncodedMessageUtils
+				.serializePublicKey(m.ourLongTermPublicKey);
+		byte[] keyidSerialized = EncodedMessageUtils
+				.serializeInt(m.ourDHPrivatecKeyID);
+
+		int len = gxSerialized.length + gySerialized.length
+				+ pubKeySerialized.length + keyidSerialized.length;
+		ByteBuffer buff = ByteBuffer.allocate(len);
+		buff.put(gxSerialized);
+		buff.put(gySerialized);
+		buff.put(pubKeySerialized);
+		buff.put(keyidSerialized);
+
+		return CryptoUtils.sha256Hmac(buff.array(), m.m1);
 	}
 }

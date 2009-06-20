@@ -42,18 +42,10 @@ public class AuthenticationInfo {
 	public byte[] m1p;
 	public byte[] m2p;
 
-	public byte[] ourM;
-	public byte[] ourX;
 	public byte[] ourXEncrypted;
-	public byte[] ourXMac;
+	public byte[] ourXEncryptedMac;
 
-	public byte[] m;
-	public byte[] x;
-	public byte[] xEncrypted;
-	public byte[] xMac;
-
-	public PublicKey ourLongTermPublicKey;
-	public PrivateKey ourLongTermPrivateKey;
+	public KeyPair ourLongTermKeyPair;
 
 	public void initialize() throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,

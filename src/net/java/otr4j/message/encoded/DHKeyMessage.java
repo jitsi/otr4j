@@ -36,7 +36,7 @@ public final class DHKeyMessage extends EncodedMessageBase {
 		len += messageType.length;
 	
 		// gy (MPI)
-		byte[] gyMpiSerialized = EncodedMessageUtils.serializeDHPublicKey(this.gy);
+		byte[] gyMpiSerialized = EncodedMessageUtils.serializeMpi(this.gy.getY());
 		len += gyMpiSerialized.length;
 	
 		ByteBuffer buff = ByteBuffer.allocate(len);

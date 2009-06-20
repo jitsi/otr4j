@@ -136,7 +136,7 @@ public final class StateMachine {
 			}
 
 			int protocolVersion = 2;
-			
+
 			auth.theirDHPublicKey = CryptoUtils.getDHPublicKey(gxmpi);
 			logger.debug("Calculating secret key.");
 			auth.s = CryptoUtils.generateSecret(auth.ourDHKeyPair.getPrivate(),
@@ -144,9 +144,8 @@ public final class StateMachine {
 
 			// TODO load private key from disk or request it from host
 			// application
-			KeyPair pair = listener.createPrivateKey(account, protocol);
-			auth.ourLongTermPublicKey = pair.getPublic();
-			auth.ourLongTermPrivateKey = pair.getPrivate();
+			KeyPair keyPair = listener.getKeyPair(account, protocol);
+			auth.ourLongTermKeyPair = keyPair;
 
 			auth.c = AuthenticationInfoUtils.getC(auth.s);
 			auth.cp = AuthenticationInfoUtils.getCp(auth.s);
@@ -155,23 +154,19 @@ public final class StateMachine {
 			auth.m2 = AuthenticationInfoUtils.getM2(auth.s);
 			auth.m2p = AuthenticationInfoUtils.getM2p(auth.s);
 
-			byte[] signature = CryptoUtils.aesDecrypt(auth.c, msg.encryptedSignature);
-			
-			logger.debug("Calculating our M and our X.");
-			DHPublicKey ourDHPublicKey = (DHPublicKey) auth.ourDHKeyPair
-					.getPublic();
-			auth.m = AuthenticationInfoUtils.computeM(ourDHPublicKey,
-					auth.theirDHPublicKey, auth.ourDHPrivateKeyID,
-					auth.ourLongTermPublicKey, auth.m1p);
-			auth.x = AuthenticationInfoUtils.computeX(
-					auth.ourLongTermPrivateKey, auth.ourLongTermPublicKey,
-					auth.ourDHPrivateKeyID, auth.m);
-			auth.xEncrypted = CryptoUtils.aesEncrypt(auth.cp, auth.x);
-			auth.xMac = CryptoUtils.sha256Hmac160(auth.xEncrypted, auth.m2p);
+			byte[] encryptedSignature = msg.encryptedSignature;
+			byte[] calculatedMAC = CryptoUtils.sha256Hmac160(
+					encryptedSignature, auth.m2);
+			if (!Arrays.equals(calculatedMAC, msg.signatureMac)) {
+				logger.debug("Signature MACs are not equal, ignoring message.");
+				return;
+			}
 
-			SignatureMessage msgSig = new SignatureMessage(protocolVersion,
-					auth.ourXMac, auth.ourXEncrypted);
-			listener.injectMessage(msgSig.toString());
+			/*
+			 * SignatureMessage msgSig = new SignatureMessage(protocolVersion,
+			 * auth.ourXMac, auth.ourXEncrypted);
+			 * listener.injectMessage(msgSig.toString());
+			 */
 			break;
 		default:
 			break;
@@ -400,17 +395,10 @@ public final class StateMachine {
 				return;
 			}
 
-			// TODO load private key from disk or request it from host
-			// application
-			KeyPair pair = listener.createPrivateKey(account, protocol);
-
+			auth.theirDHPublicKey = msg.gy;
 			logger.debug("Calculating secret key.");
 			auth.s = CryptoUtils.generateSecret(auth.ourDHKeyPair.getPrivate(),
-					msg.gy);
-
-			auth.theirDHPublicKey = msg.gy;
-			auth.ourLongTermPublicKey = pair.getPublic();
-			auth.ourLongTermPrivateKey = pair.getPrivate();
+					auth.theirDHPublicKey);
 
 			auth.c = AuthenticationInfoUtils.getC(auth.s);
 			auth.cp = AuthenticationInfoUtils.getCp(auth.s);
@@ -419,17 +407,27 @@ public final class StateMachine {
 			auth.m2 = AuthenticationInfoUtils.getM2(auth.s);
 			auth.m2p = AuthenticationInfoUtils.getM2p(auth.s);
 
+			// TODO load private key from disk or request it from host
+			// application
+			KeyPair keyPair = listener.getKeyPair(account, protocol);
+			auth.ourLongTermKeyPair = keyPair;
+
 			logger.debug("Calculating our M and our X.");
 			DHPublicKey ourDHPublicKey = (DHPublicKey) auth.ourDHKeyPair
 					.getPublic();
-			auth.m = AuthenticationInfoUtils.computeM(ourDHPublicKey,
-					auth.theirDHPublicKey, auth.ourDHPrivateKeyID,
-					auth.ourLongTermPublicKey, auth.m1);
-			auth.x = AuthenticationInfoUtils.computeX(
-					auth.ourLongTermPrivateKey, auth.ourLongTermPublicKey,
-					auth.ourDHPrivateKeyID, auth.m);
-			auth.xEncrypted = CryptoUtils.aesEncrypt(auth.c, auth.x);
-			auth.xMac = CryptoUtils.sha256Hmac160(auth.xEncrypted, auth.m2);
+			MysteriousM m = new MysteriousM(auth.m1, ourDHPublicKey,
+					auth.theirDHPublicKey, auth.ourLongTermKeyPair.getPublic(),
+					auth.ourDHPrivateKeyID);
+
+			/*BigInteger[] signature = MysteriousXUtils.sign(m.toByteArray(),
+					auth.ourLongTermKeyPair.getPrivate());
+			MysteriousX x = new MysteriousX(auth.ourDHKeyPair.getPublic(),
+					auth.ourDHPrivateKeyID, signature);
+
+			auth.ourXEncrypted = CryptoUtils.aesEncrypt(auth.c, x
+					.toByteArray());
+			auth.ourXEncryptedMac = CryptoUtils.sha256Hmac160(
+					auth.ourXEncrypted, auth.m2);*/
 
 			replyRevealSig = true;
 			break;
@@ -446,7 +444,8 @@ public final class StateMachine {
 			int protocolVersion = 2;
 
 			RevealSignatureMessage revealSignatureMessage = new RevealSignatureMessage(
-					protocolVersion, auth.r, auth.xMac, auth.xEncrypted);
+					protocolVersion, auth.r, auth.ourXEncryptedMac,
+					auth.ourXEncrypted);
 
 			auth.authenticationState = AuthenticationState.AWAITING_SIG;
 			logger.debug("Sending Reveal Signature.");

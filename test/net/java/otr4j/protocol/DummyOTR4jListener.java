@@ -41,7 +41,7 @@ public class DummyOTR4jListener implements OTR4jListener {
 	}
 
 	@Override
-	public KeyPair createPrivateKey(String account, String protocol)
+	public KeyPair getKeyPair(String account, String protocol)
 			throws NoSuchAlgorithmException {
 		logger.debug("IM generates a DSA key pair.");
 		return CryptoUtils.generateDsaKeyPair();

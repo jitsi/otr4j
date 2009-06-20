@@ -14,6 +14,6 @@ public interface OTR4jListener {
 
 	public int getPolicy(ConnContext ctx);
 
-	public KeyPair createPrivateKey(String account, String protocol)
+	public KeyPair getKeyPair(String account, String protocol)
 			throws NoSuchAlgorithmException;
 }

@@ -16,50 +16,6 @@ import net.java.otr4j.crypto.CryptoUtils;
 import net.java.otr4j.message.encoded.EncodedMessageUtils;
 
 public class AuthenticationInfoUtils {
-	private static byte[] sign(byte[] b, PrivateKey privateKey)
-			throws NoSuchAlgorithmException, InvalidKeyException,
-			SignatureException {
-		Signature sign = Signature.getInstance(privateKey.getAlgorithm());
-		sign.initSign(privateKey);
-		sign.update(b);
-		return sign.sign();
-	}
-
-	public static byte[] computeX(PrivateKey privKey, PublicKey pubKey,
-			int keyidB, byte[] MB) throws InvalidKeyException,
-			NoSuchAlgorithmException, SignatureException {
-
-		byte[] pubBBytes = EncodedMessageUtils.serializeDsaPublicKey(pubKey);
-		byte[] keyidBBytes = EncodedMessageUtils.serializeInt(keyidB);
-		byte[] sigB = sign(MB, privKey);
-
-		int len = pubBBytes.length + keyidBBytes.length + sigB.length;
-		ByteBuffer buff = ByteBuffer.allocate(len);
-		buff.put(pubBBytes);
-		buff.put(keyidBBytes);
-		buff.put(sigB);
-		return buff.array();
-	}
-
-	public static byte[] computeM(DHPublicKey gxKey, DHPublicKey gyKey,
-			int keyidB, PublicKey pubB, byte[] m1) throws InvalidKeyException,
-			NoSuchAlgorithmException {
-
-		byte[] gx = EncodedMessageUtils.serializeDHPublicKey(gxKey);
-		byte[] gy = EncodedMessageUtils.serializeDHPublicKey(gyKey);
-		byte[] keyidBytes = EncodedMessageUtils.serializeInt(keyidB);
-		byte[] pub = EncodedMessageUtils.serializeDsaPublicKey(pubB);
-
-		int len = gx.length + gy.length + pub.length + keyidBytes.length;
-		ByteBuffer buff = ByteBuffer.allocate(len);
-		buff.put(gx);
-		buff.put(gy);
-		buff.put(pub);
-		buff.put(keyidBytes);
-
-		return CryptoUtils.sha256Hmac(buff.array(), m1);
-	}
-
 	private static byte[] h2(byte b, BigInteger s)
 			throws NoSuchAlgorithmException {
 		byte[] secbytes = EncodedMessageUtils.serializeMpi(s);
