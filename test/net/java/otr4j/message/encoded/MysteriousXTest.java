@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 
 import net.java.otr4j.crypto.CryptoUtils;
 import net.java.otr4j.message.encoded.MysteriousX;
@@ -18,14 +19,14 @@ public class MysteriousXTest extends TestCase {
 
 	@Test
 	public void testSerialization() throws IOException,
-			NoSuchAlgorithmException {
+			NoSuchAlgorithmException, NoSuchProviderException {
 
 		KeyPair keyPair = CryptoUtils.generateDsaKeyPair();
 		BigInteger[] sig = new BigInteger[2];
 		sig[0] = BigInteger.ZERO;
 		sig[1] = BigInteger.ONE;
 
-		MysteriousX x = new MysteriousX(keyPair.getPublic(), 0, sig);
+		MysteriousX x = new MysteriousX(keyPair.getPublic(), 0, null);
 
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ObjectOutputStream oos = new ObjectOutputStream(out);

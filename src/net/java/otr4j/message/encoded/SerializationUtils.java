@@ -1,11 +1,14 @@
 package net.java.otr4j.message.encoded;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.PublicKey;
 import java.security.interfaces.DSAParams;
 import java.security.interfaces.DSAPublicKey;
+import org.bouncycastle.asn1.DERInteger;
+import org.bouncycastle.asn1.DERSequence;
 
 import net.java.otr4j.Utils;
 import net.java.otr4j.crypto.CryptoConstants;
@@ -57,10 +60,31 @@ public class SerializationUtils {
 	}
 
 	public static void writeSignature(java.io.ByteArrayOutputStream stream,
-			BigInteger[] signatureRS) throws IOException {
-		// TODO verify that this is correct.
-		stream.write(signatureRS[0].toByteArray());
-		stream.write(signatureRS[1].toByteArray());
+			byte[] signature, PublicKey pubKey) throws IOException {
+		if (!pubKey.getAlgorithm().equals("DSA"))
+			throw new UnsupportedOperationException();
+		
+		// http://www.codeproject.com/KB/security/CryptoInteropSign.aspx
+		// http://java.sun.com/j2se/1.4.2/docs/guide/security/CryptoSpec.html
+		
+		DERSequence derSequence = (DERSequence) DERSequence
+				.fromByteArray(signature);
+		DERInteger r = (DERInteger) derSequence.getObjectAt(0);
+		DERInteger s = (DERInteger) derSequence.getObjectAt(1);
+		
+		byte[] rb = r.getPositiveValue().toByteArray();
+		byte[] sb = s.getPositiveValue().toByteArray();
+		
+		stream.write(rb);
+		stream.write(sb);
+	}
+
+	public static void writeMac(ByteArrayOutputStream stream,
+			byte[] signatureMac) throws IOException {
+		if (signatureMac == null || signatureMac.length != DataLength.MAC)
+			throw new IllegalArgumentException();
+
+		stream.write(signatureMac);
 	}
 
 }

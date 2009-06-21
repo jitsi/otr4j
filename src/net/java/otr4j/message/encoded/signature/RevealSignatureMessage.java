@@ -30,7 +30,7 @@ public final class RevealSignatureMessage extends SignatureMessageBase {
 		SerializationUtils.writeByte(stream, this.messageType);
 		SerializationUtils.writeData(stream, this.revealedKey);
 		SerializationUtils.writeData(stream, this.encryptedSignature);
-		SerializationUtils.writeData(stream, this.signatureMac);
+		SerializationUtils.writeMac(stream, this.signatureMac);
 	}
 
 	public void readObject(java.io.ByteArrayInputStream stream) throws IOException {

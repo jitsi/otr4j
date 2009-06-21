@@ -1,13 +1,19 @@
 package net.java.otr4j.message.encoded;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.interfaces.DSAParams;
+import java.security.interfaces.DSAPublicKey;
 import java.security.spec.DSAPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
+
+import org.bouncycastle.asn1.*;
 
 import net.java.otr4j.Utils;
 import net.java.otr4j.crypto.CryptoConstants;
@@ -91,8 +97,29 @@ public class DeserializationUtils {
 		return b;
 	}
 
-	public static BigInteger[] readSignature(java.io.ByteArrayInputStream stream) {
-		throw new UnsupportedOperationException("Not implemented");
-	}
+	public static byte[] readSignature(java.io.ByteArrayInputStream stream,
+			PublicKey pubKey) throws IOException {
+		if (!pubKey.getAlgorithm().equals("DSA"))
+			throw new UnsupportedOperationException();
 
+		DSAPublicKey dsaPubKey = (DSAPublicKey) pubKey;
+		DSAParams dsaParams = dsaPubKey.getParams();
+		int qlen = dsaParams.getQ().bitLength() / 8;
+		// http://www.codeproject.com/KB/security/CryptoInteropSign.aspx
+		// http://java.sun.com/j2se/1.4.2/docs/guide/security/CryptoSpec.html
+
+		byte[] r = new byte[qlen];
+		byte[] s = new byte[qlen];
+
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		DERSequenceGenerator seqGen = new DERSequenceGenerator(bos);
+
+		stream.read(r);
+		seqGen.addObject(new DERInteger(r));
+		stream.read(s);
+		seqGen.addObject(new DERInteger(s));
+		seqGen.close();
+		
+		return bos.toByteArray();
+	}
 }

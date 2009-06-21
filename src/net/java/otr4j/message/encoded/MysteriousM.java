@@ -3,8 +3,11 @@ package net.java.otr4j.message.encoded;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import javax.crypto.interfaces.DHPublicKey;
+
+import net.java.otr4j.crypto.CryptoUtils;
 
 public class MysteriousM {
 
@@ -25,7 +28,8 @@ public class MysteriousM {
 	public PublicKey ourLongTermPublicKey;
 	public int ourDHPrivatecKeyID;
 
-	public byte[] compute() throws InvalidKeyException, IOException {
+	public byte[] compute() throws InvalidKeyException, IOException,
+			NoSuchAlgorithmException {
 
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
@@ -34,6 +38,6 @@ public class MysteriousM {
 		SerializationUtils.writePublicKey(bos, this.ourLongTermPublicKey);
 		SerializationUtils.writeInt(bos, this.ourDHPrivatecKeyID);
 
-		return bos.toByteArray();
+		return CryptoUtils.sha256Hash(bos.toByteArray());
 	}
 }

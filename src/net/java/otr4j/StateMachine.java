@@ -3,27 +3,20 @@ package net.java.otr4j;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Vector;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPublicKey;
-
-import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
 import net.java.otr4j.context.ConnContext;
@@ -180,17 +173,10 @@ public final class StateMachine {
 				return;
 			}
 
-			int protocolVersion = 2;
-
 			auth.theirDHPublicKey = CryptoUtils.getDHPublicKey(gxmpi);
 			logger.debug("Calculating secret key.");
 			auth.s = CryptoUtils.generateSecret(auth.ourDHKeyPair.getPrivate(),
 					auth.theirDHPublicKey);
-
-			// TODO load private key from disk or request it from host
-			// application
-			KeyPair keyPair = listener.getKeyPair(account, protocol);
-			auth.ourLongTermKeyPair = keyPair;
 
 			auth.c = AuthenticationInfoUtils.getC(auth.s);
 			auth.cp = AuthenticationInfoUtils.getCp(auth.s);
@@ -200,13 +186,26 @@ public final class StateMachine {
 			auth.m2p = AuthenticationInfoUtils.getM2p(auth.s);
 
 			byte[] encryptedSignature = msg.encryptedSignature;
-			byte[] calculatedMAC = CryptoUtils.sha256Hmac160(
+			byte[] calculatedSignatureMAC = CryptoUtils.sha256Hmac160(
 					encryptedSignature, auth.m2);
-			if (!Arrays.equals(calculatedMAC, msg.signatureMac)) {
+			if (!Arrays.equals(calculatedSignatureMAC, msg.signatureMac)) {
 				logger.debug("Signature MACs are not equal, ignoring message.");
 				return;
 			}
 
+			byte[] decryptedX = CryptoUtils.aesDecrypt(auth.c,
+					msg.encryptedSignature);
+			MysteriousX x = new MysteriousX();
+			x.readObject(new ByteArrayInputStream(decryptedX));
+
+			MysteriousM m = new MysteriousM(auth.m1, auth.theirDHPublicKey,
+					(DHPublicKey) auth.ourDHKeyPair.getPublic(), x.publicKey,
+					x.dhKeyID);
+			byte[] mbytes = m.compute();
+			if (!CryptoUtils.verify(mbytes, x.publicKey, x.signature)) {
+				logger.debug("Signature verification failed.");
+				return;
+			}
 			/*
 			 * SignatureMessage msgSig = new SignatureMessage(protocolVersion,
 			 * auth.ourXMac, auth.ourXEncrypted);
@@ -395,9 +394,6 @@ public final class StateMachine {
 			throw new UnsupportedOperationException();
 		}
 
-		if (action == ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY)
-			auth.initialize();
-
 		switch (action) {
 		case RETRANSMIT_DH_COMMIT:
 			logger
@@ -408,8 +404,9 @@ public final class StateMachine {
 			logger.debug("Sending D-H Commit.");
 			injectMessage(listener, dhCommit);
 			break;
-		case RETRANSMIT_OLD_DH_KEY:
 		case SEND_NEW_DH_KEY:
+			auth.initialize();
+		case RETRANSMIT_OLD_DH_KEY:
 			logger.debug("Storing encrypted gx and encrypted gx hash.");
 			auth.theirDHPublicKeyEncrypted = msg.gxEncrypted;
 			auth.theirDHPublicKeyHash = msg.gxHash;
@@ -461,8 +458,6 @@ public final class StateMachine {
 			auth.m2 = AuthenticationInfoUtils.getM2(auth.s);
 			auth.m2p = AuthenticationInfoUtils.getM2p(auth.s);
 
-			// TODO load private key from disk or request it from host
-			// application
 			KeyPair keyPair = listener.getKeyPair(account, protocol);
 			auth.ourLongTermKeyPair = keyPair;
 
@@ -473,8 +468,9 @@ public final class StateMachine {
 					auth.theirDHPublicKey, auth.ourLongTermKeyPair.getPublic(),
 					auth.ourDHPrivateKeyID);
 
-			BigInteger[] signature = MysteriousXUtils.sign(m.compute(),
-					auth.ourLongTermKeyPair.getPrivate());
+			byte[] mbytes = m.compute();
+			byte[] signature = CryptoUtils.sign(mbytes, auth.ourLongTermKeyPair
+					.getPrivate());
 			MysteriousX x = new MysteriousX(
 					auth.ourLongTermKeyPair.getPublic(),
 					auth.ourDHPrivateKeyID, signature);

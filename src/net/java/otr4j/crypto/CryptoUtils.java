@@ -13,6 +13,10 @@ import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.interfaces.DSAPrivateKey;
+import java.security.interfaces.DSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -28,10 +32,12 @@ import javax.crypto.spec.SecretKeySpec;
 public class CryptoUtils {
 
 	static {
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		Security
+				.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
-	public static KeyPair generateDsaKeyPair() throws NoSuchAlgorithmException {
+	public static KeyPair generateDsaKeyPair() throws NoSuchAlgorithmException,
+			NoSuchProviderException {
 		KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
 		return kg.genKeyPair();
 	}
@@ -62,15 +68,6 @@ public class CryptoUtils {
 		KeyFactory keyFac = KeyFactory.getInstance("DH");
 		return (DHPublicKey) keyFac.generatePublic(pubKeySpecs);
 
-	}
-
-	public static BigInteger getSecretKey(KeyPair dhKeyPairX, KeyPair dhKeyPairY)
-			throws NoSuchAlgorithmException, InvalidKeyException {
-		KeyAgreement ka = KeyAgreement.getInstance("DH");
-		ka.init(dhKeyPairX.getPrivate());
-		ka.doPhase(dhKeyPairY.getPublic(), true);
-		BigInteger s = new BigInteger(ka.generateSecret());
-		return s;
 	}
 
 	public static byte[] sha256Hmac(byte[] b, byte[] key)
@@ -148,5 +145,31 @@ public class CryptoUtils {
 		ka.doPhase(pubKey, true);
 		BigInteger s = new BigInteger(ka.generateSecret());
 		return s;
+	}
+
+	public static byte[] sign(byte[] b, PrivateKey privatekey)
+			throws NoSuchAlgorithmException, InvalidKeyException,
+			SignatureException {
+
+		if (!(privatekey instanceof DSAPrivateKey))
+			throw new IllegalArgumentException();
+
+		Signature signer = Signature.getInstance(privatekey.getAlgorithm());
+		signer.initSign(privatekey);
+		signer.update(b);
+		return signer.sign();
+	}
+
+	public static Boolean verify(byte[] b, PublicKey pubKey, byte[] signature)
+			throws NoSuchAlgorithmException, InvalidKeyException,
+			SignatureException {
+		
+		if (!(pubKey instanceof DSAPublicKey))
+			throw new IllegalArgumentException();
+		
+		Signature signer = Signature.getInstance(pubKey.getAlgorithm());
+		signer.initVerify(pubKey);
+		signer.update(b);
+		return (signer.verify(signature));
 	}
 }
