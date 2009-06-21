@@ -20,6 +20,10 @@ public class AuthenticationInfo {
 
 	private static Logger logger = Logger.getLogger(AuthenticationInfo.class);
 
+	public AuthenticationInfo() {
+		this.authenticationState = AuthenticationState.NONE;
+	}
+
 	public AuthenticationState authenticationState;
 	public byte[] r;
 
@@ -50,7 +54,7 @@ public class AuthenticationInfo {
 			InvalidKeyException, NoSuchPaddingException,
 			IllegalBlockSizeException, BadPaddingException {
 		this.authenticationState = AuthenticationState.NONE;
-		
+
 		logger.debug("Picking random key r.");
 		this.r = Utils.getRandomBytes(CryptoConstants.AES_KEY_BYTE_LENGTH);
 
