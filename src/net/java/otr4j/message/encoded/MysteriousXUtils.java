@@ -1,4 +1,4 @@
-package net.java.otr4j;
+package net.java.otr4j.message.encoded;
 
 import java.math.BigInteger;
 import java.security.InvalidKeyException;

@@ -1,7 +1,6 @@
 package net.java.otr4j.message.encoded;
 
-import java.nio.ByteBuffer;
-import net.java.otr4j.message.MessageHeader;
+import java.io.IOException;
 import net.java.otr4j.message.MessageType;
 
 public final class DHCommitMessage extends EncodedMessageBase {
@@ -9,74 +8,29 @@ public final class DHCommitMessage extends EncodedMessageBase {
 	public byte[] gxEncrypted;
 	public byte[] gxHash;
 
-	private DHCommitMessage() {
-		super(MessageType.DH_COMMIT);
+	public DHCommitMessage() {
 	}
 
-	public String toString() {
-		int len = 0;
+	public void writeObject(java.io.ByteArrayOutputStream stream)
+			throws IOException {
 
-		// Protocol version (SHORT)
-		byte[] protocolVersion = EncodedMessageUtils
-				.serializeShort(this.protocolVersion);
-		len += protocolVersion.length;
-
-		// Message type (BYTE)
-		byte[] messageType = EncodedMessageUtils
-				.serializeByte(this.messageType);
-		len += messageType.length;
-
-		// Encrypted gx (DATA)
-		byte[] serializedGxEncrypted = EncodedMessageUtils
-				.serializeData(this.gxEncrypted);
-		len += serializedGxEncrypted.length;
-
-		// Hashed gx (DATA)
-		byte[] serializedGxHash = EncodedMessageUtils
-				.serializeData(this.gxHash);
-		len += serializedGxHash.length;
-
-		ByteBuffer buff = ByteBuffer.allocate(len);
-		buff.put(protocolVersion);
-		buff.put(messageType);
-		buff.put(serializedGxEncrypted);
-		buff.put(serializedGxHash);
-
-		String encodedMessage = EncodedMessageUtils.encodeMessage(buff.array());
-		return encodedMessage;
+		SerializationUtils.writeShort(stream, this.protocolVersion);
+		SerializationUtils.writeByte(stream, this.messageType);
+		SerializationUtils.writeData(stream, this.gxEncrypted);
+		SerializationUtils.writeData(stream, this.gxHash);
 	}
 
-	public DHCommitMessage(String msgText) {
-		this();
-
-		if (msgText == null || !msgText.startsWith(MessageHeader.DH_COMMIT))
-			return;
-
-		byte[] decodedMessage = EncodedMessageUtils.decodeMessage(msgText);
-		ByteBuffer buff = ByteBuffer.wrap(decodedMessage);
-
-		// Protocol version (SHORT)
-		int protocolVersion = EncodedMessageUtils.deserializeShort(buff);
-
-		// Message type (BYTE)
-		int msgType = EncodedMessageUtils.deserializeByte(buff);
-		if (msgType != MessageType.DH_COMMIT)
-			return;
-
-		// Encrypted gx (DATA)
-		byte[] gx = EncodedMessageUtils.deserializeData(buff);
-
-		// Hashed gx (DATA)
-		byte[] gxHash = EncodedMessageUtils.deserializeData(buff);
-
-		this.protocolVersion = protocolVersion;
-		this.gxEncrypted = gx;
-		this.gxHash = gxHash;
+	public void readObject(java.io.ByteArrayInputStream stream) throws IOException {
+		this.protocolVersion = DeserializationUtils.readShort(stream);
+		this.messageType = DeserializationUtils.readByte(stream);
+		this.gxEncrypted = DeserializationUtils.readData(stream);
+		this.gxHash = DeserializationUtils.readData(stream);
 	}
 
-	public DHCommitMessage(int protocolVersion, byte[] gxHash, byte[] gxEncrypted) {
-		this();
+	public DHCommitMessage(int protocolVersion, byte[] gxHash,
+			byte[] gxEncrypted) {
 
+		this.messageType = MessageType.DH_COMMIT;
 		this.protocolVersion = protocolVersion;
 		this.gxEncrypted = gxEncrypted;
 		this.gxHash = gxHash;

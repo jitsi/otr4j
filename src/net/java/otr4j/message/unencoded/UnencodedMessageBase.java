@@ -4,8 +4,4 @@ import net.java.otr4j.message.MessageBase;
 
 public abstract class UnencodedMessageBase extends MessageBase {
 
-	protected UnencodedMessageBase(int messageType) {
-		super(messageType);
-	}
-
 }

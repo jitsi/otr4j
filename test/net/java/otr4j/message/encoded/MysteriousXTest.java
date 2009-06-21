@@ -1,4 +1,4 @@
-package net.java.otr4j;
+package net.java.otr4j.message.encoded;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -8,6 +8,7 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 
 import net.java.otr4j.crypto.CryptoUtils;
+import net.java.otr4j.message.encoded.MysteriousX;
 
 import org.junit.Test;
 

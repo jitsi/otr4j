@@ -7,10 +7,6 @@ import net.java.otr4j.message.MessageType;
 
 public final class QueryMessage extends QueryMessageBase {
 
-	private QueryMessage() {
-		super(MessageType.QUERY);
-	}
-
 	public String toString() {
 		String txt = MessageHeader.BASE + "?";
 
@@ -23,16 +19,16 @@ public final class QueryMessage extends QueryMessageBase {
 	}
 
 	public QueryMessage(Vector<Integer> versions) {
-		this();
+		this.messageType = MessageType.QUERY;
 		this.versions = versions;
 	}
 
 	public QueryMessage(String msgText) {
-		this();
 		if (!msgText.startsWith(MessageHeader.QUERY1)
 				&& !msgText.startsWith(MessageHeader.QUERY2))
 			return;
 
+		this.messageType = MessageType.QUERY;
 		msgText = msgText.substring(MessageHeader.BASE.length());
 		char[] chars = msgText.toCharArray();
 		Vector<Integer> versions = new Vector<Integer>();

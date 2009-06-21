@@ -1,24 +1,17 @@
 package net.java.otr4j.message.encoded;
 
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import net.java.otr4j.message.MessageBase;
 
 public abstract class EncodedMessageBase extends MessageBase {
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-
-	protected EncodedMessageBase(int messageType) {
-		super(messageType);
-	}
-
 	public int protocolVersion;
-	
-	// abstract void writeObject(ObjectOutputStream out);
-	// abstract void readObject(ObjectOutputStream in);
-	// abstract void validateState();
+
+	public abstract void writeObject(ByteArrayOutputStream stream)
+			throws IOException;
+
+	public abstract void readObject(ByteArrayInputStream stream)
+			throws IOException;
 }

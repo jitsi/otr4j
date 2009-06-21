@@ -1,35 +1,24 @@
 package net.java.otr4j.message.encoded;
 
-import java.security.KeyPair;
-
-import javax.crypto.interfaces.DHPublicKey;
-
+import java.io.ByteArrayInputStream;
 import org.junit.Test;
-
-import junit.framework.TestCase;
-
-import net.java.otr4j.crypto.CryptoUtils;
+import net.java.otr4j.message.MessageType;
 import net.java.otr4j.message.encoded.DHKeyMessage;
 
-public class DHKeyMessageTest extends TestCase {
+public class DHKeyMessageTest extends junit.framework.TestCase {
 
 	@Test
-	public void testCreate() throws Exception {
-
-		// Prepare parameters.
-		KeyPair keyPair = CryptoUtils.generateDHKeyPair();
-		int protocolVersion = 2;
-
-		DHKeyMessage dhKeyMessage = new DHKeyMessage(protocolVersion,
-				(DHPublicKey) keyPair.getPublic());
-
-		assertNotNull(dhKeyMessage);
-	}
-
-	@Test
-	public void testDisassemble() throws Exception {
-		DHKeyMessage dhKeyMessage = new DHKeyMessage(EncodedMessageTextSample.DHKeyMessageText);
-		assertNotNull(dhKeyMessage);
+	public void testReadObject() throws Exception {
+		byte[] decodedMessage = EncodedMessageUtils
+				.decodeMessage(EncodedMessageTextSample.DHKeyMessageText);
+		ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
+		
+		DHKeyMessage dhKey = new DHKeyMessage();
+		dhKey.readObject(bis);
+		
+		assertEquals(dhKey.messageType, MessageType.DH_KEY);
+		assertEquals(dhKey.protocolVersion, 2);
+		assertNotNull(dhKey.gy);
 	}
 
 }

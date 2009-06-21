@@ -12,12 +12,12 @@ public class DataMessageTest extends TestCase {
 		// TODO Implement
 	}
 
-	@Test
+	/*@Test
 	public void testDisassemble() {
 		DataMessage dataMessage1 = new DataMessage(EncodedMessageTextSample.DataMessage1);
 		assertNotNull(dataMessage1);
 		
 		DataMessage dataMessage2 = new DataMessage(EncodedMessageTextSample.DataMessage2);
 		assertNotNull(dataMessage2);
-	}
+	}*/
 }

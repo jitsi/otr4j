@@ -1,16 +1,13 @@
-package net.java.otr4j;
+package net.java.otr4j.message.encoded;
 
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.security.PublicKey;
 import javax.crypto.interfaces.DHPublicKey;
 
-public class MysteriousM implements Serializable {
+public class MysteriousM {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 	public MysteriousM(byte[] m1, DHPublicKey ourDHPublicKey,
 			DHPublicKey theirDHPublicKey, PublicKey ourLongTermPublicKey,
 			int ourDHPrivateKeyID) {
@@ -27,10 +24,16 @@ public class MysteriousM implements Serializable {
 	public DHPublicKey theirDHPublicKey;
 	public PublicKey ourLongTermPublicKey;
 	public int ourDHPrivatecKeyID;
-	
-	private void writeObject(ObjectOutputStream out) {
-		
-	}
-	private void readObject(ObjectOutputStream in) {
+
+	public byte[] compute() throws InvalidKeyException, IOException {
+
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+		SerializationUtils.writeMpi(bos, this.ourDHPublicKey.getY());
+		SerializationUtils.writeMpi(bos, this.theirDHPublicKey.getY());
+		SerializationUtils.writePublicKey(bos, this.ourLongTermPublicKey);
+		SerializationUtils.writeInt(bos, this.ourDHPrivatecKeyID);
+
+		return bos.toByteArray();
 	}
 }

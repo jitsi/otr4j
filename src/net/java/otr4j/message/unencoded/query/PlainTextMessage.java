@@ -7,14 +7,10 @@ import net.java.otr4j.message.unencoded.WhiteSpaceTag;
 
 public final class PlainTextMessage extends QueryMessageBase {
 
-	private PlainTextMessage() {
-		super(MessageType.PLAINTEXT);
-	}
-
 	public String cleanText;
 	
 	public PlainTextMessage (String msgText) {
-		this();
+		this.messageType = MessageType.PLAINTEXT;
 		Vector<Integer> versions = new Vector<Integer>();
 		
 		String cleanText = msgText;

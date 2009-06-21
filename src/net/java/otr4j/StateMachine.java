@@ -1,11 +1,18 @@
 package net.java.otr4j;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
@@ -16,6 +23,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPublicKey;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
 import net.java.otr4j.context.ConnContext;
@@ -36,13 +44,26 @@ public final class StateMachine {
 
 	private static Logger logger = Logger.getLogger(StateMachine.class);
 
+	static byte[] decodeMessage(String msg) {
+		int end = msg.lastIndexOf(".");
+
+		if (msg.indexOf(MessageHeader.ENCODED_MESSAGE) != 0
+				|| end != msg.length() - 1)
+			throw new IllegalArgumentException();
+
+		String base64 = msg.substring(MessageHeader.ENCODED_MESSAGE.length(),
+				end);
+		byte[] decodedMessage = Base64.decodeBase64(base64.getBytes());
+		return decodedMessage;
+	}
+
 	public static String receivingMessage(OTR4jListener listener,
 			UserState userState, String user, String account, String protocol,
 			String msgText) throws NoSuchAlgorithmException,
 			InvalidKeySpecException, InvalidKeyException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
-			NoSuchProviderException, SignatureException {
+			NoSuchProviderException, SignatureException, IOException {
 
 		if (Utils.IsNullOrEmpty(msgText))
 			return msgText;
@@ -67,17 +88,41 @@ public final class StateMachine {
 			receivingQueryMessage(ctx, listener, new QueryMessage(msgText));
 			// User needs to know nothing about Query messages.
 		} else if (msgText.startsWith(MessageHeader.DH_COMMIT)) {
-			receivingDHCommitMessage(ctx, listener,
-					new DHCommitMessage(msgText));
+
+			DHCommitMessage dhCommit = new DHCommitMessage();
+			byte[] decodedMessage = decodeMessage(msgText);
+			ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
+			dhCommit.readObject(bis);
+
+			receivingDHCommitMessage(ctx, listener, dhCommit);
+
 		} else if (msgText.startsWith(MessageHeader.DH_KEY)) {
-			receivingDHKeyMessage(ctx, listener, new DHKeyMessage(msgText),
-					account, protocol);
+
+			byte[] decodedMessage = decodeMessage(msgText);
+			ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
+			DHKeyMessage dhKey = new DHKeyMessage();
+			dhKey.readObject(bis);
+
+			receivingDHKeyMessage(ctx, listener, dhKey, account, protocol);
+
 		} else if (msgText.startsWith(MessageHeader.REVEALSIG)) {
-			receivingRevealSignatureMessage(ctx, listener,
-					new RevealSignatureMessage(msgText), account, protocol);
+
+			byte[] decodedMessage = decodeMessage(msgText);
+			ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
+			RevealSignatureMessage revealSigMessage = new RevealSignatureMessage();
+			revealSigMessage.readObject(bis);
+			receivingRevealSignatureMessage(ctx, listener, revealSigMessage,
+					account, protocol);
+
 		} else if (msgText.startsWith(MessageHeader.SIGNATURE)) {
-			receivingSignatureMessage(ctx, listener, new SignatureMessage(
-					msgText));
+
+			byte[] decodedMessage = decodeMessage(msgText);
+			ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
+			SignatureMessage sigMessage = new SignatureMessage();
+			sigMessage.readObject(bis);
+
+			receivingSignatureMessage(ctx, listener, sigMessage);
+
 		} else if (msgText.startsWith(MessageHeader.V1_KEY_EXCHANGE)) {
 			throw new UnsupportedOperationException();
 		} else if (msgText.startsWith(MessageHeader.DATA1)
@@ -103,7 +148,8 @@ public final class StateMachine {
 			String protocol) throws InvalidKeyException,
 			NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException,
-			BadPaddingException, SignatureException, InvalidKeySpecException {
+			BadPaddingException, SignatureException, InvalidKeySpecException,
+			IOException {
 
 		logger.debug("Received reveal signature message.");
 		int policy = listener.getPolicy(ctx);
@@ -178,7 +224,7 @@ public final class StateMachine {
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
-			NoSuchProviderException {
+			NoSuchProviderException, IOException {
 		Vector<Integer> versions = msg.versions;
 		int policy = listener.getPolicy(ctx);
 		if (versions.size() < 1) {
@@ -235,7 +281,7 @@ public final class StateMachine {
 					auth.authenticationState = AuthenticationState.AWAITING_DHKEY;
 
 					logger.debug("Sending D-H Commit.");
-					listener.injectMessage(dhCommitMessage.toString());
+					injectMessage(listener, dhCommitMessage);
 				} else if (versions.contains(1)
 						&& PolicyUtils.getAllowV1(policy)) {
 					throw new UnsupportedOperationException();
@@ -246,12 +292,21 @@ public final class StateMachine {
 		return null;
 	}
 
+	private static void injectMessage(OTR4jListener listener,
+			EncodedMessageBase msg) throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		msg.writeObject(bos);
+		String encodedMessage = EncodedMessageUtils.encodeMessage(bos
+				.toByteArray());
+		listener.injectMessage(encodedMessage);
+	}
+
 	private static void receivingQueryMessage(ConnContext ctx,
 			OTR4jListener listener, QueryMessage msg)
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
-			NoSuchProviderException {
+			NoSuchProviderException, IOException {
 		logger.debug("Received query message.");
 		Vector<Integer> versions = msg.versions;
 		int policy = listener.getPolicy(ctx);
@@ -266,7 +321,7 @@ public final class StateMachine {
 			auth.authenticationState = AuthenticationState.AWAITING_DHKEY;
 
 			logger.debug("Sending D-H Commit.");
-			listener.injectMessage(dhCommitMessage.toString());
+			injectMessage(listener, dhCommitMessage);
 		} else if (versions.contains(1) && PolicyUtils.getAllowV1(policy)) {
 			throw new UnsupportedOperationException();
 		}
@@ -302,7 +357,7 @@ public final class StateMachine {
 			throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeyException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException {
+			IllegalBlockSizeException, BadPaddingException, IOException {
 
 		logger.debug("Received D-H Commit.");
 
@@ -352,7 +407,7 @@ public final class StateMachine {
 					auth.ourDHPublicKeyHash, auth.ourDHPublicKeyEncrypted);
 
 			logger.debug("Sending D-H Commit.");
-			listener.injectMessage(dhCommit.toString());
+			injectMessage(listener, dhCommit);
 			break;
 		case RETRANSMIT_OLD_DH_KEY:
 		case SEND_NEW_DH_KEY:
@@ -365,7 +420,7 @@ public final class StateMachine {
 			auth.authenticationState = AuthenticationState.AWAITING_REVEALSIG;
 
 			logger.debug("Sending D-H key.");
-			listener.injectMessage(dhKey.toString());
+			injectMessage(listener, dhKey);
 		default:
 			break;
 		}
@@ -376,7 +431,7 @@ public final class StateMachine {
 			String protocol) throws InvalidKeyException,
 			NoSuchAlgorithmException, SignatureException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException {
+			IllegalBlockSizeException, BadPaddingException, IOException {
 		logger.debug("Received D-H Key.");
 		if (!PolicyUtils.getAllowV2(listener.getPolicy(ctx))) {
 			logger.debug("If ALLOW_V2 is not set, ignore this message.");
@@ -419,15 +474,19 @@ public final class StateMachine {
 					auth.theirDHPublicKey, auth.ourLongTermKeyPair.getPublic(),
 					auth.ourDHPrivateKeyID);
 
-			/*BigInteger[] signature = MysteriousXUtils.sign(m.toByteArray(),
+			BigInteger[] signature = MysteriousXUtils.sign(m.compute(),
 					auth.ourLongTermKeyPair.getPrivate());
-			MysteriousX x = new MysteriousX(auth.ourDHKeyPair.getPublic(),
+			MysteriousX x = new MysteriousX(
+					auth.ourLongTermKeyPair.getPublic(),
 					auth.ourDHPrivateKeyID, signature);
 
-			auth.ourXEncrypted = CryptoUtils.aesEncrypt(auth.c, x
-					.toByteArray());
+			ByteArrayOutputStream xstream = new ByteArrayOutputStream();
+			x.writeObject(xstream);
+			byte[] xbytes = xstream.toByteArray();
+
+			auth.ourXEncrypted = CryptoUtils.aesEncrypt(auth.c, xbytes);
 			auth.ourXEncryptedMac = CryptoUtils.sha256Hmac160(
-					auth.ourXEncrypted, auth.m2);*/
+					auth.ourXEncrypted, auth.m2);
 
 			replyRevealSig = true;
 			break;
@@ -449,7 +508,7 @@ public final class StateMachine {
 
 			auth.authenticationState = AuthenticationState.AWAITING_SIG;
 			logger.debug("Sending Reveal Signature.");
-			listener.injectMessage(revealSignatureMessage.toString());
+			injectMessage(listener, revealSignatureMessage);
 		}
 
 	}

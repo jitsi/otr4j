@@ -17,7 +17,7 @@ public interface CryptoConstants {
 	public static byte[] ZERO_CTR = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-	public static byte[] DSA_PUB_TYPE = new byte[] { 0x00, 0x00 };
+	public static int DSA_PUB_TYPE = 0;
 
 	public static byte SSID_START = (byte) 0x00;
 	public static byte C_START = (byte) 0x01;
