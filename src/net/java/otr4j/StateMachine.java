@@ -44,19 +44,6 @@ public final class StateMachine {
 
 	private static Logger logger = Logger.getLogger(StateMachine.class);
 
-	static byte[] decodeMessage(String msg) {
-		int end = msg.lastIndexOf(".");
-
-		if (msg.indexOf(MessageHeader.ENCODED_MESSAGE) != 0
-				|| end != msg.length() - 1)
-			throw new IllegalArgumentException();
-
-		String base64 = msg.substring(MessageHeader.ENCODED_MESSAGE.length(),
-				end);
-		byte[] decodedMessage = Base64.decodeBase64(base64.getBytes());
-		return decodedMessage;
-	}
-
 	public static String receivingMessage(OTR4jListener listener,
 			UserState userState, String user, String account, String protocol,
 			String msgText) throws NoSuchAlgorithmException,
@@ -80,59 +67,71 @@ public final class StateMachine {
 			return msgText;
 		}
 
+		int msgType = 0;
 		if (!msgText.startsWith(MessageHeader.BASE)) {
-			return receivingPlainTextMessage(ctx, listener,
-					new PlainTextMessage(msgText));
-		} else if (msgText.startsWith(MessageHeader.QUERY1)
-				|| msgText.startsWith(MessageHeader.QUERY2)) {
-			receivingQueryMessage(ctx, listener, new QueryMessage(msgText));
-			// User needs to know nothing about Query messages.
+			msgType = MessageType.PLAINTEXT;
 		} else if (msgText.startsWith(MessageHeader.DH_COMMIT)) {
-
-			DHCommitMessage dhCommit = new DHCommitMessage();
-			byte[] decodedMessage = decodeMessage(msgText);
-			ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
-			dhCommit.readObject(bis);
-
-			receivingDHCommitMessage(ctx, listener, dhCommit);
-
+			msgType = MessageType.DH_COMMIT;
 		} else if (msgText.startsWith(MessageHeader.DH_KEY)) {
-
-			byte[] decodedMessage = decodeMessage(msgText);
-			ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
-			DHKeyMessage dhKey = new DHKeyMessage();
-			dhKey.readObject(bis);
-
-			receivingDHKeyMessage(ctx, listener, dhKey, account, protocol);
-
+			msgType = MessageType.DH_KEY;
 		} else if (msgText.startsWith(MessageHeader.REVEALSIG)) {
-
-			byte[] decodedMessage = decodeMessage(msgText);
-			ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
-			RevealSignatureMessage revealSigMessage = new RevealSignatureMessage();
-			revealSigMessage.readObject(bis);
-			receivingRevealSignatureMessage(ctx, listener, revealSigMessage,
-					account, protocol);
-
+			msgType = MessageType.REVEALSIG;
 		} else if (msgText.startsWith(MessageHeader.SIGNATURE)) {
-
-			byte[] decodedMessage = decodeMessage(msgText);
-			ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
-			SignatureMessage sigMessage = new SignatureMessage();
-			sigMessage.readObject(bis);
-
-			receivingSignatureMessage(ctx, listener, sigMessage);
-
+			msgType = MessageType.SIGNATURE;
 		} else if (msgText.startsWith(MessageHeader.V1_KEY_EXCHANGE)) {
-			throw new UnsupportedOperationException();
+			msgType = MessageType.V1_KEY_EXCHANGE;
 		} else if (msgText.startsWith(MessageHeader.DATA1)
 				|| msgText.startsWith(MessageHeader.DATA1)) {
-			throw new UnsupportedOperationException();
+			msgType = MessageType.DATA;
 		} else if (msgText.startsWith(MessageHeader.ERROR)) {
+			msgType = MessageType.ERROR;
+		} else {
+			msgType = MessageType.QUERY;
+		}
+
+		switch (msgType) {
+		case MessageType.DATA:
+			throw new UnsupportedOperationException();
+		case MessageType.DH_COMMIT:
+			DHCommitMessage dhCommit = new DHCommitMessage();
+			dhCommit.readObject(new ByteArrayInputStream(EncodedMessageUtils
+					.decodeMessage(msgText)));
+			receivingDHCommitMessage(ctx, listener, dhCommit);
+			break;
+		case MessageType.DH_KEY:
+			DHKeyMessage dhKey = new DHKeyMessage();
+			dhKey.readObject(new ByteArrayInputStream(EncodedMessageUtils
+					.decodeMessage(msgText)));
+			receivingDHKeyMessage(ctx, listener, dhKey, account, protocol);
+			break;
+		case MessageType.REVEALSIG:
+			RevealSignatureMessage revealSigMessage = new RevealSignatureMessage();
+			revealSigMessage.readObject(new ByteArrayInputStream(
+					EncodedMessageUtils.decodeMessage(msgText)));
+			receivingRevealSignatureMessage(ctx, listener, revealSigMessage,
+					account, protocol);
+			break;
+		case MessageType.SIGNATURE:
+			SignatureMessage sigMessage = new SignatureMessage();
+			sigMessage.readObject(new ByteArrayInputStream(EncodedMessageUtils
+					.decodeMessage(msgText)));
+			receivingSignatureMessage(ctx, listener, sigMessage);
+			break;
+		case MessageType.ERROR:
 			receivingErrorMessage(ctx, listener, new ErrorMessage(msgText));
 			// User needs to know nothing about Error messages.
-		} else {
-			logger.debug("Oups.. Uknown message type :S");
+			break;
+		case MessageType.PLAINTEXT:
+			break;
+		case MessageType.QUERY:
+			receivingQueryMessage(ctx, listener, new QueryMessage(msgText));
+			// User needs to know nothing about Query messages.
+			break;
+		case MessageType.V1_KEY_EXCHANGE:
+			throw new UnsupportedOperationException();
+		default:
+			return receivingPlainTextMessage(ctx, listener,
+					new PlainTextMessage(msgText));
 		}
 
 		return msgText;

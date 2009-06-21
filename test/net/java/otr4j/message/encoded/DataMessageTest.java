@@ -1,5 +1,8 @@
 package net.java.otr4j.message.encoded;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
 import junit.framework.TestCase;
 
 import org.junit.Test;
@@ -12,12 +15,17 @@ public class DataMessageTest extends TestCase {
 		// TODO Implement
 	}
 
-	/*@Test
-	public void testDisassemble() {
-		DataMessage dataMessage1 = new DataMessage(EncodedMessageTextSample.DataMessage1);
-		assertNotNull(dataMessage1);
+	@Test
+	public void testReadObject() throws IOException {
+		byte[] decodedMessage = EncodedMessageUtils
+				.decodeMessage(EncodedMessageTextSample.DataMessage1);
+
+		ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
+		DataMessage dataMessage1 = new DataMessage();
+		dataMessage1.readObject(bis);
+
 		
-		DataMessage dataMessage2 = new DataMessage(EncodedMessageTextSample.DataMessage2);
-		assertNotNull(dataMessage2);
-	}*/
+		assertNotNull(dataMessage1.ctr);
+		assertNotNull(dataMessage1.mac);
+	}
 }

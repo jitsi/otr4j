@@ -42,7 +42,8 @@ public class SerializationUtils {
 			PublicKey pubKey) throws InvalidKeyException, IOException {
 
 		if (!(pubKey instanceof DSAPublicKey))
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(
+					"Key types other than DSA are not supported at the moment.");
 
 		DSAPublicKey dsaKey = (DSAPublicKey) pubKey;
 
@@ -57,6 +58,7 @@ public class SerializationUtils {
 
 	public static void writeSignature(java.io.ByteArrayOutputStream stream,
 			BigInteger[] signatureRS) throws IOException {
+		// TODO verify that this is correct.
 		stream.write(signatureRS[0].toByteArray());
 		stream.write(signatureRS[1].toByteArray());
 	}

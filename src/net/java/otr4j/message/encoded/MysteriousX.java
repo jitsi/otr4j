@@ -1,7 +1,6 @@
 package net.java.otr4j.message.encoded;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
