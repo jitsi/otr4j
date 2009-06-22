@@ -16,9 +16,9 @@ public class DHKeyMessageTest extends junit.framework.TestCase {
 		DHKeyMessage dhKey = new DHKeyMessage();
 		dhKey.readObject(bis);
 		
-		assertEquals(dhKey.messageType, MessageType.DH_KEY);
-		assertEquals(dhKey.protocolVersion, 2);
-		assertNotNull(dhKey.dhPublicKey);
+		assertEquals(dhKey.getMessageType(), MessageType.DH_KEY);
+		assertEquals(dhKey.getProtocolVersion(), 2);
+		assertNotNull(dhKey.getDhPublicKey());
 	}
 
 }

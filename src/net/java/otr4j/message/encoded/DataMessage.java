@@ -17,8 +17,8 @@ public class DataMessage extends EncodedMessageBase {
 	public byte[] oldKeys;
 
 	public void readObject(ByteArrayInputStream stream) throws IOException {
-		this.protocolVersion = DeserializationUtils.readShort(stream);
-		this.messageType = DeserializationUtils.readByte(stream);
+		this.setProtocolVersion(DeserializationUtils.readShort(stream));
+		this.setMessageType(DeserializationUtils.readByte(stream));
 		this.flags = DeserializationUtils.readByte(stream);
 		this.senderKeyID = DeserializationUtils.readInt(stream);
 		this.recipientKeyID = DeserializationUtils.readInt(stream);

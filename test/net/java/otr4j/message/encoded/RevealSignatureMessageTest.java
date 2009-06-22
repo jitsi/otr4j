@@ -20,11 +20,11 @@ public class RevealSignatureMessageTest extends TestCase {
 		RevealSignatureMessage revealSignature = new RevealSignatureMessage();
 		revealSignature.readObject(bis);
 		
-		assertEquals(revealSignature.messageType, MessageType.REVEALSIG);
-		assertEquals(revealSignature.protocolVersion, 2);
-		assertNotNull(revealSignature.xEncrypted);
-		assertNotNull(revealSignature.xEncryptedMAC);
-		assertNotNull(revealSignature.revealedKey);
+		assertEquals(revealSignature.getMessageType(), MessageType.REVEALSIG);
+		assertEquals(revealSignature.getProtocolVersion(), 2);
+		assertNotNull(revealSignature.getXEncrypted());
+		assertNotNull(revealSignature.getXEncryptedMAC());
+		assertNotNull(revealSignature.getRevealedKey());
 	}
 
 }

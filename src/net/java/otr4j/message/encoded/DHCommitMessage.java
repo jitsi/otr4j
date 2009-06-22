@@ -5,8 +5,8 @@ import net.java.otr4j.message.MessageType;
 
 public final class DHCommitMessage extends EncodedMessageBase {
 
-	public byte[] dhPublicKeyEncrypted;
-	public byte[] dhPublicKeyHash;
+	private byte[] dhPublicKeyEncrypted;
+	private byte[] dhPublicKeyHash;
 
 	public DHCommitMessage() {
 	}
@@ -14,25 +14,41 @@ public final class DHCommitMessage extends EncodedMessageBase {
 	public void writeObject(java.io.ByteArrayOutputStream stream)
 			throws IOException {
 
-		SerializationUtils.writeShort(stream, this.protocolVersion);
-		SerializationUtils.writeByte(stream, this.messageType);
-		SerializationUtils.writeData(stream, this.dhPublicKeyEncrypted);
-		SerializationUtils.writeData(stream, this.dhPublicKeyHash);
+		SerializationUtils.writeShort(stream, this.getProtocolVersion());
+		SerializationUtils.writeByte(stream, this.getMessageType());
+		SerializationUtils.writeData(stream, this.getDhPublicKeyEncrypted());
+		SerializationUtils.writeData(stream, this.getDhPublicKeyHash());
 	}
 
 	public void readObject(java.io.ByteArrayInputStream stream) throws IOException {
-		this.protocolVersion = DeserializationUtils.readShort(stream);
-		this.messageType = DeserializationUtils.readByte(stream);
-		this.dhPublicKeyEncrypted = DeserializationUtils.readData(stream);
-		this.dhPublicKeyHash = DeserializationUtils.readData(stream);
+		this.setProtocolVersion(DeserializationUtils.readShort(stream));
+		this.setMessageType(DeserializationUtils.readByte(stream));
+		this.setDhPublicKeyEncrypted(DeserializationUtils.readData(stream));
+		this.setDhPublicKeyHash(DeserializationUtils.readData(stream));
 	}
 
 	public DHCommitMessage(int protocolVersion, byte[] gxHash,
 			byte[] gxEncrypted) {
 
-		this.messageType = MessageType.DH_COMMIT;
-		this.protocolVersion = protocolVersion;
-		this.dhPublicKeyEncrypted = gxEncrypted;
-		this.dhPublicKeyHash = gxHash;
+		this.setMessageType(MessageType.DH_COMMIT);
+		this.setProtocolVersion(protocolVersion);
+		this.setDhPublicKeyEncrypted(gxEncrypted);
+		this.setDhPublicKeyHash(gxHash);
+	}
+
+	public void setDhPublicKeyHash(byte[] dhPublicKeyHash) {
+		this.dhPublicKeyHash = dhPublicKeyHash;
+	}
+
+	public byte[] getDhPublicKeyHash() {
+		return dhPublicKeyHash;
+	}
+
+	public void setDhPublicKeyEncrypted(byte[] dhPublicKeyEncrypted) {
+		this.dhPublicKeyEncrypted = dhPublicKeyEncrypted;
+	}
+
+	public byte[] getDhPublicKeyEncrypted() {
+		return dhPublicKeyEncrypted;
 	}
 }

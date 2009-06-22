@@ -11,36 +11,44 @@ import net.java.otr4j.message.MessageType;
 
 public final class DHKeyMessage extends EncodedMessageBase {
 
-	public DHPublicKey dhPublicKey;
+	private DHPublicKey dhPublicKey;
 
 	public DHKeyMessage() {
 
 	}
 
 	public DHKeyMessage(int protocolVersion, DHPublicKey dhPublicKey) {
-		this.messageType = MessageType.DH_KEY;
-		this.dhPublicKey = dhPublicKey;
-		this.protocolVersion = protocolVersion;
+		this.setMessageType(MessageType.DH_KEY);
+		this.setDhPublicKey(dhPublicKey);
+		this.setProtocolVersion(protocolVersion);
 	}
 
 	public void writeObject(ByteArrayOutputStream stream) throws IOException {
 
-		SerializationUtils.writeShort(stream, this.protocolVersion);
-		SerializationUtils.writeByte(stream, this.messageType);
-		SerializationUtils.writeMpi(stream, this.dhPublicKey.getY());
+		SerializationUtils.writeShort(stream, this.getProtocolVersion());
+		SerializationUtils.writeByte(stream, this.getMessageType());
+		SerializationUtils.writeMpi(stream, this.getDhPublicKey().getY());
 	}
 
 	public void readObject(java.io.ByteArrayInputStream stream)
 			throws IOException {
 
-		this.protocolVersion = DeserializationUtils.readShort(stream);
-		this.messageType = DeserializationUtils.readByte(stream);
+		this.setProtocolVersion(DeserializationUtils.readShort(stream));
+		this.setMessageType(DeserializationUtils.readByte(stream));
 
 		BigInteger gyMpi = DeserializationUtils.readMpi(stream);
 		try {
-			this.dhPublicKey = CryptoUtils.getDHPublicKey(gyMpi);
+			this.setDhPublicKey(CryptoUtils.getDHPublicKey(gyMpi));
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
+	}
+
+	public void setDhPublicKey(DHPublicKey dhPublicKey) {
+		this.dhPublicKey = dhPublicKey;
+	}
+
+	public DHPublicKey getDhPublicKey() {
+		return dhPublicKey;
 	}
 }

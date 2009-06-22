@@ -21,7 +21,6 @@ import org.apache.log4j.Logger;
 
 import net.java.otr4j.context.ConnContext;
 import net.java.otr4j.context.auth.AuthenticationInfo;
-import net.java.otr4j.context.auth.AuthenticationInfoUtils;
 import net.java.otr4j.context.auth.AuthenticationState;
 import net.java.otr4j.crypto.CryptoConstants;
 import net.java.otr4j.crypto.CryptoUtils;
@@ -148,28 +147,34 @@ public final class StateMachine {
 		}
 
 		AuthenticationInfo auth = ctx.authenticationInfo;
-		switch (auth.authenticationState) {
+		switch (auth.getAuthenticationState()) {
 		case AWAITING_SIG:
-			byte[] remoteXEncrypted = msg.xEncrypted;
+			// Uses m2' to verify MACm2'(AESc'(XA))
+			byte[] remoteXEncrypted = msg.getXEncrypted();
 			byte[] remoteXEncryptedMAC = CryptoUtils.sha256Hmac160(
-					remoteXEncrypted, auth.m2p);
-			if (!Arrays.equals(remoteXEncryptedMAC, msg.xEncryptedMAC)) {
+					remoteXEncrypted, auth.getM2p());
+			if (!Arrays.equals(remoteXEncryptedMAC, msg.getXEncryptedMAC())) {
 				logger.debug("Signature MACs are not equal, ignoring message.");
 				return;
 			}
 
-			byte[] remoteXDecrypted = CryptoUtils.aesDecrypt(auth.cp, msg.xEncrypted);
+			// Uses c' to decrypt AESc'(XA) to obtain XA = pubA, keyidA,
+			// sigA(MA)
+			byte[] remoteXDecrypted = CryptoUtils.aesDecrypt(auth.getCp(),
+					remoteXEncrypted);
 
+			// Computes MA = MACm1'(gy, gx, pubA, keyidA)
 			MysteriousX remoteX = new MysteriousX();
 			remoteX.readObject(new ByteArrayInputStream(remoteXDecrypted));
 
-			MysteriousM remoteM = new MysteriousM(auth.m1p,
-					auth.remoteDHPublicKey, (DHPublicKey) auth.localDHKeyPair
-							.getPublic(), remoteX.longTermPublicKey,
-					remoteX.dhKeyID);
+			MysteriousM remoteM = new MysteriousM(auth.getM1p(), auth
+					.getRemoteDHPublicKey(), (DHPublicKey) auth
+					.getLocalDHKeyPair().getPublic(), remoteX
+					.getLongTermPublicKey(), remoteX.getDhKeyID());
 
-			if (!CryptoUtils.verify(remoteM.compute(),
-					remoteX.longTermPublicKey, remoteX.signature)) {
+			// Uses pubA to verify sigA(MA)
+			if (!CryptoUtils.verify(remoteM.compute(), remoteX
+					.getLongTermPublicKey(), remoteX.getSignature())) {
 				logger.debug("Signature verification failed.");
 				return;
 			}
@@ -196,22 +201,25 @@ public final class StateMachine {
 		}
 
 		AuthenticationInfo auth = ctx.authenticationInfo;
-		switch (auth.authenticationState) {
+		switch (auth.getAuthenticationState()) {
 		case AWAITING_REVEALSIG:
-			byte[] r = msg.revealedKey;
-			byte[] remoteDHPublicKeyDecrypted = CryptoUtils.aesDecrypt(r,
-					auth.remoteDHPublicKeyEncrypted);
+			// Uses r to decrypt the value of gx sent earlier
+			byte[] revealedKey = msg.getRevealedKey();
+			byte[] remoteDHPublicKeyDecrypted = CryptoUtils.aesDecrypt(
+					revealedKey, auth.getRemoteDHPublicKeyEncrypted());
 
+			// Verifies that HASH(gx) matches the value sent earlier
 			byte[] remoteDHPublicKeyHash = CryptoUtils
 					.sha256Hash(remoteDHPublicKeyDecrypted);
-			if (!Arrays.equals(remoteDHPublicKeyHash,
-					auth.remoteDHPublicKeyHash)) {
+			if (!Arrays.equals(remoteDHPublicKeyHash, auth
+					.getRemoteDHPublicKeyHash())) {
 				logger.debug("Hashes don't match, ignoring message.");
 				return;
 			}
 
 			// Verifies that Bob's gx is a legal value (2 <= gx <= modulus-2)
-			BigInteger remoteDHPublicKeyMpi = new BigInteger(remoteDHPublicKeyDecrypted);
+			BigInteger remoteDHPublicKeyMpi = new BigInteger(
+					remoteDHPublicKeyDecrypted);
 			if (remoteDHPublicKeyMpi
 					.compareTo(CryptoConstants.MODULUS_MINUS_TWO) > 0) {
 				logger.debug("gx <= modulus-2, ignoring message.");
@@ -222,66 +230,77 @@ public final class StateMachine {
 				return;
 			}
 
-			auth.remoteDHPublicKey = CryptoUtils
-					.getDHPublicKey(remoteDHPublicKeyMpi);
+			auth.setRemoteDHPublicKey(CryptoUtils
+					.getDHPublicKey(remoteDHPublicKeyMpi));
+
+			// Computes s = (gx)y (note that this will be the same as the value
+			// of s Bob calculated)
+			// Computes two AES keys c, c' and four MAC keys m1, m1', m2, m2' by
+			// hashing s in various ways (the same as Bob)
 			logger.debug("Calculating secret key.");
-			auth.s = CryptoUtils.generateSecret(auth.localDHKeyPair
-					.getPrivate(), auth.remoteDHPublicKey);
+			auth.setS(CryptoUtils.generateSecret(auth.getLocalDHKeyPair()
+					.getPrivate(), auth.getRemoteDHPublicKey()));
 
-			auth.c = AuthenticationInfoUtils.getC(auth.s);
-			auth.cp = AuthenticationInfoUtils.getCp(auth.s);
-			auth.m1 = AuthenticationInfoUtils.getM1(auth.s);
-			auth.m1p = AuthenticationInfoUtils.getM1p(auth.s);
-			auth.m2 = AuthenticationInfoUtils.getM2(auth.s);
-			auth.m2p = AuthenticationInfoUtils.getM2p(auth.s);
-
-			byte[] remoteXEncrypted = msg.xEncrypted;
+			// Uses m2 to verify MACm2(AESc(XB))
+			byte[] remoteXEncrypted = msg.getXEncrypted();
 			byte[] remoteXEncryptedMAC = CryptoUtils.sha256Hmac160(
-					remoteXEncrypted, auth.m2);
-			if (!Arrays.equals(remoteXEncryptedMAC, msg.xEncryptedMAC)) {
+					remoteXEncrypted, auth.getM2());
+			if (!Arrays.equals(remoteXEncryptedMAC, msg.getXEncryptedMAC())) {
 				logger.debug("Signature MACs are not equal, ignoring message.");
 				return;
 			}
 
-			byte[] remoteXDecrypted = CryptoUtils.aesDecrypt(auth.c, msg.xEncrypted);
+			// Uses c to decrypt AESc(XB) to obtain XB = pubB, keyidB, sigB(MB)
+			byte[] remoteXDecrypted = CryptoUtils.aesDecrypt(auth.getC(),
+					remoteXEncrypted);
 
 			MysteriousX remoteX = new MysteriousX();
 			remoteX.readObject(new ByteArrayInputStream(remoteXDecrypted));
 
-			MysteriousM remoteM = new MysteriousM(auth.m1,
-					auth.remoteDHPublicKey, (DHPublicKey) auth.localDHKeyPair
-							.getPublic(), remoteX.longTermPublicKey,
-					remoteX.dhKeyID);
+			// Computes MB = MACm1(gx, gy, pubB, keyidB)
+			MysteriousM remoteM = new MysteriousM(auth.getM1(), auth
+					.getRemoteDHPublicKey(), (DHPublicKey) auth
+					.getLocalDHKeyPair().getPublic(), remoteX
+					.getLongTermPublicKey(), remoteX.getDhKeyID());
 
-			if (!CryptoUtils.verify(remoteM.compute(),
-					remoteX.longTermPublicKey, remoteX.signature)) {
+			// Uses pubB to verify sigB(MB)
+			if (!CryptoUtils.verify(remoteM.compute(), remoteX
+					.getLongTermPublicKey(), remoteX.getSignature())) {
 				logger.debug("Signature verification failed.");
 				return;
 			}
 
-			auth.localLongTermKeyPair = listener.getKeyPair(account, protocol);
+			// Computes MA = MACm1'(gy, gx, pubA, keyidA)
+			auth
+					.setLocalLongTermKeyPair(listener.getKeyPair(account,
+							protocol));
 			logger.debug("Calculating our M and our X.");
-			DHPublicKey localDHPublicKey = (DHPublicKey) auth.localDHKeyPair
-					.getPublic();
-			MysteriousM localM = new MysteriousM(auth.m1p, localDHPublicKey,
-					auth.remoteDHPublicKey, auth.localLongTermKeyPair
-							.getPublic(), auth.localDHPrivateKeyID);
+			DHPublicKey localDHPublicKey = (DHPublicKey) auth
+					.getLocalDHKeyPair().getPublic();
+			MysteriousM localM = new MysteriousM(auth.getM1p(),
+					localDHPublicKey, auth.getRemoteDHPublicKey(), auth
+							.getLocalLongTermKeyPair().getPublic(), auth
+							.getLocalDHPrivateKeyID());
 
-			byte[] localSignature = CryptoUtils.sign(localM.compute(),
-					auth.localLongTermKeyPair.getPrivate());
-			MysteriousX localX = new MysteriousX(auth.localLongTermKeyPair
-					.getPublic(), auth.localDHPrivateKeyID, localSignature);
+			byte[] localSignature = CryptoUtils.sign(localM.compute(), auth
+					.getLocalLongTermKeyPair().getPrivate());
+
+			// Computes XA = pubA, keyidA, sigA(MA)
+			MysteriousX localX = new MysteriousX(auth.getLocalLongTermKeyPair()
+					.getPublic(), auth.getLocalDHPrivateKeyID(), localSignature);
 
 			ByteArrayOutputStream localXbos = new ByteArrayOutputStream();
 			localX.writeObject(localXbos);
 			byte[] localXbytes = localXbos.toByteArray();
 
-			auth.localXEncrypted = CryptoUtils.aesEncrypt(auth.cp, localXbytes);
-			auth.localXEncryptedMac = CryptoUtils.sha256Hmac160(
-					auth.localXEncrypted, auth.m2p);
+			// Sends Bob AESc'(XA), MACm2'(AESc'(XA))
+			auth.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getCp(),
+					localXbytes));
+			auth.setLocalXEncryptedMac(CryptoUtils.sha256Hmac160(auth
+					.getLocalXEncrypted(), auth.getM2p()));
 
-			SignatureMessage msgSig = new SignatureMessage(2,
-					auth.localXEncryptedMac, auth.localXEncrypted);
+			SignatureMessage msgSig = new SignatureMessage(2, auth
+					.getLocalXEncryptedMac(), auth.getLocalXEncrypted());
 			injectMessage(listener, msgSig);
 			break;
 		default:
@@ -346,9 +365,10 @@ public final class StateMachine {
 					auth.initialize();
 
 					DHCommitMessage dhCommitMessage = new DHCommitMessage(2,
-							auth.localDHPublicKeyHash,
-							auth.localDHPublicKeyEncrypted);
-					auth.authenticationState = AuthenticationState.AWAITING_DHKEY;
+							auth.getLocalDHPublicKeyHash(), auth
+									.getLocalDHPublicKeyEncrypted());
+					auth
+							.setAuthenticationState(AuthenticationState.AWAITING_DHKEY);
 
 					logger.debug("Sending D-H Commit.");
 					injectMessage(listener, dhCommitMessage);
@@ -386,9 +406,10 @@ public final class StateMachine {
 			AuthenticationInfo auth = ctx.authenticationInfo;
 			auth.initialize();
 
-			DHCommitMessage dhCommitMessage = new DHCommitMessage(2,
-					auth.localDHPublicKeyHash, auth.localDHPublicKeyEncrypted);
-			auth.authenticationState = AuthenticationState.AWAITING_DHKEY;
+			DHCommitMessage dhCommitMessage = new DHCommitMessage(2, auth
+					.getLocalDHPublicKeyHash(), auth
+					.getLocalDHPublicKeyEncrypted());
+			auth.setAuthenticationState(AuthenticationState.AWAITING_DHKEY);
 
 			logger.debug("Sending D-H Commit.");
 			injectMessage(listener, dhCommitMessage);
@@ -440,15 +461,16 @@ public final class StateMachine {
 		ReceivingDHCommitMessageActions action = ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY;
 
 		AuthenticationInfo auth = ctx.authenticationInfo;
-		switch (auth.authenticationState) {
+		switch (auth.getAuthenticationState()) {
 		case NONE:
 			action = ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY;
 			break;
 
 		case AWAITING_DHKEY:
-			BigInteger ourHash = new BigInteger(auth.localDHPublicKeyHash)
+			BigInteger ourHash = new BigInteger(auth.getLocalDHPublicKeyHash())
 					.abs();
-			BigInteger theirHash = new BigInteger(msg.dhPublicKeyHash).abs();
+			BigInteger theirHash = new BigInteger(msg.getDhPublicKeyHash())
+					.abs();
 
 			if (theirHash.compareTo(ourHash) == -1) {
 				action = ReceivingDHCommitMessageActions.RETRANSMIT_DH_COMMIT;
@@ -471,8 +493,9 @@ public final class StateMachine {
 		case RETRANSMIT_DH_COMMIT:
 			logger
 					.debug("Ignore the incoming D-H Commit message, but resend your D-H Commit message.");
-			DHCommitMessage dhCommit = new DHCommitMessage(2,
-					auth.localDHPublicKeyHash, auth.localDHPublicKeyEncrypted);
+			DHCommitMessage dhCommit = new DHCommitMessage(2, auth
+					.getLocalDHPublicKeyHash(), auth
+					.getLocalDHPublicKeyEncrypted());
 
 			logger.debug("Sending D-H Commit.");
 			injectMessage(listener, dhCommit);
@@ -481,12 +504,12 @@ public final class StateMachine {
 			auth.initialize();
 		case RETRANSMIT_OLD_DH_KEY:
 			logger.debug("Storing encrypted gx and encrypted gx hash.");
-			auth.remoteDHPublicKeyEncrypted = msg.dhPublicKeyEncrypted;
-			auth.remoteDHPublicKeyHash = msg.dhPublicKeyHash;
+			auth.setRemoteDHPublicKeyEncrypted(msg.getDhPublicKeyEncrypted());
+			auth.setRemoteDHPublicKeyHash(msg.getDhPublicKeyHash());
 
-			DHKeyMessage dhKey = new DHKeyMessage(2,
-					(DHPublicKey) auth.localDHKeyPair.getPublic());
-			auth.authenticationState = AuthenticationState.AWAITING_REVEALSIG;
+			DHKeyMessage dhKey = new DHKeyMessage(2, (DHPublicKey) auth
+					.getLocalDHKeyPair().getPublic());
+			auth.setAuthenticationState(AuthenticationState.AWAITING_REVEALSIG);
 
 			logger.debug("Sending D-H key.");
 			injectMessage(listener, dhKey);
@@ -510,64 +533,64 @@ public final class StateMachine {
 		Boolean replyRevealSig = false;
 
 		AuthenticationInfo auth = ctx.authenticationInfo;
-		switch (auth.authenticationState) {
+		switch (auth.getAuthenticationState()) {
 		case AWAITING_DHKEY:
+			// Verifies that Alice's gy is a legal value (2 <= gy <= modulus-2)
 			logger.debug("Verify received D-H Public Key is a legal value.");
-			if (msg.dhPublicKey.getY().compareTo(
+			if (msg.getDhPublicKey().getY().compareTo(
 					CryptoConstants.MODULUS_MINUS_TWO) > 0) {
 				logger.debug("Illegal D-H Public Key value, Ignoring message.");
 				return;
-			} else if (msg.dhPublicKey.getY().compareTo(
+			} else if (msg.getDhPublicKey().getY().compareTo(
 					CryptoConstants.BIGINTEGER_TWO) < 0) {
 				logger.debug("Illegal D-H Public Key value, Ignoring message.");
 				return;
 			}
 
+			// Computes s = (gy)x
 			logger.debug("Computing secret.");
-			auth.remoteDHPublicKey = msg.dhPublicKey;
-			auth.s = CryptoUtils.generateSecret(auth.localDHKeyPair
-					.getPrivate(), auth.remoteDHPublicKey);
+			auth.setRemoteDHPublicKey(msg.getDhPublicKey());
+			auth.setS(CryptoUtils.generateSecret(auth.getLocalDHKeyPair()
+					.getPrivate(), auth.getRemoteDHPublicKey()));
 
-			logger.debug("Compute various keys by hashing secret.");
-			auth.c = AuthenticationInfoUtils.getC(auth.s);
-			auth.cp = AuthenticationInfoUtils.getCp(auth.s);
-			auth.m1 = AuthenticationInfoUtils.getM1(auth.s);
-			auth.m1p = AuthenticationInfoUtils.getM1p(auth.s);
-			auth.m2 = AuthenticationInfoUtils.getM2(auth.s);
-			auth.m2p = AuthenticationInfoUtils.getM2p(auth.s);
-
+			// Computes MB = MACm1(gx, gy, pubB, keyidB)
 			logger.debug("Computing M");
 			KeyPair keyPair = listener.getKeyPair(account, protocol);
-			auth.localLongTermKeyPair = keyPair;
+			auth.setLocalLongTermKeyPair(keyPair);
 
-			DHPublicKey ourDHPublicKey = (DHPublicKey) auth.localDHKeyPair
+			DHPublicKey ourDHPublicKey = (DHPublicKey) auth.getLocalDHKeyPair()
 					.getPublic();
-			MysteriousM m = new MysteriousM(auth.m1, ourDHPublicKey,
-					auth.remoteDHPublicKey, auth.localLongTermKeyPair
-							.getPublic(), auth.localDHPrivateKeyID);
+			MysteriousM m = new MysteriousM(auth.getM1(), ourDHPublicKey, auth
+					.getRemoteDHPublicKey(), auth.getLocalLongTermKeyPair()
+					.getPublic(), auth.getLocalDHPrivateKeyID());
 
 			byte[] mbytes = m.compute();
-			byte[] signature = CryptoUtils.sign(mbytes,
-					auth.localLongTermKeyPair.getPrivate());
+			byte[] signature = CryptoUtils.sign(mbytes, auth
+					.getLocalLongTermKeyPair().getPrivate());
 
+			// Computes XB = pubB, keyidB, sigB(MB)
 			logger.debug("Computing X");
-			MysteriousX x = new MysteriousX(auth.localLongTermKeyPair
-					.getPublic(), auth.localDHPrivateKeyID, signature);
+			MysteriousX x = new MysteriousX(auth.getLocalLongTermKeyPair()
+					.getPublic(), auth.getLocalDHPrivateKeyID(), signature);
 
 			ByteArrayOutputStream xstream = new ByteArrayOutputStream();
 			x.writeObject(xstream);
 			byte[] xbytes = xstream.toByteArray();
 
+			// Sends Alice r, AESc(XB), MACm2(AESc(XB))
 			logger.debug("Encryting X");
-			auth.localXEncrypted = CryptoUtils.aesEncrypt(auth.c, xbytes);
+			auth
+					.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getC(),
+							xbytes));
 			logger.debug("Hashing encrypted X");
-			auth.localXEncryptedMac = CryptoUtils.sha256Hmac160(
-					auth.localXEncrypted, auth.m2);
+			auth.setLocalXEncryptedMac(CryptoUtils.sha256Hmac160(auth
+					.getLocalXEncrypted(), auth.getM2()));
 
 			replyRevealSig = true;
 			break;
 		case AWAITING_SIG:
-			if (msg.dhPublicKey.getEncoded().equals(ctx.their_y.getFirst())) {
+			if (msg.getDhPublicKey().getEncoded()
+					.equals(ctx.their_y.getFirst())) {
 				replyRevealSig = true;
 			}
 			break;
@@ -579,10 +602,10 @@ public final class StateMachine {
 			int protocolVersion = 2;
 
 			RevealSignatureMessage revealSignatureMessage = new RevealSignatureMessage(
-					protocolVersion, auth.r, auth.localXEncryptedMac,
-					auth.localXEncrypted);
+					protocolVersion, auth.getR(), auth.getLocalXEncryptedMac(),
+					auth.getLocalXEncrypted());
 
-			auth.authenticationState = AuthenticationState.AWAITING_SIG;
+			auth.setAuthenticationState(AuthenticationState.AWAITING_SIG);
 			logger.debug("Sending Reveal Signature.");
 			injectMessage(listener, revealSignatureMessage);
 		}

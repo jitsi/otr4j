@@ -14,30 +14,54 @@ public class MysteriousX {
 
 	public MysteriousX(PublicKey ourLongTermPublicKey, int ourKeyID,
 			byte[] signature) {
-		this.dhKeyID = ourKeyID;
-		this.longTermPublicKey = ourLongTermPublicKey;
-		this.signature = signature;
+		this.setDhKeyID(ourKeyID);
+		this.setLongTermPublicKey(ourLongTermPublicKey);
+		this.setSignature(signature);
 	}
 
 	public void readObject(java.io.ByteArrayInputStream stream)
 			throws IOException, NoSuchAlgorithmException,
 			InvalidKeySpecException {
-		this.longTermPublicKey = DeserializationUtils.readPublicKey(stream);
-		this.dhKeyID = DeserializationUtils.readInt(stream);
-		this.signature = DeserializationUtils.readSignature(stream,
-				this.longTermPublicKey);
+		this.setLongTermPublicKey(DeserializationUtils.readPublicKey(stream));
+		this.setDhKeyID(DeserializationUtils.readInt(stream));
+		this.setSignature(DeserializationUtils.readSignature(stream,
+				this.getLongTermPublicKey()));
 	}
 
-	public PublicKey longTermPublicKey;
-	public int dhKeyID;
-	public byte[] signature;
+	private PublicKey longTermPublicKey;
+	private int dhKeyID;
+	private byte[] signature;
 
 	public void writeObject(java.io.ByteArrayOutputStream stream)
 			throws IOException, InvalidKeyException {
 
-		SerializationUtils.writePublicKey(stream, this.longTermPublicKey);
-		SerializationUtils.writeInt(stream, this.dhKeyID);
-		SerializationUtils.writeSignature(stream, this.signature,
-				this.longTermPublicKey);
+		SerializationUtils.writePublicKey(stream, this.getLongTermPublicKey());
+		SerializationUtils.writeInt(stream, this.getDhKeyID());
+		SerializationUtils.writeSignature(stream, this.getSignature(),
+				this.getLongTermPublicKey());
+	}
+
+	public void setLongTermPublicKey(PublicKey longTermPublicKey) {
+		this.longTermPublicKey = longTermPublicKey;
+	}
+
+	public PublicKey getLongTermPublicKey() {
+		return longTermPublicKey;
+	}
+
+	public void setDhKeyID(int dhKeyID) {
+		this.dhKeyID = dhKeyID;
+	}
+
+	public int getDhKeyID() {
+		return dhKeyID;
+	}
+
+	public void setSignature(byte[] signature) {
+		this.signature = signature;
+	}
+
+	public byte[] getSignature() {
+		return signature;
 	}
 }

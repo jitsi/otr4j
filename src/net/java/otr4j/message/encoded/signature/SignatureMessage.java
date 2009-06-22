@@ -20,10 +20,10 @@ public final class SignatureMessage extends SignatureMessageBase {
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException, SignatureException {
 
-		this.messageType = MessageType.SIGNATURE;
-		this.protocolVersion = protocolVersion;
-		this.xEncryptedMAC = xEncryptedMAC;
-		this.xEncrypted = xEncrypted;
+		this.setMessageType(MessageType.SIGNATURE);
+		this.setProtocolVersion(protocolVersion);
+		this.setXEncryptedMAC(xEncryptedMAC);
+		this.setXEncrypted(xEncrypted);
 	}
 
 	public SignatureMessage() {
@@ -33,17 +33,17 @@ public final class SignatureMessage extends SignatureMessageBase {
 	public void writeObject(java.io.ByteArrayOutputStream stream)
 			throws IOException {
 
-		SerializationUtils.writeShort(stream, this.protocolVersion);
-		SerializationUtils.writeByte(stream, this.messageType);
-		SerializationUtils.writeData(stream, this.xEncrypted);
-		SerializationUtils.writeMac(stream, this.xEncryptedMAC);
+		SerializationUtils.writeShort(stream, this.getProtocolVersion());
+		SerializationUtils.writeByte(stream, this.getMessageType());
+		SerializationUtils.writeData(stream, this.getXEncrypted());
+		SerializationUtils.writeMac(stream, this.getXEncryptedMAC());
 	}
 
 	public void readObject(java.io.ByteArrayInputStream stream) throws IOException {
 
-		this.protocolVersion = DeserializationUtils.readShort(stream);
-		this.messageType = DeserializationUtils.readByte(stream);
-		this.xEncrypted = DeserializationUtils.readData(stream);
-		this.xEncryptedMAC = DeserializationUtils.readMac(stream);
+		this.setProtocolVersion(DeserializationUtils.readShort(stream));
+		this.setMessageType(DeserializationUtils.readByte(stream));
+		this.setXEncrypted(DeserializationUtils.readData(stream));
+		this.setXEncryptedMAC(DeserializationUtils.readMac(stream));
 	}
 }

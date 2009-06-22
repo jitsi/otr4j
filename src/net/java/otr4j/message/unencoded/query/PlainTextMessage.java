@@ -10,7 +10,7 @@ public final class PlainTextMessage extends QueryMessageBase {
 	public String cleanText;
 	
 	public PlainTextMessage (String msgText) {
-		this.messageType = MessageType.PLAINTEXT;
+		this.setMessageType(MessageType.PLAINTEXT);
 		Vector<Integer> versions = new Vector<Integer>();
 		
 		String cleanText = msgText;

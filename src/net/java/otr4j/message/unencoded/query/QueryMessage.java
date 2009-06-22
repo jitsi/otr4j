@@ -19,7 +19,7 @@ public final class QueryMessage extends QueryMessageBase {
 	}
 
 	public QueryMessage(Vector<Integer> versions) {
-		this.messageType = MessageType.QUERY;
+		this.setMessageType(MessageType.QUERY);
 		this.versions = versions;
 	}
 
@@ -28,7 +28,7 @@ public final class QueryMessage extends QueryMessageBase {
 				&& !msgText.startsWith(MessageHeader.QUERY2))
 			return;
 
-		this.messageType = MessageType.QUERY;
+		this.setMessageType(MessageType.QUERY);
 		msgText = msgText.substring(MessageHeader.BASE.length());
 		char[] chars = msgText.toCharArray();
 		Vector<Integer> versions = new Vector<Integer>();

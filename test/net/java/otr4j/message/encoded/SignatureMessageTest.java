@@ -19,10 +19,10 @@ public final class SignatureMessageTest extends TestCase {
 		SignatureMessage signature = new SignatureMessage();
 		signature.readObject(bis);
 		
-		assertEquals(signature.messageType, MessageType.SIGNATURE);
-		assertEquals(signature.protocolVersion, 2);
-		assertNotNull(signature.xEncrypted);
-		assertNotNull(signature.xEncryptedMAC);
+		assertEquals(signature.getMessageType(), MessageType.SIGNATURE);
+		assertEquals(signature.getProtocolVersion(), 2);
+		assertNotNull(signature.getXEncrypted());
+		assertNotNull(signature.getXEncryptedMAC());
 	}
 
 }

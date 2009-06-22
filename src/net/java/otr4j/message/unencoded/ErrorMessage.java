@@ -10,7 +10,7 @@ public final class ErrorMessage extends UnencodedMessageBase {
 		if (!msgText.startsWith(MessageHeader.ERROR))
 			return;
 
-		this.messageType = MessageType.ERROR;
+		this.setMessageType(MessageType.ERROR);
 		this.error = msgText.substring(MessageHeader.ERROR.length());
 		
 	}
