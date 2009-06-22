@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -78,10 +77,7 @@ public class DeserializationUtils {
 		byte[] b = new byte[len];
 		in.read(b);
 
-		// MPIs must use the minimum-length encoding; i.e. no leading 0x00
-		// bytes.
-		byte[] bTrimmed = Utils.trim(b);
-		return new BigInteger(1, bTrimmed);
+		return new BigInteger(1, Utils.trim(b));
 	}
 
 	public static int readInt(java.io.ByteArrayInputStream stream)
@@ -115,9 +111,9 @@ public class DeserializationUtils {
 		DERSequenceGenerator seqGen = new DERSequenceGenerator(bos);
 
 		stream.read(r);
-		seqGen.addObject(new DERInteger(r));
+		seqGen.addObject(new DERInteger(new BigInteger(1, r)));
 		stream.read(s);
-		seqGen.addObject(new DERInteger(s));
+		seqGen.addObject(new DERInteger(new BigInteger(1, s)));
 		seqGen.close();
 		
 		return bos.toByteArray();

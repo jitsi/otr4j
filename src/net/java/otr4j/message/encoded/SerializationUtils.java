@@ -38,7 +38,7 @@ public class SerializationUtils {
 
 	public static void writeMpi(java.io.ByteArrayOutputStream stream,
 			BigInteger i) throws IOException {
-		writeData(stream, i.toByteArray());
+		writeData(stream, Utils.trim(i.toByteArray()));
 	}
 
 	public static void writePublicKey(java.io.ByteArrayOutputStream stream,
@@ -63,18 +63,18 @@ public class SerializationUtils {
 			byte[] signature, PublicKey pubKey) throws IOException {
 		if (!pubKey.getAlgorithm().equals("DSA"))
 			throw new UnsupportedOperationException();
-		
+
 		// http://www.codeproject.com/KB/security/CryptoInteropSign.aspx
 		// http://java.sun.com/j2se/1.4.2/docs/guide/security/CryptoSpec.html
-		
+
 		DERSequence derSequence = (DERSequence) DERSequence
 				.fromByteArray(signature);
 		DERInteger r = (DERInteger) derSequence.getObjectAt(0);
 		DERInteger s = (DERInteger) derSequence.getObjectAt(1);
 		
-		byte[] rb = r.getPositiveValue().toByteArray();
-		byte[] sb = s.getPositiveValue().toByteArray();
-		
+		byte[] rb = Utils.trim(r.getValue().toByteArray());
+		byte[] sb = Utils.trim(s.getValue().toByteArray());
+
 		stream.write(rb);
 		stream.write(sb);
 	}
