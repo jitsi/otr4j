@@ -61,6 +61,8 @@ public class AuthenticationInfo {
 
 		logger.debug("Generating own D-H key pair.");
 		this.setLocalDHKeyPair(CryptoUtils.generateDHKeyPair());
+		
+		logger.debug("Setting our keyID to 1.");
 		this.setLocalDHPrivateKeyID(1);
 
 		byte[] gx = ((DHPublicKey) getLocalDHKeyPair().getPublic()).getY()
