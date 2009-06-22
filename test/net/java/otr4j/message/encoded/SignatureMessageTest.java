@@ -21,8 +21,8 @@ public final class SignatureMessageTest extends TestCase {
 		
 		assertEquals(signature.messageType, MessageType.SIGNATURE);
 		assertEquals(signature.protocolVersion, 2);
-		assertNotNull(signature.encryptedSignature);
-		assertNotNull(signature.signatureMac);
+		assertNotNull(signature.xEncrypted);
+		assertNotNull(signature.xEncryptedMAC);
 	}
 
 }

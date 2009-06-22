@@ -36,8 +36,7 @@ public class CryptoUtils {
 				.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
-	public static KeyPair generateDsaKeyPair() throws NoSuchAlgorithmException,
-			NoSuchProviderException {
+	public static KeyPair generateDsaKeyPair() throws NoSuchAlgorithmException {
 		KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
 		return kg.genKeyPair();
 	}
@@ -163,10 +162,10 @@ public class CryptoUtils {
 	public static Boolean verify(byte[] b, PublicKey pubKey, byte[] signature)
 			throws NoSuchAlgorithmException, InvalidKeyException,
 			SignatureException {
-		
+
 		if (!(pubKey instanceof DSAPublicKey))
 			throw new IllegalArgumentException();
-		
+
 		Signature signer = Signature.getInstance(pubKey.getAlgorithm());
 		signer.initVerify(pubKey);
 		signer.update(b);

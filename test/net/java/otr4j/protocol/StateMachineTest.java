@@ -23,18 +23,18 @@ public class StateMachineTest extends TestCase {
 
 	private static Logger logger = Logger.getLogger(StateMachine.class);
 	
-	public void testReceivingMessage_2() throws Exception {
+	public void testReceivingMessage() throws Exception {
 		
 		DummyOTR4jListener listener = new DummyOTR4jListener(Policy.ALLOW_V2
 				| Policy.ERROR_START_AKE);
 
 		runAKE(listener, UnencodedMessageTextSample.QueryMessage_V12);
 		
-		listener.lastInjectedMessage = null;
+		/*listener.lastInjectedMessage = null;
 		runAKE(listener, "Hello World.");
 		
 		listener.lastInjectedMessage = null;
-		runAKE(listener, UnencodedMessageTextSample.ErrorMessageText);
+		runAKE(listener, UnencodedMessageTextSample.ErrorMessageText);*/
 	}
 
 	private void runAKE(DummyOTR4jListener listener, String initialMessage)

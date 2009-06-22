@@ -4,6 +4,6 @@ import net.java.otr4j.message.encoded.EncodedMessageBase;
 
 public abstract class SignatureMessageBase extends EncodedMessageBase {
 
-	public byte[] encryptedSignature;
-	public byte[] signatureMac;
+	public byte[] xEncrypted;
+	public byte[] xEncryptedMAC;
 }

@@ -18,7 +18,7 @@ public class DHKeyMessageTest extends junit.framework.TestCase {
 		
 		assertEquals(dhKey.messageType, MessageType.DH_KEY);
 		assertEquals(dhKey.protocolVersion, 2);
-		assertNotNull(dhKey.gy);
+		assertNotNull(dhKey.dhPublicKey);
 	}
 
 }

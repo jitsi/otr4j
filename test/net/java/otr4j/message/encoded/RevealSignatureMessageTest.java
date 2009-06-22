@@ -22,8 +22,8 @@ public class RevealSignatureMessageTest extends TestCase {
 		
 		assertEquals(revealSignature.messageType, MessageType.REVEALSIG);
 		assertEquals(revealSignature.protocolVersion, 2);
-		assertNotNull(revealSignature.encryptedSignature);
-		assertNotNull(revealSignature.signatureMac);
+		assertNotNull(revealSignature.xEncrypted);
+		assertNotNull(revealSignature.xEncryptedMAC);
 		assertNotNull(revealSignature.revealedKey);
 	}
 

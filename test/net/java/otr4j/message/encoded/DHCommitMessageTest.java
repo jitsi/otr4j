@@ -21,7 +21,7 @@ public class DHCommitMessageTest extends junit.framework.TestCase {
 		
 		assertEquals(dhCommit.messageType, MessageType.DH_COMMIT);
 		assertEquals(dhCommit.protocolVersion, 2);
-		assertNotNull(dhCommit.gxEncrypted);
-		assertNotNull(dhCommit.gxHash);
+		assertNotNull(dhCommit.dhPublicKeyEncrypted);
+		assertNotNull(dhCommit.dhPublicKeyHash);
 	}
 }

@@ -27,14 +27,14 @@ public class AuthenticationInfo {
 	public AuthenticationState authenticationState;
 	public byte[] r;
 
-	public DHPublicKey theirDHPublicKey;
-	public byte[] theirDHPublicKeyEncrypted;
-	public byte[] theirDHPublicKeyHash;
+	public DHPublicKey remoteDHPublicKey;
+	public byte[] remoteDHPublicKeyEncrypted;
+	public byte[] remoteDHPublicKeyHash;
 
-	public KeyPair ourDHKeyPair;
-	public int ourDHPrivateKeyID;
-	public byte[] ourDHPublicKeyHash;
-	public byte[] ourDHPublicKeyEncrypted;
+	public KeyPair localDHKeyPair;
+	public int localDHPrivateKeyID;
+	public byte[] localDHPublicKeyHash;
+	public byte[] localDHPublicKeyEncrypted;
 
 	public BigInteger s;
 	public byte[] c;
@@ -44,10 +44,10 @@ public class AuthenticationInfo {
 	public byte[] m1p;
 	public byte[] m2p;
 
-	public byte[] ourXEncrypted;
-	public byte[] ourXEncryptedMac;
+	public byte[] localXEncrypted;
+	public byte[] localXEncryptedMac;
 
-	public KeyPair ourLongTermKeyPair;
+	public KeyPair localLongTermKeyPair;
 
 	public void initialize() throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
@@ -59,16 +59,16 @@ public class AuthenticationInfo {
 		this.r = Utils.getRandomBytes(CryptoConstants.AES_KEY_BYTE_LENGTH);
 
 		logger.debug("Generating own D-H key pair.");
-		this.ourDHKeyPair = CryptoUtils.generateDHKeyPair();
-		this.ourDHPrivateKeyID = 1;
+		this.localDHKeyPair = CryptoUtils.generateDHKeyPair();
+		this.localDHPrivateKeyID = 1;
 
-		byte[] gx = ((DHPublicKey) ourDHKeyPair.getPublic()).getY()
+		byte[] gx = ((DHPublicKey) localDHKeyPair.getPublic()).getY()
 				.toByteArray();
 
 		logger.debug("Hashing gx");
-		this.ourDHPublicKeyHash = CryptoUtils.sha256Hash(gx);
+		this.localDHPublicKeyHash = CryptoUtils.sha256Hash(gx);
 
 		logger.debug("Encrypting gx");
-		this.ourDHPublicKeyEncrypted = CryptoUtils.aesEncrypt(r, gx);
+		this.localDHPublicKeyEncrypted = CryptoUtils.aesEncrypt(r, gx);
 	}
 }

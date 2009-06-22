@@ -15,29 +15,29 @@ public class MysteriousX {
 	public MysteriousX(PublicKey ourLongTermPublicKey, int ourKeyID,
 			byte[] signature) {
 		this.dhKeyID = ourKeyID;
-		this.publicKey = ourLongTermPublicKey;
+		this.longTermPublicKey = ourLongTermPublicKey;
 		this.signature = signature;
 	}
 
 	public void readObject(java.io.ByteArrayInputStream stream)
 			throws IOException, NoSuchAlgorithmException,
 			InvalidKeySpecException {
-		this.publicKey = DeserializationUtils.readPublicKey(stream);
+		this.longTermPublicKey = DeserializationUtils.readPublicKey(stream);
 		this.dhKeyID = DeserializationUtils.readInt(stream);
 		this.signature = DeserializationUtils.readSignature(stream,
-				this.publicKey);
+				this.longTermPublicKey);
 	}
 
-	public PublicKey publicKey;
+	public PublicKey longTermPublicKey;
 	public int dhKeyID;
 	public byte[] signature;
 
 	public void writeObject(java.io.ByteArrayOutputStream stream)
 			throws IOException, InvalidKeyException {
 
-		SerializationUtils.writePublicKey(stream, this.publicKey);
+		SerializationUtils.writePublicKey(stream, this.longTermPublicKey);
 		SerializationUtils.writeInt(stream, this.dhKeyID);
 		SerializationUtils.writeSignature(stream, this.signature,
-				this.publicKey);
+				this.longTermPublicKey);
 	}
 }

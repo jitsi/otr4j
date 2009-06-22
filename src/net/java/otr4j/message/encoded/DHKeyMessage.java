@@ -11,15 +11,15 @@ import net.java.otr4j.message.MessageType;
 
 public final class DHKeyMessage extends EncodedMessageBase {
 
-	public DHPublicKey gy;
+	public DHPublicKey dhPublicKey;
 
 	public DHKeyMessage() {
 
 	}
 
-	public DHKeyMessage(int protocolVersion, DHPublicKey gy) {
+	public DHKeyMessage(int protocolVersion, DHPublicKey dhPublicKey) {
 		this.messageType = MessageType.DH_KEY;
-		this.gy = gy;
+		this.dhPublicKey = dhPublicKey;
 		this.protocolVersion = protocolVersion;
 	}
 
@@ -27,7 +27,7 @@ public final class DHKeyMessage extends EncodedMessageBase {
 
 		SerializationUtils.writeShort(stream, this.protocolVersion);
 		SerializationUtils.writeByte(stream, this.messageType);
-		SerializationUtils.writeMpi(stream, this.gy.getY());
+		SerializationUtils.writeMpi(stream, this.dhPublicKey.getY());
 	}
 
 	public void readObject(java.io.ByteArrayInputStream stream)
@@ -38,7 +38,7 @@ public final class DHKeyMessage extends EncodedMessageBase {
 
 		BigInteger gyMpi = DeserializationUtils.readMpi(stream);
 		try {
-			this.gy = CryptoUtils.getDHPublicKey(gyMpi);
+			this.dhPublicKey = CryptoUtils.getDHPublicKey(gyMpi);
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
