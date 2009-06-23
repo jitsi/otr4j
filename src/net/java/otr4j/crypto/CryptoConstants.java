@@ -25,6 +25,12 @@ public interface CryptoConstants {
 	public static byte M2_START = (byte) 0x03;
 	public static byte M1p_START = (byte) 0x04;
 	public static byte M2p_START = (byte) 0x05;
+	public static byte HIGH_SEND_BYTE = (byte)0x01;
+	public static byte HIGH_RECEIVE_BYTE = (byte)0x02;
+	public static byte LOW_SEND_BYTE = (byte)0x02;
+	public static byte LOW_RECEIVE_BYTE = (byte)0x01;
 	
 	public static int SSID_LENGTH = 8;
+	
+	
 }
