@@ -12,10 +12,13 @@ import java.security.interfaces.DSAPublicKey;
 import java.security.spec.DSAPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
 
+import javax.crypto.interfaces.DHPublicKey;
+
 import org.bouncycastle.asn1.*;
 
 import net.java.otr4j.Utils;
 import net.java.otr4j.crypto.CryptoConstants;
+import net.java.otr4j.crypto.CryptoUtils;
 
 public class DeserializationUtils {
 
@@ -26,10 +29,10 @@ public class DeserializationUtils {
 		int type = DeserializationUtils.readShort(in);
 		switch (type) {
 		case CryptoConstants.DSA_PUB_TYPE:
-			BigInteger p = DeserializationUtils.readMpi(in);
-			BigInteger q = DeserializationUtils.readMpi(in);
-			BigInteger g = DeserializationUtils.readMpi(in);
-			BigInteger y = DeserializationUtils.readMpi(in);
+			BigInteger p = DeserializationUtils.readMpi(in, null);
+			BigInteger q = DeserializationUtils.readMpi(in, null);
+			BigInteger g = DeserializationUtils.readMpi(in, null);
+			BigInteger y = DeserializationUtils.readMpi(in, null);
 			DSAPublicKeySpec keySpec = new DSAPublicKeySpec(y, p, q, g);
 			KeyFactory keyFactory = KeyFactory.getInstance("DSA");
 			return keyFactory.generatePublic(keySpec);
@@ -51,17 +54,23 @@ public class DeserializationUtils {
 		return Utils.byteArrayToInt(b);
 	}
 
-	static int readDataLen(ByteArrayInputStream in) throws IOException {
+	static int readDataLen(ByteArrayInputStream in, ByteArrayOutputStream out)
+			throws IOException {
 		byte[] b = new byte[DataLength.DATALEN];
 		in.read(b);
+		if (out != null)
+			out.write(b);
 		return Utils.byteArrayToInt(b);
 	}
 
-	public static byte[] readData(ByteArrayInputStream in) throws IOException {
-		int len = readDataLen(in);
+	public static byte[] readData(ByteArrayInputStream in,
+			ByteArrayOutputStream out) throws IOException {
+		int len = readDataLen(in, null);
 
 		byte[] b = new byte[len];
 		in.read(b);
+		if (out != null)
+			out.write(b);
 		return b;
 	}
 
@@ -71,25 +80,34 @@ public class DeserializationUtils {
 		return b;
 	}
 
-	static BigInteger readMpi(ByteArrayInputStream in) throws IOException {
-		int len = readDataLen(in);
+	static BigInteger readMpi(ByteArrayInputStream in, ByteArrayOutputStream out)
+			throws IOException {
+		int len = readDataLen(in, out);
 
 		byte[] b = new byte[len];
 		in.read(b);
+		if (out != null)
+			out.write(b);
 
 		return new BigInteger(1, Utils.trim(b));
 	}
 
-	public static int readInt(java.io.ByteArrayInputStream stream)
-			throws IOException {
+	public static int readInt(java.io.ByteArrayInputStream stream,
+			ByteArrayOutputStream out) throws IOException {
 		byte[] b = new byte[DataLength.INT];
 		stream.read(b);
+		if (out != null)
+			out.write(b);
+
 		return Utils.byteArrayToInt(b);
 	}
 
-	public static byte[] readCtr(ByteArrayInputStream in) throws IOException {
+	public static byte[] readCtr(ByteArrayInputStream in,
+			ByteArrayOutputStream out) throws IOException {
 		byte[] b = new byte[DataLength.CTR];
 		in.read(b);
+		if (out != null)
+			out.write(b);
 		return b;
 	}
 
@@ -115,7 +133,37 @@ public class DeserializationUtils {
 		stream.read(s);
 		seqGen.addObject(new DERInteger(new BigInteger(1, s)));
 		seqGen.close();
-		
+
 		return bos.toByteArray();
+	}
+
+	public static byte[] readData(ByteArrayInputStream stream)
+			throws IOException {
+		return readData(stream, null);
+	}
+
+	public static DHPublicKey readDHPublicKey(ByteArrayInputStream stream)
+			throws IOException {
+		return readDHPublicKey(stream, null);
+	}
+
+	public static int readInt(java.io.ByteArrayInputStream stream)
+			throws IOException {
+		return readInt(stream, null);
+	}
+
+	public static byte[] readCtr(ByteArrayInputStream stream)
+			throws IOException {
+		return readCtr(stream, null);
+	}
+
+	static DHPublicKey readDHPublicKey(ByteArrayInputStream in,
+			ByteArrayOutputStream out) throws IOException {
+		BigInteger gyMpi = DeserializationUtils.readMpi(in, out);
+		try {
+			return CryptoUtils.getDHPublicKey(gyMpi);
+		} catch (Exception ex) {
+			throw new IOException(ex);
+		}
 	}
 }

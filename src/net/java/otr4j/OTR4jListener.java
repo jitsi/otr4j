@@ -11,7 +11,7 @@ public interface OTR4jListener {
 	public void showWarning(String warning);
 
 	public void showError(String error);
-
+	
 	public int getPolicy(ConnContext ctx);
 
 	public KeyPair getKeyPair(String account, String protocol)

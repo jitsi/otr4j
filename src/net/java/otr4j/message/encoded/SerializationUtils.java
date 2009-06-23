@@ -7,6 +7,9 @@ import java.security.InvalidKeyException;
 import java.security.PublicKey;
 import java.security.interfaces.DSAParams;
 import java.security.interfaces.DSAPublicKey;
+
+import javax.crypto.interfaces.DHPublicKey;
+
 import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERSequence;
 
@@ -36,6 +39,11 @@ public class SerializationUtils {
 		stream.write(b);
 	}
 
+	public static void writeDHPublicKey(java.io.ByteArrayOutputStream stream,
+			DHPublicKey pubKey) throws IOException {
+		writeData(stream, Utils.trim(pubKey.getY().toByteArray()));
+	}
+	
 	public static void writeMpi(java.io.ByteArrayOutputStream stream,
 			BigInteger i) throws IOException {
 		writeData(stream, Utils.trim(i.toByteArray()));
@@ -85,6 +93,12 @@ public class SerializationUtils {
 			throw new IllegalArgumentException();
 
 		stream.write(signatureMac);
+	}
+
+	public static void writeCtr(ByteArrayOutputStream out, byte[] ctr)
+			throws IOException {
+		if (ctr.length != DataLength.CTR)
+			throw new IOException();
 	}
 
 }

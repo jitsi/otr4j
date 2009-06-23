@@ -2,6 +2,8 @@ package net.java.otr4j.message.encoded;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 import junit.framework.TestCase;
 
@@ -16,7 +18,7 @@ public class DataMessageTest extends TestCase {
 	}
 
 	@Test
-	public void testReadObject() throws IOException {
+	public void testReadObject() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		byte[] decodedMessage = EncodedMessageUtils
 				.decodeMessage(EncodedMessageTextSample.DataMessage1);
 

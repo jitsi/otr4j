@@ -1,7 +1,6 @@
 package net.java.otr4j.context;
 
 import java.security.KeyPair;
-import java.util.LinkedList;
 
 import javax.crypto.interfaces.DHPublicKey;
 
@@ -19,8 +18,19 @@ public class ConnContext {
 	
     public AuthenticationInfo authenticationInfo;
     
-    public LinkedList<KeyPair> our_dh;
-    public LinkedList<DHPublicKey> their_y;
+    public int localPreviousKeyID;
+    public KeyPair localPreviousKeyPair;
+    
+    public int localCurrentKeyID;
+    public KeyPair localCurrentKeyPair;
+    
+    public int remotePreviousKeyID;
+    public DHPublicKey remotePreviousDHublicKey;
+    
+    public int remoteCurrentKeyID;
+    public DHPublicKey remoteCurrentDHPublicKey;
+    
+    public String lastSentMessage;
     
     public ConnContext(String user, String account, String protocol){
         this.user = user;

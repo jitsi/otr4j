@@ -2,11 +2,7 @@ package net.java.otr4j.message.encoded;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
-
 import javax.crypto.interfaces.DHPublicKey;
-
-import net.java.otr4j.crypto.CryptoUtils;
 import net.java.otr4j.message.MessageType;
 
 public final class DHKeyMessage extends EncodedMessageBase {
@@ -27,7 +23,7 @@ public final class DHKeyMessage extends EncodedMessageBase {
 
 		SerializationUtils.writeShort(stream, this.getProtocolVersion());
 		SerializationUtils.writeByte(stream, this.getMessageType());
-		SerializationUtils.writeMpi(stream, this.getDhPublicKey().getY());
+		SerializationUtils.writeDHPublicKey(stream, this.getDhPublicKey());
 	}
 
 	public void readObject(java.io.ByteArrayInputStream stream)
@@ -35,13 +31,8 @@ public final class DHKeyMessage extends EncodedMessageBase {
 
 		this.setProtocolVersion(DeserializationUtils.readShort(stream));
 		this.setMessageType(DeserializationUtils.readByte(stream));
+		this.setDhPublicKey(DeserializationUtils.readDHPublicKey(stream));
 
-		BigInteger gyMpi = DeserializationUtils.readMpi(stream);
-		try {
-			this.setDhPublicKey(CryptoUtils.getDHPublicKey(gyMpi));
-		} catch (Exception e) {
-			throw new IOException(e);
-		}
 	}
 
 	public void setDhPublicKey(DHPublicKey dhPublicKey) {

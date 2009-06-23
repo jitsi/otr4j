@@ -10,14 +10,15 @@ import net.java.otr4j.context.ConnContext;
 import net.java.otr4j.crypto.CryptoUtils;
 
 public class DummyOTR4jListener implements OTR4jListener {
-	
-	public DummyOTR4jListener(int policy){
+
+	public DummyOTR4jListener(int policy) {
 		this.policy = policy;
 	}
-	
+
 	private static Logger logger = Logger.getLogger(DummyOTR4jListener.class);
 	private int policy;
 	public String lastInjectedMessage;
+
 	@Override
 	public int getPolicy(ConnContext ctx) {
 		return this.policy;
@@ -25,7 +26,8 @@ public class DummyOTR4jListener implements OTR4jListener {
 
 	@Override
 	public void injectMessage(String msg) {
-		String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10) + "..." : msg;
+		String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10) + "..."
+				: msg;
 		this.lastInjectedMessage = msg;
 		logger.debug("IM injects message: " + msgDisplay);
 	}

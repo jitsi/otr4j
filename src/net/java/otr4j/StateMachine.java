@@ -20,6 +20,7 @@ import javax.crypto.interfaces.DHPublicKey;
 import org.apache.log4j.Logger;
 
 import net.java.otr4j.context.ConnContext;
+import net.java.otr4j.context.MessageState;
 import net.java.otr4j.context.auth.AuthenticationInfo;
 import net.java.otr4j.context.auth.AuthenticationState;
 import net.java.otr4j.crypto.CryptoConstants;
@@ -35,6 +36,23 @@ import net.java.otr4j.message.unencoded.query.QueryMessage;
 public final class StateMachine {
 
 	private static Logger logger = Logger.getLogger(StateMachine.class);
+
+	public static void sendingMessage(OTR4jListener listener,
+			UserState userState, String user, String account, String protocol,
+			String msgText) {
+		ConnContext ctx = userState.getConnContext(user, account, protocol);
+		switch (ctx.messageState) {
+		case PLAINTEXT:
+			break;
+		case ENCRYPTED:
+			ctx.lastSentMessage = msgText;
+			break;
+		case FINISHED:
+			// TODO Inform the user that the message cannot be sent at this time.
+			ctx.lastSentMessage = msgText;
+			break;
+		}
+	}
 
 	public static String receivingMessage(OTR4jListener listener,
 			UserState userState, String user, String account, String protocol,
@@ -86,7 +104,10 @@ public final class StateMachine {
 
 		switch (msgType) {
 		case MessageType.DATA:
-			throw new UnsupportedOperationException();
+			DataMessage data = new DataMessage();
+			data.readObject(new ByteArrayInputStream(EncodedMessageUtils
+					.decodeMessage(msgText)));
+			receivingDataMessage(ctx, listener, data);
 		case MessageType.DH_COMMIT:
 			DHCommitMessage dhCommit = new DHCommitMessage();
 			dhCommit.readObject(new ByteArrayInputStream(EncodedMessageUtils
@@ -132,6 +153,73 @@ public final class StateMachine {
 		return msgText;
 	}
 
+	private static void receivingDataMessage(ConnContext ctx,
+			OTR4jListener listener, DataMessage msg)
+			throws InvalidKeyException, NoSuchAlgorithmException, IOException,
+			NoSuchPaddingException, InvalidAlgorithmParameterException,
+			IllegalBlockSizeException, BadPaddingException {
+		switch (ctx.messageState) {
+		case ENCRYPTED:
+			int senderKeyID = msg.senderKeyID;
+			int receipientKeyID = msg.recipientKeyID;
+
+			DHPublicKey remotePublicKey = null;
+			if (senderKeyID == ctx.remotePreviousKeyID) {
+				remotePublicKey = ctx.remotePreviousDHublicKey;
+			} else if (senderKeyID == ctx.remoteCurrentKeyID) {
+				remotePublicKey = ctx.remoteCurrentDHPublicKey;
+			} else if (senderKeyID == ctx.authenticationInfo
+					.getRemoteDHPPublicKeyID()) {
+				remotePublicKey = ctx.authenticationInfo.getRemoteDHPublicKey();
+			}
+
+			if (remotePublicKey == null)
+				return;
+
+			KeyPair localKeyPair = null;
+			if (receipientKeyID == ctx.localPreviousKeyID) {
+				localKeyPair = ctx.localPreviousKeyPair;
+			} else if (receipientKeyID == ctx.localCurrentKeyID) {
+				localKeyPair = ctx.localPreviousKeyPair;
+			} else if (receipientKeyID == ctx.authenticationInfo
+					.getLocalDHPrivateKeyID()) {
+				localKeyPair = ctx.authenticationInfo.getLocalDHKeyPair();
+			}
+
+			if (localKeyPair == null)
+				return;
+
+			BigInteger s = CryptoUtils.generateSecret(
+					localKeyPair.getPrivate(), remotePublicKey);
+
+			Boolean high = ((DHPublicKey) localKeyPair.getPublic()).getY()
+					.abs().compareTo(remotePublicKey.getY().abs()) == 1;
+
+			byte[] receivingAESKey = CryptoUtils.calculateReceivingAESKey(high,
+					s);
+			byte[] receivingMACKey = CryptoUtils
+					.calculateReceivingMACKey(receivingAESKey);
+
+			byte[] computedMAC = CryptoUtils.sha256Hmac(msg.t, receivingMACKey);
+			if (!Arrays.equals(computedMAC, msg.mac)) {
+				logger.debug("MAC verification failed.");
+				return;
+			}
+
+			// TODO do something with this message..
+			byte[] decryptedMsg = CryptoUtils.aesDecrypt(receivingAESKey,
+					msg.encryptedMsg);
+			logger.debug("Successfully decrypted message.");
+			break;
+		case FINISHED:
+		case PLAINTEXT:
+			listener.showWarning("unreadable encrypted message was received");
+			ErrorMessage errormsg = new ErrorMessage("Oups.");
+			listener.injectMessage(errormsg.toString());
+			break;
+		}
+	}
+
 	private static void receivingSignatureMessage(ConnContext ctx,
 			OTR4jListener listener, SignatureMessage msg)
 			throws InvalidKeyException, NoSuchAlgorithmException,
@@ -166,7 +254,7 @@ public final class StateMachine {
 			// Computes MA = MACm1'(gy, gx, pubA, keyidA)
 			MysteriousX remoteX = new MysteriousX();
 			remoteX.readObject(new ByteArrayInputStream(remoteXDecrypted));
-
+			auth.setRemoteDHPPublicKeyID(remoteX.getDhKeyID());
 			MysteriousM remoteM = new MysteriousM(auth.getM1p(), auth
 					.getRemoteDHPublicKey(), (DHPublicKey) auth
 					.getLocalDHKeyPair().getPublic(), remoteX
@@ -178,6 +266,9 @@ public final class StateMachine {
 				logger.debug("Signature verification failed.");
 				return;
 			}
+
+			auth.setAuthenticationState(AuthenticationState.NONE);
+			ctx.messageState = MessageState.ENCRYPTED;
 			break;
 		default:
 			break;
@@ -256,6 +347,7 @@ public final class StateMachine {
 
 			MysteriousX remoteX = new MysteriousX();
 			remoteX.readObject(new ByteArrayInputStream(remoteXDecrypted));
+			auth.setRemoteDHPPublicKeyID(remoteX.getDhKeyID());
 
 			// Computes MB = MACm1(gx, gy, pubB, keyidB)
 			MysteriousM remoteM = new MysteriousM(auth.getM1(), auth
@@ -589,8 +681,8 @@ public final class StateMachine {
 			replyRevealSig = true;
 			break;
 		case AWAITING_SIG:
-			if (msg.getDhPublicKey().getEncoded()
-					.equals(ctx.their_y.getFirst())) {
+			if (msg.getDhPublicKey().getY().equals(
+					auth.getRemoteDHPublicKey().getY())) {
 				replyRevealSig = true;
 			}
 			break;
