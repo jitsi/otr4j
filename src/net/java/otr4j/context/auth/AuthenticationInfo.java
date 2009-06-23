@@ -29,6 +29,7 @@ public class AuthenticationInfo {
 	private byte[] r;
 
 	private DHPublicKey remoteDHPublicKey;
+	private int remoteDHPPublicKeyID;
 	private byte[] remoteDHPublicKeyEncrypted;
 	private byte[] remoteDHPublicKeyHash;
 
@@ -232,5 +233,13 @@ public class AuthenticationInfo {
 
 	public KeyPair getLocalLongTermKeyPair() {
 		return localLongTermKeyPair;
+	}
+
+	public void setRemoteDHPPublicKeyID(int remoteDHPPublicKeyID) {
+		this.remoteDHPPublicKeyID = remoteDHPPublicKeyID;
+	}
+
+	public int getRemoteDHPPublicKeyID() {
+		return remoteDHPPublicKeyID;
 	}
 }
