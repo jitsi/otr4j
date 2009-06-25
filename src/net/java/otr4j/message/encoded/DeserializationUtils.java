@@ -134,7 +134,9 @@ public class DeserializationUtils {
 		seqGen.addObject(new DERInteger(new BigInteger(1, s)));
 		seqGen.close();
 
-		return bos.toByteArray();
+		byte[] result = bos.toByteArray();
+		bos.close();
+		return result;
 	}
 
 	public static byte[] readData(ByteArrayInputStream stream)
