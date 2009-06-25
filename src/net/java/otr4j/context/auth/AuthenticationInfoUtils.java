@@ -15,8 +15,9 @@ public class AuthenticationInfoUtils {
 		
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		SerializationUtils.writeMpi(bos, s);
-
 		byte[] secbytes = bos.toByteArray();
+		bos.close();
+		
 		int len = secbytes.length + 1;
 		ByteBuffer buff = ByteBuffer.allocate(len);
 		buff.put(b);
