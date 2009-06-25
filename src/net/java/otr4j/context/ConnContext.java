@@ -1,7 +1,7 @@
 package net.java.otr4j.context;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -50,6 +50,27 @@ public class ConnContext {
 		}
 	}
 
+	private byte[] sendingCtr = new byte[8];
+	private byte[] receivingCtr = new byte[8];
+
+	private void incrementSendingCtr() {
+		for (int i = 0; i < sendingCtr.length; i++)
+			sendingCtr[i]++;
+	}
+
+	public byte[] getSendingCtr() {
+		return sendingCtr;
+	}
+
+	public byte[] getReceivingCtr() {
+		return receivingCtr;
+	}
+
+	public void setReceivingCtr(byte[] ctr) {
+		this.receivingCtr = ctr;
+
+	}
+
 	public SessionKeys getTopSessionKeys() {
 		return sessionKeys[KeyIndex.Current][KeyIndex.Current];
 	}
@@ -69,18 +90,31 @@ public class ConnContext {
 		return null;
 	}
 
-	public ByteArrayOutputStream oldMacKeys = new ByteArrayOutputStream();
+	private Vector<byte[]> oldMacKeys = new Vector<byte[]>();
+
+	public byte[] getOldMacKeys() {
+		int len = 0;
+		for (int i = 0; i < oldMacKeys.size(); i++) {
+			len += oldMacKeys.get(i).length;
+		}
+		ByteBuffer buff = ByteBuffer.allocate(len);
+		for (int i = 0; i < oldMacKeys.size(); i++) {
+			buff.put(oldMacKeys.get(i));
+		}
+		oldMacKeys.clear();
+		return buff.array();
+	}
+
 	public void rotateRemoteKeys(DHPublicKey pubKey)
 			throws NoSuchAlgorithmException, IOException {
 
-		oldMacKeys.write(sessionKeys[KeyIndex.Current][KeyIndex.Previous]
-				.getSendingMACKey());
-		oldMacKeys.write(sessionKeys[KeyIndex.Current][KeyIndex.Previous]
-				.getReceivingMACKey());
-		oldMacKeys.write(sessionKeys[KeyIndex.Previous][KeyIndex.Previous]
-				.getSendingMACKey());
-		oldMacKeys.write(sessionKeys[KeyIndex.Current][KeyIndex.Previous]
-				.getReceivingMACKey());
+		SessionKeys sess1 = sessionKeys[KeyIndex.Current][KeyIndex.Previous];
+		if (sess1.isUsedReceivingMACKey)
+			oldMacKeys.add(sess1.getReceivingMACKey());
+
+		SessionKeys sess2 = sessionKeys[KeyIndex.Previous][KeyIndex.Previous];
+		if (sess2.isUsedReceivingMACKey)
+			oldMacKeys.add(sess2.getReceivingMACKey());
 
 		sessionKeys[KeyIndex.Current][KeyIndex.Previous] = sessionKeys[KeyIndex.Current][KeyIndex.Current];
 		sessionKeys[KeyIndex.Previous][KeyIndex.Previous] = sessionKeys[KeyIndex.Previous][KeyIndex.Current];
@@ -88,20 +122,21 @@ public class ConnContext {
 				.setRemoteDHPublicKey(pubKey);
 		sessionKeys[KeyIndex.Previous][KeyIndex.Current]
 				.setRemoteDHPublicKey(pubKey);
+
+		this.incrementSendingCtr();
 	}
 
 	public void rotateLocalKeys() throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			IOException {
 
-		oldMacKeys.write(sessionKeys[KeyIndex.Previous][KeyIndex.Current]
-				.getSendingMACKey());
-		oldMacKeys.write(sessionKeys[KeyIndex.Previous][KeyIndex.Current]
-				.getReceivingMACKey());
-		oldMacKeys.write(sessionKeys[KeyIndex.Previous][KeyIndex.Previous]
-				.getSendingMACKey());
-		oldMacKeys.write(sessionKeys[KeyIndex.Previous][KeyIndex.Previous]
-				.getReceivingMACKey());
+		SessionKeys sess1 = sessionKeys[KeyIndex.Previous][KeyIndex.Current];
+		if (sess1.isUsedReceivingMACKey)
+			oldMacKeys.add(sess1.getReceivingMACKey());
+
+		SessionKeys sess2 = sessionKeys[KeyIndex.Previous][KeyIndex.Previous];
+		if (sess2.isUsedReceivingMACKey)
+			oldMacKeys.add(sess2.getReceivingMACKey());
 
 		sessionKeys[KeyIndex.Previous][KeyIndex.Current] = sessionKeys[KeyIndex.Current][KeyIndex.Current];
 		sessionKeys[KeyIndex.Previous][KeyIndex.Previous] = sessionKeys[KeyIndex.Current][KeyIndex.Previous];
@@ -109,5 +144,8 @@ public class ConnContext {
 		KeyPair newPair = CryptoUtils.generateDHKeyPair();
 		sessionKeys[KeyIndex.Current][KeyIndex.Current].setLocalPair(newPair);
 		sessionKeys[KeyIndex.Current][KeyIndex.Previous].setLocalPair(newPair);
+
+		this.incrementSendingCtr();
 	}
+
 }

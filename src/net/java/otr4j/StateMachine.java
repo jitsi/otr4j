@@ -55,16 +55,20 @@ public final class StateMachine {
 
 			// Computes TA = (keyidA, keyidB, next_dh, ctr, AES-CTRek,ctr(msg))
 			DataMessage msg = new DataMessage();
-			msg.senderKeyID = topKeys.localKeyID;
-			msg.recipientKeyID = topKeys.remoteKeyID;
-			msg.nextDHPublicKey = (DHPublicKey) topKeys.localPair.getPublic();
-			msg.ctr = topKeys.getSendingCtr();
-			msg.encryptedMsg = CryptoUtils.aesDecrypt(topKeys
-					.getSendingAESKey(), msgText.getBytes());
+			msg.setSenderKeyID(topKeys.localKeyID);
+			msg.setRecipientKeyID(topKeys.remoteKeyID);
+			msg.setNextDHPublicKey((DHPublicKey) topKeys.localPair.getPublic());
+			msg.setCtr(ctx.getSendingCtr());
+			msg.setEncryptedMsg(CryptoUtils.aesEncrypt(topKeys
+					.getSendingAESKey(), msgText.getBytes()));
+
 			// Sends Bob TA, MACmk(TA), oldmackeys
-			msg.oldMACKeys = ctx.oldMacKeys.toByteArray();
-			
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			msg.setOldMACKeys(ctx.getOldMacKeys());
+
+			msg.setMac(CryptoUtils.sha256Hmac(msg.getT(), topKeys
+					.getSendingMACKey()));
+
+			injectMessage(listener, msg);
 			break;
 		case FINISHED:
 			// TODO Inform the user that the message cannot be sent at this
@@ -181,28 +185,33 @@ public final class StateMachine {
 			NoSuchProviderException {
 		switch (ctx.messageState) {
 		case ENCRYPTED:
-			int senderKeyID = msg.senderKeyID;
-			int receipientKeyID = msg.recipientKeyID;
+			int senderKeyID = msg.getSenderKeyID();
+			int receipientKeyID = msg.getRecipientKeyID();
 
 			SessionKeys keys = ctx
 					.findSessionKeys(receipientKeyID, senderKeyID);
 
 			if (senderKeyID == ctx.getTopSessionKeys().remoteKeyID)
-				ctx.rotateRemoteKeys(msg.nextDHPublicKey);
+				ctx.rotateRemoteKeys(msg.getNextDHPublicKey());
 
 			if (receipientKeyID == ctx.getTopSessionKeys().localKeyID)
 				ctx.rotateLocalKeys();
 
-			byte[] computedMAC = CryptoUtils.sha256Hmac(msg.t, keys
+			byte[] computedMAC = CryptoUtils.sha256Hmac(msg.getT(), keys
 					.getReceivingMACKey());
 
-			if (!Arrays.equals(computedMAC, msg.mac)) {
+			if (!Arrays.equals(computedMAC, msg.getMac())) {
 				logger.debug("MAC verification failed.");
 				return;
 			}
 
-			// byte[] decryptedMsg = CryptoUtils.aesDecrypt(keys
-			// .getReceivingAESKey(), msg.encryptedMsg);
+			keys.isUsedReceivingMACKey = true;
+
+			ctx.setReceivingCtr(msg.getCtr());
+
+			byte[] decryptedMsg = CryptoUtils.aesDecrypt(keys
+					.getReceivingAESKey(), ctx.getReceivingCtr(), msg
+					.getEncryptedMsg());
 			logger.debug("Successfully decrypted message.");
 			break;
 		case FINISHED:
@@ -243,7 +252,7 @@ public final class StateMachine {
 			// Uses c' to decrypt AESc'(XA) to obtain XA = pubA, keyidA,
 			// sigA(MA)
 			byte[] remoteXDecrypted = CryptoUtils.aesDecrypt(auth.getCp(),
-					remoteXEncrypted);
+					null, remoteXEncrypted);
 
 			// Computes MA = MACm1'(gy, gx, pubA, keyidA)
 			MysteriousX remoteX = new MysteriousX();
@@ -261,8 +270,7 @@ public final class StateMachine {
 				return;
 			}
 
-			auth.setAuthenticationState(AuthenticationState.NONE);
-			ctx.messageState = MessageState.ENCRYPTED;
+			goSecure(ctx, auth.getLocalDHKeyPair(), auth.getRemoteDHPublicKey());
 			break;
 		default:
 			break;
@@ -291,7 +299,7 @@ public final class StateMachine {
 			// Uses r to decrypt the value of gx sent earlier
 			byte[] revealedKey = msg.getRevealedKey();
 			byte[] remoteDHPublicKeyDecrypted = CryptoUtils.aesDecrypt(
-					revealedKey, auth.getRemoteDHPublicKeyEncrypted());
+					revealedKey, null, auth.getRemoteDHPublicKeyEncrypted());
 
 			// Verifies that HASH(gx) matches the value sent earlier
 			byte[] remoteDHPublicKeyHash = CryptoUtils
@@ -336,7 +344,7 @@ public final class StateMachine {
 			}
 
 			// Uses c to decrypt AESc(XB) to obtain XB = pubB, keyidB, sigB(MB)
-			byte[] remoteXDecrypted = CryptoUtils.aesDecrypt(auth.getC(),
+			byte[] remoteXDecrypted = CryptoUtils.aesDecrypt(auth.getC(), null,
 					remoteXEncrypted);
 
 			MysteriousX remoteX = new MysteriousX();
@@ -387,11 +395,24 @@ public final class StateMachine {
 
 			SignatureMessage msgSig = new SignatureMessage(2, auth
 					.getLocalXEncryptedMac(), auth.getLocalXEncrypted());
+
+			goSecure(ctx, auth.getLocalDHKeyPair(), auth.getRemoteDHPublicKey());
 			injectMessage(listener, msgSig);
 			break;
 		default:
 			break;
 		}
+	}
+
+	private static void goSecure(ConnContext ctx, KeyPair keyPair,
+			DHPublicKey pubKey) {
+
+		ctx.getTopSessionKeys().setLocalPair(keyPair);
+		ctx.getTopSessionKeys().setRemoteDHPublicKey(pubKey);
+
+		ctx.authenticationInfo.setAuthenticationState(AuthenticationState.NONE);
+		ctx.messageState = MessageState.ENCRYPTED;
+		logger.debug("Gone Secure.");
 	}
 
 	private static String receivingPlainTextMessage(ConnContext ctx,

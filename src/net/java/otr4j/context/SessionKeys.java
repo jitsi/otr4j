@@ -25,27 +25,15 @@ public class SessionKeys {
 	}
 
 	private void reset() {
-		this.sendingCtr = null;
-		this.receivingCtr = null;
 		this.sendingAESKey = null;
 		this.receivingAESKey = null;
 		this.sendingMACKey = null;
 		this.receivingMACKey = null;
+		this.isUsedReceivingMACKey = false;
 		this.s = null;
-		this.isHigh = ((DHPublicKey) localPair.getPublic()).getY().abs()
-				.compareTo(remoteKey.getY().abs()) == 1;
-	}
-
-	public byte[] getSendingCtr() {
-		if (sendingCtr == null) {
-		}
-		return sendingCtr;
-	}
-
-	public byte[] getReceivingCtr() {
-		if (receivingCtr == null) {
-		}
-		return receivingCtr;
+		if (localPair != null && remoteKey != null)
+			this.isHigh = ((DHPublicKey) localPair.getPublic()).getY().abs()
+					.compareTo(remoteKey.getY().abs()) == 1;
 	}
 
 	public byte[] getSendingAESKey() throws InvalidKeyException,
@@ -89,12 +77,11 @@ public class SessionKeys {
 	public DHPublicKey remoteKey;
 	public KeyPair localPair;
 
-	private byte[] sendingCtr;
-	private byte[] receivingCtr;
 	private byte[] sendingAESKey;
 	private byte[] receivingAESKey;
 	private byte[] sendingMACKey;
 	private byte[] receivingMACKey;
+	public Boolean isUsedReceivingMACKey = false;
 	private BigInteger s;
 	private Boolean isHigh;
 }

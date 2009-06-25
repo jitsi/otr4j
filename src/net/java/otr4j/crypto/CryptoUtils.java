@@ -114,14 +114,16 @@ public class CryptoUtils {
 		return sha256.digest();
 	}
 
-	public static byte[] aesDecrypt(byte[] key, byte[] b)
+	public static byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b)
 			throws NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException {
 		// Create cipher KeySpec based on r.
 		SecretKeySpec keyspec = new SecretKeySpec(key, "AES");
 		// Create initial counter value 0.
-		IvParameterSpec spec = new IvParameterSpec(CryptoConstants.ZERO_CTR);
+		if (ctr == null)
+			ctr = CryptoConstants.ZERO_CTR;
+		IvParameterSpec spec = new IvParameterSpec(ctr);
 
 		// Initialize cipher.
 		Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
@@ -187,8 +189,9 @@ public class CryptoUtils {
 
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		SerializationUtils.writeMpi(bos, s);
-
 		byte[] secbytes = bos.toByteArray();
+		bos.close();
+		
 		int len = secbytes.length + 1;
 		ByteBuffer buff = ByteBuffer.allocate(len);
 		buff.put(b);
