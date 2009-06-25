@@ -7,6 +7,7 @@ import java.security.InvalidKeyException;
 import java.security.PublicKey;
 import java.security.interfaces.DSAParams;
 import java.security.interfaces.DSAPublicKey;
+import java.util.Arrays;
 
 import javax.crypto.interfaces.DHPublicKey;
 
@@ -44,8 +45,8 @@ public class SerializationUtils {
 		writeData(stream, Utils.trim(pubKey.getY().toByteArray()));
 	}
 
-	public static void writeMpi(ByteArrayOutputStream stream,
-			BigInteger i) throws IOException {
+	public static void writeMpi(ByteArrayOutputStream stream, BigInteger i)
+			throws IOException {
 		writeData(stream, Utils.trim(i.toByteArray()));
 	}
 
@@ -91,8 +92,8 @@ public class SerializationUtils {
 		stream.write(sb);
 	}
 
-	public static void writeMac(ByteArrayOutputStream stream,
-			byte[] mac) throws IOException {
+	public static void writeMac(ByteArrayOutputStream stream, byte[] mac)
+			throws IOException {
 		if (mac == null || mac.length != DataLength.MAC)
 			throw new IllegalArgumentException();
 
@@ -101,9 +102,7 @@ public class SerializationUtils {
 
 	public static void writeCtr(ByteArrayOutputStream out, byte[] ctr)
 			throws IOException {
-		if (ctr.length != DataLength.CTR)
-			throw new IOException();
-		out.write(ctr);
+		out.write(Arrays.copyOfRange(ctr, 0, DataLength.CTR));
 	}
 
 }

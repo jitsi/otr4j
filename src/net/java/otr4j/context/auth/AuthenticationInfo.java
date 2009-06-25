@@ -73,7 +73,7 @@ public class AuthenticationInfo {
 		this.setLocalDHPublicKeyHash(CryptoUtils.sha256Hash(gx));
 
 		logger.debug("Encrypting gx");
-		this.setLocalDHPublicKeyEncrypted(CryptoUtils.aesEncrypt(getR(), gx));
+		this.setLocalDHPublicKeyEncrypted(CryptoUtils.aesEncrypt(getR(), null, gx));
 	}
 
 	public void setAuthenticationState(AuthenticationState authenticationState) {

@@ -61,9 +61,11 @@ public final class StateMachine {
 			int senderKeyID = topKeys.localKeyID;
 			int receipientKeyID = topKeys.remoteKeyID;
 			DHPublicKey nextDH = (DHPublicKey) topKeys.localPair.getPublic();
-			byte[] ctr = ctx.getSendingCtr();
+			topKeys.incrementSendingCtr();
+			byte[] ctr = topKeys.getSendingCtr();
+			byte[] msgBytes = msgText.getBytes();
 			byte[] encryptedMsg = CryptoUtils.aesEncrypt(topKeys
-					.getSendingAESKey(), msgText.getBytes());
+					.getSendingAESKey(), ctr, msgBytes);
 
 			byte[] oldMacKeys = ctx.getOldMacKeys();
 
@@ -75,7 +77,6 @@ public final class StateMachine {
 			byte[] serializedT = out.toByteArray();
 			out.close();
 
-			byte[] receivingmackey = topKeys.getReceivingMACKey();
 			byte[] sendingmackey = topKeys.getSendingMACKey();
 			byte[] mac = CryptoUtils.sha1Hmac(serializedT, sendingmackey,
 					DataLength.MAC);
@@ -210,21 +211,14 @@ public final class StateMachine {
 			SessionKeys matchingKeys = ctx.findSessionKeys(receipientKeyID,
 					senderKeyID);
 
-			if (senderKeyID == ctx.getTopSessionKeys().remoteKeyID)
-				ctx.rotateRemoteKeys(t.nextDHPublicKey);
-
-			if (receipientKeyID == ctx.getTopSessionKeys().localKeyID)
-				ctx.rotateLocalKeys();
-
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			t.writeObject(out);
 			byte[] serializedT = out.toByteArray();
 			out.close();
 
 			byte[] receivingmackey = matchingKeys.getReceivingMACKey();
-			byte[] sendingmackey = matchingKeys.getSendingMACKey();
-			byte[] computedMAC = CryptoUtils.sha1Hmac(serializedT, receivingmackey,
-					DataLength.MAC);
+			byte[] computedMAC = CryptoUtils.sha1Hmac(serializedT,
+					receivingmackey, DataLength.MAC);
 
 			if (!Arrays.equals(computedMAC, msg.getMac())) {
 				logger.debug("MAC verification failed.");
@@ -233,10 +227,10 @@ public final class StateMachine {
 
 			matchingKeys.isUsedReceivingMACKey = true;
 
-			ctx.setReceivingCtr(t.ctr);
+			matchingKeys.setReceivingCtr(t.ctr);
 
 			byte[] decryptedMsg = CryptoUtils.aesDecrypt(matchingKeys
-					.getReceivingAESKey(), ctx.getReceivingCtr(),
+					.getReceivingAESKey(), matchingKeys.getReceivingCtr(),
 					t.encryptedMsg);
 			logger.debug("Successfully decrypted message: "
 					+ new String(decryptedMsg));
@@ -297,7 +291,8 @@ public final class StateMachine {
 				return;
 			}
 
-			goSecure(ctx, auth.getLocalDHKeyPair(), auth.getRemoteDHPublicKey());
+			goSecure(ctx, auth.getLocalDHKeyPair(),
+					auth.getRemoteDHPublicKey(), auth.getS());
 			break;
 		default:
 			break;
@@ -358,8 +353,9 @@ public final class StateMachine {
 			// Computes two AES keys c, c' and four MAC keys m1, m1', m2, m2' by
 			// hashing s in various ways (the same as Bob)
 			logger.debug("Calculating secret key.");
-			auth.setS(CryptoUtils.generateSecret(auth.getLocalDHKeyPair()
-					.getPrivate(), auth.getRemoteDHPublicKey()));
+			BigInteger s = CryptoUtils.generateSecret(auth.getLocalDHKeyPair()
+					.getPrivate(), auth.getRemoteDHPublicKey());
+			auth.setS(s);
 
 			// Uses m2 to verify MACm2(AESc(XB))
 			byte[] remoteXEncrypted = msg.getXEncrypted();
@@ -415,7 +411,7 @@ public final class StateMachine {
 			byte[] localXbytes = localXbos.toByteArray();
 
 			// Sends Bob AESc'(XA), MACm2'(AESc'(XA))
-			auth.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getCp(),
+			auth.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getCp(), null,
 					localXbytes));
 			auth.setLocalXEncryptedMac(CryptoUtils.sha256Hmac160(auth
 					.getLocalXEncrypted(), auth.getM2p()));
@@ -423,7 +419,8 @@ public final class StateMachine {
 			SignatureMessage msgSig = new SignatureMessage(2, auth
 					.getLocalXEncryptedMac(), auth.getLocalXEncrypted());
 
-			goSecure(ctx, auth.getLocalDHKeyPair(), auth.getRemoteDHPublicKey());
+			goSecure(ctx, auth.getLocalDHKeyPair(),
+					auth.getRemoteDHPublicKey(), s);
 			injectMessage(listener, msgSig);
 			break;
 		default:
@@ -432,10 +429,12 @@ public final class StateMachine {
 	}
 
 	private static void goSecure(ConnContext ctx, KeyPair keyPair,
-			DHPublicKey pubKey) {
+			DHPublicKey pubKey, BigInteger s) {
 
-		ctx.getTopSessionKeys().setLocalPair(keyPair);
-		ctx.getTopSessionKeys().setRemoteDHPublicKey(pubKey);
+		SessionKeys topKeys = ctx.getTopSessionKeys();
+		topKeys.setLocalPair(keyPair);
+		topKeys.setRemoteDHPublicKey(pubKey);
+		topKeys.setS(s);
 
 		ctx.authenticationInfo.setAuthenticationState(AuthenticationState.NONE);
 		ctx.messageState = MessageState.ENCRYPTED;
@@ -684,8 +683,9 @@ public final class StateMachine {
 			// Computes s = (gy)x
 			logger.debug("Computing secret.");
 			auth.setRemoteDHPublicKey(msg.getDhPublicKey());
-			auth.setS(CryptoUtils.generateSecret(auth.getLocalDHKeyPair()
-					.getPrivate(), auth.getRemoteDHPublicKey()));
+			BigInteger s = CryptoUtils.generateSecret(auth.getLocalDHKeyPair()
+					.getPrivate(), auth.getRemoteDHPublicKey());
+			auth.setS(s);
 
 			// Computes MB = MACm1(gx, gy, pubB, keyidB)
 			logger.debug("Computing M");
@@ -713,9 +713,8 @@ public final class StateMachine {
 
 			// Sends Alice r, AESc(XB), MACm2(AESc(XB))
 			logger.debug("Encryting X");
-			auth
-					.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getC(),
-							xbytes));
+			auth.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getC(), null,
+					xbytes));
 			logger.debug("Hashing encrypted X");
 			auth.setLocalXEncryptedMac(CryptoUtils.sha256Hmac160(auth
 					.getLocalXEncrypted(), auth.getM2()));

@@ -51,27 +51,6 @@ public class ConnContext {
 		}
 	}
 
-	private byte[] sendingCtr = new byte[8];
-	private byte[] receivingCtr = new byte[8];
-
-	private void incrementSendingCtr() {
-		for (int i = 0; i < sendingCtr.length; i++)
-			sendingCtr[i]++;
-	}
-
-	public byte[] getSendingCtr() {
-		return sendingCtr;
-	}
-
-	public byte[] getReceivingCtr() {
-		return receivingCtr;
-	}
-
-	public void setReceivingCtr(byte[] ctr) {
-		this.receivingCtr = ctr;
-
-	}
-
 	public SessionKeys getTopSessionKeys() {
 		return sessionKeys[KeyIndex.Current][KeyIndex.Current];
 	}
@@ -123,8 +102,6 @@ public class ConnContext {
 				.setRemoteDHPublicKey(pubKey);
 		sessionKeys[KeyIndex.Previous][KeyIndex.Current]
 				.setRemoteDHPublicKey(pubKey);
-
-		this.incrementSendingCtr();
 	}
 
 	public void rotateLocalKeys() throws NoSuchAlgorithmException,
@@ -145,8 +122,6 @@ public class ConnContext {
 		KeyPair newPair = CryptoUtils.generateDHKeyPair();
 		sessionKeys[KeyIndex.Current][KeyIndex.Current].setLocalPair(newPair);
 		sessionKeys[KeyIndex.Current][KeyIndex.Previous].setLocalPair(newPair);
-
-		this.incrementSendingCtr();
 	}
 
 }

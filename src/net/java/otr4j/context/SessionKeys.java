@@ -5,9 +5,9 @@ import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 import javax.crypto.interfaces.DHPublicKey;
-
 import net.java.otr4j.crypto.CryptoUtils;
 
 public class SessionKeys {
@@ -24,16 +24,42 @@ public class SessionKeys {
 		this.reset();
 	}
 
+	private byte[] sendingCtr = new byte[16];
+	private byte[] receivingCtr = new byte[16];
+
+	public void incrementSendingCtr() {
+		for (int i = 7; i >= 0; i--)
+			if (++sendingCtr[i] != 0)
+				break;
+	}
+
+	public byte[] getSendingCtr() {
+		return sendingCtr;
+	}
+
+	public byte[] getReceivingCtr() {
+		return receivingCtr;
+	}
+
+	public void setReceivingCtr(byte[] ctr) {
+		for (int i = 0; i < ctr.length; i++)
+			receivingCtr[i] = ctr[i];
+	}
+
 	private void reset() {
+		Arrays.fill(this.sendingCtr, (byte) 0x00);
+		Arrays.fill(this.receivingCtr, (byte) 0x00);
 		this.sendingAESKey = null;
 		this.receivingAESKey = null;
 		this.sendingMACKey = null;
 		this.receivingMACKey = null;
 		this.isUsedReceivingMACKey = false;
 		this.s = null;
-		if (localPair != null && remoteKey != null)
+		if (localPair != null && remoteKey != null) {
 			this.isHigh = ((DHPublicKey) localPair.getPublic()).getY().abs()
 					.compareTo(remoteKey.getY().abs()) == 1;
+		}
+
 	}
 
 	public byte[] getSendingAESKey() throws InvalidKeyException,
@@ -73,6 +99,10 @@ public class SessionKeys {
 		if (s == null)
 			s = CryptoUtils.generateSecret(localPair.getPrivate(), remoteKey);
 		return s;
+	}
+
+	public void setS(BigInteger s) {
+		this.s = s;
 	}
 
 	public int localKeyID;

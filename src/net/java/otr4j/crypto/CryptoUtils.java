@@ -151,7 +151,7 @@ public class CryptoUtils {
 		return cipher.doFinal(b);
 	}
 
-	public static byte[] aesEncrypt(byte[] key, byte[] b)
+	public static byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b)
 			throws NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException {
@@ -159,7 +159,9 @@ public class CryptoUtils {
 		// Create cipher KeySpec based on r.
 		SecretKeySpec keyspec = new SecretKeySpec(key, "AES");
 		// Create initial counter value 0.
-		IvParameterSpec spec = new IvParameterSpec(CryptoConstants.ZERO_CTR);
+		if (ctr == null)
+			ctr = CryptoConstants.ZERO_CTR;
+		IvParameterSpec spec = new IvParameterSpec(ctr);
 
 		// Initialize cipher.
 		Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
@@ -215,7 +217,8 @@ public class CryptoUtils {
 		ByteBuffer buff = ByteBuffer.allocate(len);
 		buff.put(b);
 		buff.put(secbytes);
-		return CryptoUtils.sha1Hash(buff.array());
+		byte[] result = CryptoUtils.sha1Hash(buff.array());
+		return result;
 	}
 
 	public static byte[] calculateSendingAESKey(Boolean high, BigInteger s)
