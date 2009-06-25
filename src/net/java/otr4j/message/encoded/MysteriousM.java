@@ -38,7 +38,9 @@ public class MysteriousM {
 		SerializationUtils.writePublicKey(bos, this.getOurLongTermPublicKey());
 		SerializationUtils.writeInt(bos, this.getOurDHPrivatecKeyID());
 
-		return CryptoUtils.sha256Hash(bos.toByteArray());
+		byte[] result = bos.toByteArray();
+		bos.close();
+		return CryptoUtils.sha256Hash(result);
 	}
 
 	public void setM1(byte[] m1) {
