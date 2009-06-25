@@ -52,16 +52,19 @@ public class SessionKeys {
 		return receivingAESKey;
 	}
 
-	public byte[] getSendingMACKey() throws NoSuchAlgorithmException {
+	public byte[] getSendingMACKey() throws NoSuchAlgorithmException,
+			InvalidKeyException, IOException {
 		if (sendingMACKey == null)
-			sendingMACKey = CryptoUtils.calculateSendingMACKey(sendingAESKey);
+			sendingMACKey = CryptoUtils.calculateSendingMACKey(this
+					.getSendingAESKey());
 		return sendingMACKey;
 	}
 
-	public byte[] getReceivingMACKey() throws NoSuchAlgorithmException {
+	public byte[] getReceivingMACKey() throws NoSuchAlgorithmException,
+			InvalidKeyException, IOException {
 		if (receivingMACKey == null)
-			receivingMACKey = CryptoUtils
-					.calculateReceivingMACKey(receivingAESKey);
+			receivingMACKey = CryptoUtils.calculateReceivingMACKey(this
+					.getReceivingAESKey());
 		return receivingMACKey;
 	}
 

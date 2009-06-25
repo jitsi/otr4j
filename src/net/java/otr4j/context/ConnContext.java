@@ -3,6 +3,7 @@ package net.java.otr4j.context;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -106,7 +107,7 @@ public class ConnContext {
 	}
 
 	public void rotateRemoteKeys(DHPublicKey pubKey)
-			throws NoSuchAlgorithmException, IOException {
+			throws NoSuchAlgorithmException, IOException, InvalidKeyException {
 
 		SessionKeys sess1 = sessionKeys[KeyIndex.Current][KeyIndex.Previous];
 		if (sess1.isUsedReceivingMACKey)
@@ -128,7 +129,7 @@ public class ConnContext {
 
 	public void rotateLocalKeys() throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
-			IOException {
+			IOException, InvalidKeyException {
 
 		SessionKeys sess1 = sessionKeys[KeyIndex.Previous][KeyIndex.Current];
 		if (sess1.isUsedReceivingMACKey)

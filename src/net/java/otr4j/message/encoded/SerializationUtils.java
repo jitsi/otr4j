@@ -18,38 +18,38 @@ import net.java.otr4j.crypto.CryptoConstants;
 
 public class SerializationUtils {
 
-	public static void writeShort(java.io.ByteArrayOutputStream stream, int n)
+	public static void writeShort(ByteArrayOutputStream stream, int n)
 			throws IOException {
 		stream.write(Utils.intToByteArray(n, DataLength.SHORT));
 	}
 
-	public static void writeByte(java.io.ByteArrayOutputStream stream, int n)
+	public static void writeByte(ByteArrayOutputStream stream, int n)
 			throws IOException {
 		stream.write(Utils.intToByteArray(n, DataLength.BYTE));
 	}
 
-	public static void writeInt(java.io.ByteArrayOutputStream stream, int n)
+	public static void writeInt(ByteArrayOutputStream stream, int n)
 			throws IOException {
 		stream.write(Utils.intToByteArray(n, DataLength.INT));
 	}
 
-	public static void writeData(java.io.ByteArrayOutputStream stream, byte[] b)
+	public static void writeData(ByteArrayOutputStream stream, byte[] b)
 			throws IOException {
 		stream.write(Utils.intToByteArray(b.length, DataLength.DATALEN));
 		stream.write(b);
 	}
 
-	public static void writeDHPublicKey(java.io.ByteArrayOutputStream stream,
+	public static void writeDHPublicKey(ByteArrayOutputStream stream,
 			DHPublicKey pubKey) throws IOException {
 		writeData(stream, Utils.trim(pubKey.getY().toByteArray()));
 	}
-	
-	public static void writeMpi(java.io.ByteArrayOutputStream stream,
+
+	public static void writeMpi(ByteArrayOutputStream stream,
 			BigInteger i) throws IOException {
 		writeData(stream, Utils.trim(i.toByteArray()));
 	}
 
-	public static void writePublicKey(java.io.ByteArrayOutputStream stream,
+	public static void writePublicKey(ByteArrayOutputStream stream,
 			PublicKey pubKey) throws InvalidKeyException, IOException {
 
 		if (!(pubKey instanceof DSAPublicKey))
@@ -67,7 +67,7 @@ public class SerializationUtils {
 		writeMpi(stream, dsaKey.getY());
 	}
 
-	public static void writeSignature(java.io.ByteArrayOutputStream stream,
+	public static void writeSignature(ByteArrayOutputStream stream,
 			byte[] signature, PublicKey pubKey) throws IOException {
 		if (!pubKey.getAlgorithm().equals("DSA"))
 			throw new UnsupportedOperationException();
@@ -75,11 +75,15 @@ public class SerializationUtils {
 		// http://www.codeproject.com/KB/security/CryptoInteropSign.aspx
 		// http://java.sun.com/j2se/1.4.2/docs/guide/security/CryptoSpec.html
 
-		DERSequence derSequence = (DERSequence) DERSequence
-				.fromByteArray(signature);
+		DERSequence derSequence = null;
+		try {
+			derSequence = (DERSequence) DERSequence.fromByteArray(signature);
+		} catch (Exception ex) {
+			throw new IOException(ex);
+		}
 		DERInteger r = (DERInteger) derSequence.getObjectAt(0);
 		DERInteger s = (DERInteger) derSequence.getObjectAt(1);
-		
+
 		byte[] rb = Utils.trim(r.getValue().toByteArray());
 		byte[] sb = Utils.trim(s.getValue().toByteArray());
 
@@ -88,17 +92,18 @@ public class SerializationUtils {
 	}
 
 	public static void writeMac(ByteArrayOutputStream stream,
-			byte[] signatureMac) throws IOException {
-		if (signatureMac == null || signatureMac.length != DataLength.MAC)
+			byte[] mac) throws IOException {
+		if (mac == null || mac.length != DataLength.MAC)
 			throw new IllegalArgumentException();
 
-		stream.write(signatureMac);
+		stream.write(mac);
 	}
 
 	public static void writeCtr(ByteArrayOutputStream out, byte[] ctr)
 			throws IOException {
 		if (ctr.length != DataLength.CTR)
 			throw new IOException();
+		out.write(ctr);
 	}
 
 }

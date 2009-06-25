@@ -3,20 +3,29 @@ package net.java.otr4j.message.encoded;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import javax.crypto.interfaces.DHPublicKey;
+import net.java.otr4j.message.MessageType;
 
 public class DataMessage extends EncodedMessageBase {
 
 	private int flags;
-	private int senderKeyID;
-	private int recipientKeyID;
-	private DHPublicKey nextDHPublicKey;
-	private byte[] ctr;
-	private byte[] encryptedMsg;
 	private byte[] mac;
 	private byte[] oldMACKeys;
-	private byte[] t;
+	public MysteriousT t;
+
+	public DataMessage() {
+
+	}
+
+	public DataMessage(int protocolVersion, int flags, MysteriousT t,
+			byte[] mac, byte[] oldMacKeys) {
+
+		this.setMessageType(MessageType.DATA);
+		this.setProtocolVersion(protocolVersion);
+		this.setFlags(flags);
+		this.setMac(mac);
+		this.t = t;
+		this.setOldMACKeys(oldMacKeys);
+	}
 
 	public void readObject(ByteArrayInputStream stream) throws IOException {
 
@@ -24,7 +33,8 @@ public class DataMessage extends EncodedMessageBase {
 		this.setMessageType(DeserializationUtils.readByte(stream));
 		this.setFlags(DeserializationUtils.readByte(stream));
 
-		this.setT(stream);
+		t = new MysteriousT();
+		t.readObject(stream);
 
 		this.setMac(DeserializationUtils.readMac(stream));
 		this.setOldMACKeys(DeserializationUtils.readData(stream));
@@ -37,7 +47,7 @@ public class DataMessage extends EncodedMessageBase {
 		SerializationUtils.writeByte(stream, this.getMessageType());
 		SerializationUtils.writeByte(stream, this.getFlags());
 
-		stream.write(this.getT());
+		t.writeObject(stream);
 
 		SerializationUtils.writeMac(stream, this.getMac());
 		SerializationUtils.writeData(stream, this.getOldMACKeys());
@@ -49,46 +59,6 @@ public class DataMessage extends EncodedMessageBase {
 
 	public int getFlags() {
 		return flags;
-	}
-
-	public void setSenderKeyID(int senderKeyID) {
-		this.senderKeyID = senderKeyID;
-	}
-
-	public int getSenderKeyID() {
-		return senderKeyID;
-	}
-
-	public void setRecipientKeyID(int recipientKeyID) {
-		this.recipientKeyID = recipientKeyID;
-	}
-
-	public int getRecipientKeyID() {
-		return recipientKeyID;
-	}
-
-	public void setNextDHPublicKey(DHPublicKey nextDHPublicKey) {
-		this.nextDHPublicKey = nextDHPublicKey;
-	}
-
-	public DHPublicKey getNextDHPublicKey() {
-		return nextDHPublicKey;
-	}
-
-	public void setCtr(byte[] ctr) {
-		this.ctr = ctr;
-	}
-
-	public byte[] getCtr() {
-		return ctr;
-	}
-
-	public void setEncryptedMsg(byte[] encryptedMsg) {
-		this.encryptedMsg = encryptedMsg;
-	}
-
-	public byte[] getEncryptedMsg() {
-		return encryptedMsg;
 	}
 
 	public void setMac(byte[] mac) {
@@ -105,32 +75,5 @@ public class DataMessage extends EncodedMessageBase {
 
 	public byte[] getOldMACKeys() {
 		return oldMACKeys;
-	}
-
-	private void setT(ByteArrayInputStream stream) throws IOException {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		this.setSenderKeyID(DeserializationUtils.readInt(stream, out));
-		this.setRecipientKeyID(DeserializationUtils.readInt(stream, out));
-		this.setNextDHPublicKey(DeserializationUtils.readDHPublicKey(stream,
-				out));
-		this.setCtr(DeserializationUtils.readCtr(stream, out));
-		this.setEncryptedMsg(DeserializationUtils.readData(stream, out));
-		this.t = out.toByteArray();
-		out.close();
-	}
-
-	public byte[] getT() throws IOException {
-		if (this.t != null)
-			return this.t;
-
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		SerializationUtils.writeInt(out, this.getSenderKeyID());
-		SerializationUtils.writeInt(out, this.getRecipientKeyID());
-		SerializationUtils.writeDHPublicKey(out, this.getNextDHPublicKey());
-		SerializationUtils.writeCtr(out, this.getCtr());
-		SerializationUtils.writeData(out, this.getEncryptedMsg());
-		t = out.toByteArray();
-		out.close();
-		return t;
 	}
 }

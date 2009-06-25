@@ -45,32 +45,47 @@ public final class StateMachine {
 			InvalidKeyException, NoSuchPaddingException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
 		ConnContext ctx = userState.getConnContext(user, account, protocol);
+		logger.debug("Sending message.");
 		switch (ctx.messageState) {
 		case PLAINTEXT:
+			logger.debug("State is PLAINTEXT.");
 			break;
 		case ENCRYPTED:
+			logger.debug("State is ENCRYPTED.");
 			ctx.lastSentMessage = msgText;
 
 			SessionKeys topKeys = ctx.getTopSessionKeys();
 
 			// Computes TA = (keyidA, keyidB, next_dh, ctr, AES-CTRek,ctr(msg))
-			DataMessage msg = new DataMessage();
-			msg.setSenderKeyID(topKeys.localKeyID);
-			msg.setRecipientKeyID(topKeys.remoteKeyID);
-			msg.setNextDHPublicKey((DHPublicKey) topKeys.localPair.getPublic());
-			msg.setCtr(ctx.getSendingCtr());
-			msg.setEncryptedMsg(CryptoUtils.aesEncrypt(topKeys
-					.getSendingAESKey(), msgText.getBytes()));
 
-			// Sends Bob TA, MACmk(TA), oldmackeys
-			msg.setOldMACKeys(ctx.getOldMacKeys());
+			int senderKeyID = topKeys.localKeyID;
+			int receipientKeyID = topKeys.remoteKeyID;
+			DHPublicKey nextDH = (DHPublicKey) topKeys.localPair.getPublic();
+			byte[] ctr = ctx.getSendingCtr();
+			byte[] encryptedMsg = CryptoUtils.aesEncrypt(topKeys
+					.getSendingAESKey(), msgText.getBytes());
 
-			msg.setMac(CryptoUtils.sha256Hmac(msg.getT(), topKeys
-					.getSendingMACKey()));
+			byte[] oldMacKeys = ctx.getOldMacKeys();
+
+			MysteriousT t = new MysteriousT(senderKeyID, receipientKeyID,
+					nextDH, ctr, encryptedMsg);
+
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			t.writeObject(out);
+			byte[] serializedT = out.toByteArray();
+			out.close();
+
+			byte[] receivingmackey = topKeys.getReceivingMACKey();
+			byte[] sendingmackey = topKeys.getSendingMACKey();
+			byte[] mac = CryptoUtils.sha1Hmac(serializedT, sendingmackey,
+					DataLength.MAC);
+
+			DataMessage msg = new DataMessage(2, 0, t, mac, oldMacKeys);
 
 			injectMessage(listener, msg);
 			break;
 		case FINISHED:
+			logger.debug("State is FINISHED.");
 			// TODO Inform the user that the message cannot be sent at this
 			// time.
 			ctx.lastSentMessage = msgText;
@@ -115,7 +130,7 @@ public final class StateMachine {
 		} else if (msgText.startsWith(MessageHeader.V1_KEY_EXCHANGE)) {
 			msgType = MessageType.V1_KEY_EXCHANGE;
 		} else if (msgText.startsWith(MessageHeader.DATA1)
-				|| msgText.startsWith(MessageHeader.DATA1)) {
+				|| msgText.startsWith(MessageHeader.DATA2)) {
 			msgType = MessageType.DATA;
 		} else if (msgText.startsWith(MessageHeader.ERROR)) {
 			msgType = MessageType.ERROR;
@@ -170,7 +185,9 @@ public final class StateMachine {
 			break;
 		case MessageType.V1_KEY_EXCHANGE:
 			throw new UnsupportedOperationException();
+		case MessageType.UKNOWN:
 		default:
+			logger.debug("Wtf??");
 			break;
 		}
 
@@ -183,36 +200,46 @@ public final class StateMachine {
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
 			NoSuchProviderException {
+		logger.debug("Received data message.");
 		switch (ctx.messageState) {
 		case ENCRYPTED:
-			int senderKeyID = msg.getSenderKeyID();
-			int receipientKeyID = msg.getRecipientKeyID();
+			MysteriousT t = msg.t;
+			int senderKeyID = t.senderKeyID;
+			int receipientKeyID = t.recipientKeyID;
 
-			SessionKeys keys = ctx
-					.findSessionKeys(receipientKeyID, senderKeyID);
+			SessionKeys matchingKeys = ctx.findSessionKeys(receipientKeyID,
+					senderKeyID);
 
 			if (senderKeyID == ctx.getTopSessionKeys().remoteKeyID)
-				ctx.rotateRemoteKeys(msg.getNextDHPublicKey());
+				ctx.rotateRemoteKeys(t.nextDHPublicKey);
 
 			if (receipientKeyID == ctx.getTopSessionKeys().localKeyID)
 				ctx.rotateLocalKeys();
 
-			byte[] computedMAC = CryptoUtils.sha256Hmac(msg.getT(), keys
-					.getReceivingMACKey());
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			t.writeObject(out);
+			byte[] serializedT = out.toByteArray();
+			out.close();
+
+			byte[] receivingmackey = matchingKeys.getReceivingMACKey();
+			byte[] sendingmackey = matchingKeys.getSendingMACKey();
+			byte[] computedMAC = CryptoUtils.sha1Hmac(serializedT, receivingmackey,
+					DataLength.MAC);
 
 			if (!Arrays.equals(computedMAC, msg.getMac())) {
 				logger.debug("MAC verification failed.");
 				return;
 			}
 
-			keys.isUsedReceivingMACKey = true;
+			matchingKeys.isUsedReceivingMACKey = true;
 
-			ctx.setReceivingCtr(msg.getCtr());
+			ctx.setReceivingCtr(t.ctr);
 
-			byte[] decryptedMsg = CryptoUtils.aesDecrypt(keys
-					.getReceivingAESKey(), ctx.getReceivingCtr(), msg
-					.getEncryptedMsg());
-			logger.debug("Successfully decrypted message.");
+			byte[] decryptedMsg = CryptoUtils.aesDecrypt(matchingKeys
+					.getReceivingAESKey(), ctx.getReceivingCtr(),
+					t.encryptedMsg);
+			logger.debug("Successfully decrypted message: "
+					+ new String(decryptedMsg));
 			break;
 		case FINISHED:
 		case PLAINTEXT:

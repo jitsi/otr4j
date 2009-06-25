@@ -15,7 +15,6 @@ import java.security.spec.InvalidKeySpecException;
 import javax.crypto.interfaces.DHPublicKey;
 
 import org.bouncycastle.asn1.*;
-
 import net.java.otr4j.Utils;
 import net.java.otr4j.crypto.CryptoConstants;
 import net.java.otr4j.crypto.CryptoUtils;
@@ -29,10 +28,10 @@ public class DeserializationUtils {
 		int type = DeserializationUtils.readShort(in);
 		switch (type) {
 		case CryptoConstants.DSA_PUB_TYPE:
-			BigInteger p = DeserializationUtils.readMpi(in, null);
-			BigInteger q = DeserializationUtils.readMpi(in, null);
-			BigInteger g = DeserializationUtils.readMpi(in, null);
-			BigInteger y = DeserializationUtils.readMpi(in, null);
+			BigInteger p = DeserializationUtils.readMpi(in);
+			BigInteger q = DeserializationUtils.readMpi(in);
+			BigInteger g = DeserializationUtils.readMpi(in);
+			BigInteger y = DeserializationUtils.readMpi(in);
 			DSAPublicKeySpec keySpec = new DSAPublicKeySpec(y, p, q, g);
 			KeyFactory keyFactory = KeyFactory.getInstance("DSA");
 			return keyFactory.generatePublic(keySpec);
@@ -54,23 +53,17 @@ public class DeserializationUtils {
 		return Utils.byteArrayToInt(b);
 	}
 
-	static int readDataLen(ByteArrayInputStream in, ByteArrayOutputStream out)
-			throws IOException {
+	static int readDataLen(ByteArrayInputStream in) throws IOException {
 		byte[] b = new byte[DataLength.DATALEN];
 		in.read(b);
-		if (out != null)
-			out.write(b);
 		return Utils.byteArrayToInt(b);
 	}
 
-	public static byte[] readData(ByteArrayInputStream in,
-			ByteArrayOutputStream out) throws IOException {
-		int len = readDataLen(in, null);
+	public static byte[] readData(ByteArrayInputStream in) throws IOException {
+		int len = readDataLen(in);
 
 		byte[] b = new byte[len];
 		in.read(b);
-		if (out != null)
-			out.write(b);
 		return b;
 	}
 
@@ -80,38 +73,28 @@ public class DeserializationUtils {
 		return b;
 	}
 
-	static BigInteger readMpi(ByteArrayInputStream in, ByteArrayOutputStream out)
-			throws IOException {
-		int len = readDataLen(in, out);
+	static BigInteger readMpi(ByteArrayInputStream in) throws IOException {
+		int len = readDataLen(in);
 
 		byte[] b = new byte[len];
 		in.read(b);
-		if (out != null)
-			out.write(b);
 
 		return new BigInteger(1, Utils.trim(b));
 	}
 
-	public static int readInt(java.io.ByteArrayInputStream stream,
-			ByteArrayOutputStream out) throws IOException {
+	public static int readInt(ByteArrayInputStream stream) throws IOException {
 		byte[] b = new byte[DataLength.INT];
 		stream.read(b);
-		if (out != null)
-			out.write(b);
-
 		return Utils.byteArrayToInt(b);
 	}
 
-	public static byte[] readCtr(ByteArrayInputStream in,
-			ByteArrayOutputStream out) throws IOException {
+	public static byte[] readCtr(ByteArrayInputStream in) throws IOException {
 		byte[] b = new byte[DataLength.CTR];
 		in.read(b);
-		if (out != null)
-			out.write(b);
 		return b;
 	}
 
-	public static byte[] readSignature(java.io.ByteArrayInputStream stream,
+	public static byte[] readSignature(ByteArrayInputStream stream,
 			PublicKey pubKey) throws IOException {
 		if (!pubKey.getAlgorithm().equals("DSA"))
 			throw new UnsupportedOperationException();
@@ -139,29 +122,9 @@ public class DeserializationUtils {
 		return result;
 	}
 
-	public static byte[] readData(ByteArrayInputStream stream)
+	static DHPublicKey readDHPublicKey(ByteArrayInputStream in)
 			throws IOException {
-		return readData(stream, null);
-	}
-
-	public static DHPublicKey readDHPublicKey(ByteArrayInputStream stream)
-			throws IOException {
-		return readDHPublicKey(stream, null);
-	}
-
-	public static int readInt(java.io.ByteArrayInputStream stream)
-			throws IOException {
-		return readInt(stream, null);
-	}
-
-	public static byte[] readCtr(ByteArrayInputStream stream)
-			throws IOException {
-		return readCtr(stream, null);
-	}
-
-	static DHPublicKey readDHPublicKey(ByteArrayInputStream in,
-			ByteArrayOutputStream out) throws IOException {
-		BigInteger gyMpi = DeserializationUtils.readMpi(in, out);
+		BigInteger gyMpi = DeserializationUtils.readMpi(in);
 		try {
 			return CryptoUtils.getDHPublicKey(gyMpi);
 		} catch (Exception ex) {

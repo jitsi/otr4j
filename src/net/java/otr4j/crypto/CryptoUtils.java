@@ -97,6 +97,25 @@ public class CryptoUtils {
 		}
 	}
 
+	public static byte[] sha1Hmac(byte[] b, byte[] key, int length)
+			throws NoSuchAlgorithmException, InvalidKeyException {
+
+		SecretKeySpec keyspec = new SecretKeySpec(key, "HmacSHA1");
+		javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA1");
+		mac.init(keyspec);
+
+		byte[] macBytes = mac.doFinal(b);
+
+		if (length > 0) {
+			byte[] bytes = new byte[length];
+			ByteBuffer buff = ByteBuffer.wrap(macBytes);
+			buff.get(bytes);
+			return bytes;
+		} else {
+			return macBytes;
+		}
+	}
+
 	public static byte[] sha256Hmac160(byte[] b, byte[] key)
 			throws NoSuchAlgorithmException, InvalidKeyException {
 		return sha256Hmac(b, key, 20);
@@ -191,7 +210,7 @@ public class CryptoUtils {
 		SerializationUtils.writeMpi(bos, s);
 		byte[] secbytes = bos.toByteArray();
 		bos.close();
-		
+
 		int len = secbytes.length + 1;
 		ByteBuffer buff = ByteBuffer.allocate(len);
 		buff.put(b);
@@ -207,7 +226,7 @@ public class CryptoUtils {
 			sendbyte = CryptoConstants.HIGH_SEND_BYTE;
 
 		byte[] h1 = h1(sendbyte, s);
-		
+
 		byte[] key = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
 		ByteBuffer buff = ByteBuffer.wrap(h1);
 		buff.get(key);
@@ -226,7 +245,7 @@ public class CryptoUtils {
 			receivebyte = CryptoConstants.HIGH_RECEIVE_BYTE;
 
 		byte[] h1 = h1(receivebyte, s);
-		
+
 		byte[] key = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
 		ByteBuffer buff = ByteBuffer.wrap(h1);
 		buff.get(key);

@@ -21,9 +21,6 @@ public class DataMessageTest extends TestCase {
 		ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
 		DataMessage dataMessage1 = new DataMessage();
 		dataMessage1.readObject(bis);
-
-		
-		assertNotNull(dataMessage1.getCtr());
-		assertNotNull(dataMessage1.getMac());
+		bis.close();
 	}
 }

@@ -18,6 +18,7 @@ public class DHCommitMessageTest extends junit.framework.TestCase {
 		ByteArrayInputStream bis = new ByteArrayInputStream(decodedMessage);
 		DHCommitMessage dhCommit = new DHCommitMessage();
 		dhCommit.readObject(bis);
+		bis.close();
 		
 		assertEquals(dhCommit.getMessageType(), MessageType.DH_COMMIT);
 		assertEquals(dhCommit.getProtocolVersion(), 2);
