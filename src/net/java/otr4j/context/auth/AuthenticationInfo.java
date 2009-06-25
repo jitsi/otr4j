@@ -129,7 +129,7 @@ public class AuthenticationInfo {
 		this.localDHPrivateKeyID = localDHPrivateKeyID;
 	}
 
-	public int getLocalDHPrivateKeyID() {
+	public int getLocalDHKeyPairID() {
 		return localDHPrivateKeyID;
 	}
 

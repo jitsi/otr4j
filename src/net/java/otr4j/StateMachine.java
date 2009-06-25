@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 
 import net.java.otr4j.context.ConnContext;
 import net.java.otr4j.context.MessageState;
+import net.java.otr4j.context.SessionKeys;
 import net.java.otr4j.context.auth.AuthenticationInfo;
 import net.java.otr4j.context.auth.AuthenticationState;
 import net.java.otr4j.crypto.CryptoConstants;
@@ -39,16 +40,35 @@ public final class StateMachine {
 
 	public static void sendingMessage(OTR4jListener listener,
 			UserState userState, String user, String account, String protocol,
-			String msgText) {
+			String msgText) throws NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeyException, NoSuchPaddingException,
+			IllegalBlockSizeException, BadPaddingException, IOException {
 		ConnContext ctx = userState.getConnContext(user, account, protocol);
 		switch (ctx.messageState) {
 		case PLAINTEXT:
 			break;
 		case ENCRYPTED:
 			ctx.lastSentMessage = msgText;
+
+			SessionKeys topKeys = ctx.getTopSessionKeys();
+
+			// Computes TA = (keyidA, keyidB, next_dh, ctr, AES-CTRek,ctr(msg))
+			DataMessage msg = new DataMessage();
+			msg.senderKeyID = topKeys.localKeyID;
+			msg.recipientKeyID = topKeys.remoteKeyID;
+			msg.nextDHPublicKey = (DHPublicKey) topKeys.localPair.getPublic();
+			msg.ctr = topKeys.getSendingCtr();
+			msg.encryptedMsg = CryptoUtils.aesDecrypt(topKeys
+					.getSendingAESKey(), msgText.getBytes());
+			// Sends Bob TA, MACmk(TA), oldmackeys
+			msg.oldMACKeys = ctx.oldMacKeys.toByteArray();
+			
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			break;
 		case FINISHED:
-			// TODO Inform the user that the message cannot be sent at this time.
+			// TODO Inform the user that the message cannot be sent at this
+			// time.
 			ctx.lastSentMessage = msgText;
 			break;
 		}
@@ -157,58 +177,32 @@ public final class StateMachine {
 			OTR4jListener listener, DataMessage msg)
 			throws InvalidKeyException, NoSuchAlgorithmException, IOException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException {
+			IllegalBlockSizeException, BadPaddingException,
+			NoSuchProviderException {
 		switch (ctx.messageState) {
 		case ENCRYPTED:
 			int senderKeyID = msg.senderKeyID;
 			int receipientKeyID = msg.recipientKeyID;
 
-			DHPublicKey remotePublicKey = null;
-			if (senderKeyID == ctx.remotePreviousKeyID) {
-				remotePublicKey = ctx.remotePreviousDHublicKey;
-			} else if (senderKeyID == ctx.remoteCurrentKeyID) {
-				remotePublicKey = ctx.remoteCurrentDHPublicKey;
-			} else if (senderKeyID == ctx.authenticationInfo
-					.getRemoteDHPPublicKeyID()) {
-				remotePublicKey = ctx.authenticationInfo.getRemoteDHPublicKey();
-			}
+			SessionKeys keys = ctx
+					.findSessionKeys(receipientKeyID, senderKeyID);
 
-			if (remotePublicKey == null)
-				return;
+			if (senderKeyID == ctx.getTopSessionKeys().remoteKeyID)
+				ctx.rotateRemoteKeys(msg.nextDHPublicKey);
 
-			KeyPair localKeyPair = null;
-			if (receipientKeyID == ctx.localPreviousKeyID) {
-				localKeyPair = ctx.localPreviousKeyPair;
-			} else if (receipientKeyID == ctx.localCurrentKeyID) {
-				localKeyPair = ctx.localPreviousKeyPair;
-			} else if (receipientKeyID == ctx.authenticationInfo
-					.getLocalDHPrivateKeyID()) {
-				localKeyPair = ctx.authenticationInfo.getLocalDHKeyPair();
-			}
+			if (receipientKeyID == ctx.getTopSessionKeys().localKeyID)
+				ctx.rotateLocalKeys();
 
-			if (localKeyPair == null)
-				return;
+			byte[] computedMAC = CryptoUtils.sha256Hmac(msg.t, keys
+					.getReceivingMACKey());
 
-			BigInteger s = CryptoUtils.generateSecret(
-					localKeyPair.getPrivate(), remotePublicKey);
-
-			Boolean high = ((DHPublicKey) localKeyPair.getPublic()).getY()
-					.abs().compareTo(remotePublicKey.getY().abs()) == 1;
-
-			byte[] receivingAESKey = CryptoUtils.calculateReceivingAESKey(high,
-					s);
-			byte[] receivingMACKey = CryptoUtils
-					.calculateReceivingMACKey(receivingAESKey);
-
-			byte[] computedMAC = CryptoUtils.sha256Hmac(msg.t, receivingMACKey);
 			if (!Arrays.equals(computedMAC, msg.mac)) {
 				logger.debug("MAC verification failed.");
 				return;
 			}
 
-			// TODO do something with this message..
-			byte[] decryptedMsg = CryptoUtils.aesDecrypt(receivingAESKey,
-					msg.encryptedMsg);
+			// byte[] decryptedMsg = CryptoUtils.aesDecrypt(keys
+			// .getReceivingAESKey(), msg.encryptedMsg);
 			logger.debug("Successfully decrypted message.");
 			break;
 		case FINISHED:
@@ -372,14 +366,14 @@ public final class StateMachine {
 			MysteriousM localM = new MysteriousM(auth.getM1p(),
 					localDHPublicKey, auth.getRemoteDHPublicKey(), auth
 							.getLocalLongTermKeyPair().getPublic(), auth
-							.getLocalDHPrivateKeyID());
+							.getLocalDHKeyPairID());
 
 			byte[] localSignature = CryptoUtils.sign(localM.compute(), auth
 					.getLocalLongTermKeyPair().getPrivate());
 
 			// Computes XA = pubA, keyidA, sigA(MA)
 			MysteriousX localX = new MysteriousX(auth.getLocalLongTermKeyPair()
-					.getPublic(), auth.getLocalDHPrivateKeyID(), localSignature);
+					.getPublic(), auth.getLocalDHKeyPairID(), localSignature);
 
 			ByteArrayOutputStream localXbos = new ByteArrayOutputStream();
 			localX.writeObject(localXbos);
@@ -654,7 +648,7 @@ public final class StateMachine {
 					.getPublic();
 			MysteriousM m = new MysteriousM(auth.getM1(), ourDHPublicKey, auth
 					.getRemoteDHPublicKey(), auth.getLocalLongTermKeyPair()
-					.getPublic(), auth.getLocalDHPrivateKeyID());
+					.getPublic(), auth.getLocalDHKeyPairID());
 
 			byte[] mbytes = m.compute();
 			byte[] signature = CryptoUtils.sign(mbytes, auth
@@ -663,7 +657,7 @@ public final class StateMachine {
 			// Computes XB = pubB, keyidB, sigB(MB)
 			logger.debug("Computing X");
 			MysteriousX x = new MysteriousX(auth.getLocalLongTermKeyPair()
-					.getPublic(), auth.getLocalDHPrivateKeyID(), signature);
+					.getPublic(), auth.getLocalDHKeyPairID(), signature);
 
 			ByteArrayOutputStream xstream = new ByteArrayOutputStream();
 			x.writeObject(xstream);
