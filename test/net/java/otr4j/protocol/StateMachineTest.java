@@ -3,6 +3,7 @@ package net.java.otr4j.protocol;
 import net.java.otr4j.Policy;
 import net.java.otr4j.StateMachine;
 import net.java.otr4j.UserState;
+import net.java.otr4j.Utils;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
 
 public class StateMachineTest extends junit.framework.TestCase {
@@ -19,9 +20,9 @@ public class StateMachineTest extends junit.framework.TestCase {
 	}
 
 	private MessageInfo miFromBob = new MessageInfo("Bob", "Alice@Wonderland",
-			"proto");
+			"Scytale");
 	private MessageInfo miFromAlice = new MessageInfo("Alice",
-			"Bob@Wonderland", "proto");
+			"Bob@Wonderland", "Scytale");
 
 	public void testReceivingMessage() throws Exception {
 
@@ -58,9 +59,38 @@ public class StateMachineTest extends junit.framework.TestCase {
 				listener.lastInjectedMessage);
 
 		// We are both secure, send encrypted message.
-		String sentMessage = StateMachine.sendingMessage(listener, usAlice,
+		String sentMessage = StateMachine
+				.sendingMessage(
+						listener,
+						usAlice,
+						miFromBob.user,
+						miFromBob.account,
+						miFromBob.protocol,
+						"Hello Bob, this new IM software you installed on my PC the other day says we are talking Off-the-Record, what is that supposed to mean?");
+		assertFalse(Utils.IsNullOrEmpty(sentMessage));
+
+		// Receive encrypted message.
+		receivedMessage = StateMachine.receivingMessage(listener, usBob,
+				miFromAlice.user, miFromAlice.account, miFromAlice.protocol,
+				sentMessage);
+
+		// Send encrypted message.
+		sentMessage = StateMachine
+				.sendingMessage(listener, usBob, miFromAlice.user,
+						miFromAlice.account, miFromAlice.protocol,
+						"Hey Alice, it means that our communication is encrypted and authenticated.");
+		assertFalse(Utils.IsNullOrEmpty(sentMessage));
+
+		// Receive encrypted message.
+		receivedMessage = StateMachine.receivingMessage(listener, usAlice,
 				miFromBob.user, miFromBob.account, miFromBob.protocol,
-				"Hello Bob, we are talking encrypted now.");
+				sentMessage);
+
+		// Send encrypted message.
+		sentMessage = StateMachine.sendingMessage(listener, usAlice,
+				miFromBob.user, miFromBob.account, miFromBob.protocol,
+				"Oh, is that all?");
+		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
 		receivedMessage = StateMachine.receivingMessage(listener, usBob,
@@ -75,7 +105,8 @@ public class StateMachineTest extends junit.framework.TestCase {
 						miFromAlice.user,
 						miFromAlice.account,
 						miFromAlice.protocol,
-						"Great, let's exchange some messages and see if that works as expected. Let's count to 3.");
+						"Actually no, our communication has the properties of perfect forward secrecy and deniable authentication.");
+		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
 		receivedMessage = StateMachine.receivingMessage(listener, usAlice,
@@ -84,26 +115,9 @@ public class StateMachineTest extends junit.framework.TestCase {
 
 		// Send encrypted message.
 		sentMessage = StateMachine.sendingMessage(listener, usAlice,
-				miFromBob.user, miFromBob.account, miFromBob.protocol, "1");
-
-		// Receive encrypted message.
-		receivedMessage = StateMachine.receivingMessage(listener, usBob,
-				miFromAlice.user, miFromAlice.account, miFromAlice.protocol,
-				sentMessage);
-
-		// Send encrypted message.
-		sentMessage = StateMachine.sendingMessage(listener, usBob,
-				miFromAlice.user, miFromAlice.account, miFromAlice.protocol,
-				"2");
-
-		// Receive encrypted message.
-		receivedMessage = StateMachine.receivingMessage(listener, usAlice,
 				miFromBob.user, miFromBob.account, miFromBob.protocol,
-				sentMessage);
-
-		// Send encrypted message.
-		sentMessage = StateMachine.sendingMessage(listener, usAlice,
-				miFromBob.user, miFromBob.account, miFromBob.protocol, "3");
+				"Oh really?!");
+		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
 		receivedMessage = StateMachine.receivingMessage(listener, usBob,

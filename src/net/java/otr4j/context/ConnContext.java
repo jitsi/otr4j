@@ -30,7 +30,7 @@ public class ConnContext {
 
 	private static Logger logger = Logger.getLogger(ConnContext.class);
 
-	interface KeyIndex {
+	interface SessionKeysIndex {
 		public final int Previous = 0;
 		public final int Current = 1;
 	}
@@ -46,18 +46,21 @@ public class ConnContext {
 
 		for (int i = 0; i < sessionKeys.length; i++) {
 			for (int j = 0; j < sessionKeys[i].length; j++) {
-				sessionKeys[i][j] = new SessionKeys();
+				int localKeyIndex = i;
+				int remoteKeyIndex = j;
+				sessionKeys[i][j] = new SessionKeys(localKeyIndex,
+						remoteKeyIndex);
 			}
 		}
 	}
 
-	public SessionKeys getTopSessionKeys() {
-		return sessionKeys[KeyIndex.Current][KeyIndex.Current];
+	public SessionKeys getMostRecentSessionKeys() {
+		return sessionKeys[SessionKeysIndex.Current][SessionKeysIndex.Current];
 	}
 
 	public SessionKeys[][] sessionKeys = new SessionKeys[2][2];
-
-	public SessionKeys findSessionKeys(int localKeyID, int remoteKeyID) {
+	
+	public SessionKeys findSessionKeysByID(int localKeyID, int remoteKeyID) {
 		logger
 				.info("Searching for session keys with (localKeyID, remoteKeyID) = ("
 						+ localKeyID + "," + remoteKeyID + ")");
@@ -94,40 +97,58 @@ public class ConnContext {
 	public void rotateRemoteKeys(DHPublicKey pubKey)
 			throws NoSuchAlgorithmException, IOException, InvalidKeyException {
 
-		SessionKeys sess1 = sessionKeys[KeyIndex.Current][KeyIndex.Previous];
-		if (sess1.getIsUsedReceivingMACKey())
+		logger.info("Rotating remote keys.");
+		SessionKeys sess1 = sessionKeys[SessionKeysIndex.Current][SessionKeysIndex.Previous];
+		if (sess1.getIsUsedReceivingMACKey()) {
+			logger
+					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			oldMacKeys.add(sess1.getReceivingMACKey());
+		}
 
-		SessionKeys sess2 = sessionKeys[KeyIndex.Previous][KeyIndex.Previous];
-		if (sess2.getIsUsedReceivingMACKey())
+		SessionKeys sess2 = sessionKeys[SessionKeysIndex.Previous][SessionKeysIndex.Previous];
+		if (sess2.getIsUsedReceivingMACKey()) {
+			logger
+					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			oldMacKeys.add(sess2.getReceivingMACKey());
+		}
 
-		sessionKeys[KeyIndex.Current][KeyIndex.Previous] = sessionKeys[KeyIndex.Current][KeyIndex.Current];
-		sessionKeys[KeyIndex.Previous][KeyIndex.Previous] = sessionKeys[KeyIndex.Previous][KeyIndex.Current];
-		sessionKeys[KeyIndex.Current][KeyIndex.Current]
-				.setRemoteDHPublicKey(pubKey);
-		sessionKeys[KeyIndex.Previous][KeyIndex.Current]
-				.setRemoteDHPublicKey(pubKey);
+		SessionKeys sess3 = sessionKeys[SessionKeysIndex.Current][SessionKeysIndex.Current];
+		sess1.setRemoteDHPublicKey(sess3.remoteKey, sess3.remoteKeyID);
+
+		SessionKeys sess4 = sessionKeys[SessionKeysIndex.Previous][SessionKeysIndex.Current];
+		sess2.setRemoteDHPublicKey(sess4.remoteKey, sess4.remoteKeyID);
+
+		sess3.setRemoteDHPublicKey(pubKey, sess3.remoteKeyID + 1);
+		sess4.setRemoteDHPublicKey(pubKey, sess4.remoteKeyID + 1);
 	}
 
 	public void rotateLocalKeys() throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			IOException, InvalidKeyException {
 
-		SessionKeys sess1 = sessionKeys[KeyIndex.Previous][KeyIndex.Current];
-		if (sess1.getIsUsedReceivingMACKey())
+		logger.info("Rotating local keys.");
+		SessionKeys sess1 = sessionKeys[SessionKeysIndex.Previous][SessionKeysIndex.Current];
+		if (sess1.getIsUsedReceivingMACKey()) {
+			logger
+					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			oldMacKeys.add(sess1.getReceivingMACKey());
+		}
 
-		SessionKeys sess2 = sessionKeys[KeyIndex.Previous][KeyIndex.Previous];
-		if (sess2.getIsUsedReceivingMACKey())
+		SessionKeys sess2 = sessionKeys[SessionKeysIndex.Previous][SessionKeysIndex.Previous];
+		if (sess2.getIsUsedReceivingMACKey()) {
+			logger
+					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			oldMacKeys.add(sess2.getReceivingMACKey());
+		}
 
-		sessionKeys[KeyIndex.Previous][KeyIndex.Current] = sessionKeys[KeyIndex.Current][KeyIndex.Current];
-		sessionKeys[KeyIndex.Previous][KeyIndex.Previous] = sessionKeys[KeyIndex.Current][KeyIndex.Previous];
+		SessionKeys sess3 = sessionKeys[SessionKeysIndex.Current][SessionKeysIndex.Current];
+		sess1.setLocalPair(sess3.localPair, sess3.localKeyID);
+		SessionKeys sess4 = sessionKeys[SessionKeysIndex.Current][SessionKeysIndex.Previous];
+		sess2.setLocalPair(sess4.localPair, sess4.localKeyID);
 
 		KeyPair newPair = CryptoUtils.generateDHKeyPair();
-		sessionKeys[KeyIndex.Current][KeyIndex.Current].setLocalPair(newPair);
-		sessionKeys[KeyIndex.Current][KeyIndex.Previous].setLocalPair(newPair);
+		sess3.setLocalPair(newPair, sess3.localKeyID + 1);
+		sess4.setLocalPair(newPair, sess4.localKeyID + 1);
 	}
 
 }

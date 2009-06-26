@@ -22,17 +22,34 @@ public class SessionKeys {
 
 	private static Logger logger = Logger.getLogger(SessionKeys.class);
 
-	public void setLocalPair(KeyPair keyPair) {
+	private String keyDescription;
+
+	public SessionKeys(int localKeyIndex, int remoteKeyIndex) {
+		if (localKeyIndex == 0)
+			keyDescription = "(Previous local, ";
+		else
+			keyDescription = "(Most recent local, ";
+
+		if (remoteKeyIndex == 0)
+			keyDescription += "Previous remote)";
+		else
+			keyDescription += "Most recent remote)";
+
+	}
+
+	public void setLocalPair(KeyPair keyPair, int localPairKeyID) {
 		this.localPair = keyPair;
-		this.localKeyID = this.localKeyID + 1;
-		logger.info("Local key pair set, current local key ID: " + this.localKeyID);
+		this.localKeyID = localPairKeyID;
+		logger.info(keyDescription + " current local key ID: "
+				+ this.localKeyID);
 		this.reset();
 	}
 
-	public void setRemoteDHPublicKey(DHPublicKey pubKey) {
+	public void setRemoteDHPublicKey(DHPublicKey pubKey, int remoteKeyID) {
 		this.remoteKey = pubKey;
-		this.remoteKeyID = this.remoteKeyID + 1;
-		logger.info("Remote D-H public key set, current remote key ID: " + this.remoteKeyID);
+		this.remoteKeyID = remoteKeyID;
+		logger.info(keyDescription + " current remote key ID: "
+				+ this.remoteKeyID);
 		this.reset();
 	}
 
@@ -65,7 +82,7 @@ public class SessionKeys {
 	}
 
 	private void reset() {
-		logger.info("Resetting session keys.");
+		logger.info("Resetting " + keyDescription + " session keys.");
 		Arrays.fill(this.sendingCtr, (byte) 0x00);
 		Arrays.fill(this.receivingCtr, (byte) 0x00);
 		this.sendingAESKey = null;

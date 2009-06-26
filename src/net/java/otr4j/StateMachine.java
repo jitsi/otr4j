@@ -44,7 +44,8 @@ public final class StateMachine {
 			InvalidKeyException, NoSuchPaddingException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
 		ConnContext ctx = userState.getConnContext(user, account, protocol);
-		logger.info(account + " sends a message to " + user + ".");
+		logger.info(account + " sends a message to " + user + " throught "
+				+ protocol + ".");
 		switch (ctx.messageState) {
 		case PLAINTEXT:
 			logger.info("Message state is PLAINTEXT.");
@@ -54,19 +55,23 @@ public final class StateMachine {
 			logger.info("Message state is ENCRYPTED.");
 			ctx.lastSentMessage = msgText;
 
-			logger.info("Getting top keys.");
-			SessionKeys topKeys = ctx.getTopSessionKeys();
-
+			logger.info("Getting encryption keys");
+			SessionKeys encryptionKeys = ctx.sessionKeys[0][1];
+			logger.info("Getting most recent keys.");
+			SessionKeys mostRecentKeys = ctx.getMostRecentSessionKeys();
 			// Computes TA = (keyidA, keyidB, next_dh, ctr, AES-CTRek,ctr(msg))
 
-			int senderKeyID = topKeys.localKeyID;
-			int receipientKeyID = topKeys.remoteKeyID;
-			DHPublicKey nextDH = (DHPublicKey) topKeys.localPair.getPublic();
-			topKeys.incrementSendingCtr();
-			byte[] ctr = topKeys.getSendingCtr();
+			int senderKeyID = encryptionKeys.localKeyID;
+			int receipientKeyID = encryptionKeys.remoteKeyID;
+			DHPublicKey nextDH = (DHPublicKey) mostRecentKeys.localPair
+					.getPublic();
+			encryptionKeys.incrementSendingCtr();
+			byte[] ctr = encryptionKeys.getSendingCtr();
 			byte[] msgBytes = msgText.getBytes();
-			logger.info("Encrypting message.");
-			byte[] encryptedMsg = CryptoUtils.aesEncrypt(topKeys
+			logger
+					.info("Encrypting message with keyids (localKeyID, remoteKeyID) = ("
+							+ senderKeyID + ", " + receipientKeyID + ")");
+			byte[] encryptedMsg = CryptoUtils.aesEncrypt(encryptionKeys
 					.getSendingAESKey(), ctr, msgBytes);
 
 			logger.info("Getting MAC keys to reveal.");
@@ -81,7 +86,7 @@ public final class StateMachine {
 			byte[] serializedT = out.toByteArray();
 			out.close();
 
-			byte[] sendingmackey = topKeys.getSendingMACKey();
+			byte[] sendingmackey = encryptionKeys.getSendingMACKey();
 			logger.info("Calculating MAC(T).");
 			byte[] mac = CryptoUtils.sha1Hmac(serializedT, sendingmackey,
 					DataLength.MAC);
@@ -156,7 +161,7 @@ public final class StateMachine {
 			break;
 		case MessageType.DH_COMMIT:
 			logger.info(account + " received a D-H commit message from " + user
-					+ ".");
+					+ " throught " + protocol + ".");
 			DHCommitMessage dhCommit = new DHCommitMessage();
 			dhCommit.readObject(new ByteArrayInputStream(EncodedMessageUtils
 					.decodeMessage(msgText)));
@@ -164,7 +169,7 @@ public final class StateMachine {
 			break;
 		case MessageType.DH_KEY:
 			logger.info(account + " received a D-H key message from " + user
-					+ ".");
+					+ " throught " + protocol + ".");
 			DHKeyMessage dhKey = new DHKeyMessage();
 			dhKey.readObject(new ByteArrayInputStream(EncodedMessageUtils
 					.decodeMessage(msgText)));
@@ -172,7 +177,7 @@ public final class StateMachine {
 			break;
 		case MessageType.REVEALSIG:
 			logger.info(account + " received a reveal signature message from "
-					+ user + ".");
+					+ user + " throught " + protocol + ".");
 			RevealSignatureMessage revealSigMessage = new RevealSignatureMessage();
 			revealSigMessage.readObject(new ByteArrayInputStream(
 					EncodedMessageUtils.decodeMessage(msgText)));
@@ -181,7 +186,7 @@ public final class StateMachine {
 			break;
 		case MessageType.SIGNATURE:
 			logger.info(account + " received a signature message from " + user
-					+ ".");
+					+ " throught " + protocol + ".");
 			SignatureMessage sigMessage = new SignatureMessage();
 			sigMessage.readObject(new ByteArrayInputStream(EncodedMessageUtils
 					.decodeMessage(msgText)));
@@ -189,18 +194,18 @@ public final class StateMachine {
 			break;
 		case MessageType.ERROR:
 			logger.info(account + " received an error message from " + user
-					+ ".");
+					+ " throught " + protocol + ".");
 			receivingErrorMessage(ctx, listener, new ErrorMessage(msgText));
 			logger.info("User needs to know nothing about Query messages.");
 			break;
 		case MessageType.PLAINTEXT:
 			logger.info(account + " received a plaintext message from " + user
-					+ ".");
+					+ " throught " + protocol + ".");
 			return receivingPlainTextMessage(ctx, listener,
 					new PlainTextMessage(msgText));
 		case MessageType.QUERY:
 			logger.info(account + " received a query message from " + user
-					+ ".");
+					+ " throught " + protocol + ".");
 			receivingQueryMessage(ctx, listener, new QueryMessage(msgText));
 			logger.info("User needs to know nothing about Query messages.");
 			break;
@@ -231,8 +236,13 @@ public final class StateMachine {
 			int senderKeyID = t.senderKeyID;
 			int receipientKeyID = t.recipientKeyID;
 
-			SessionKeys matchingKeys = ctx.findSessionKeys(receipientKeyID,
+			SessionKeys matchingKeys = ctx.findSessionKeysByID(receipientKeyID,
 					senderKeyID);
+
+			if (matchingKeys == null) {
+				logger.error("No matching keys found!!!");
+				return;
+			}
 
 			logger.info("Transforming T to byte[] to calculate it's HmacSHA1.");
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -245,7 +255,7 @@ public final class StateMachine {
 					receivingmackey, DataLength.MAC);
 
 			if (!Arrays.equals(computedMAC, msg.getMac())) {
-				logger.info("MAC verification failed.");
+				logger.error("MAC verification failed.");
 				return;
 			}
 
@@ -257,7 +267,15 @@ public final class StateMachine {
 			byte[] decryptedMsg = CryptoUtils.aesDecrypt(matchingKeys
 					.getReceivingAESKey(), matchingKeys.getReceivingCtr(),
 					t.encryptedMsg);
-			logger.info("Decrypted message: " + new String(decryptedMsg));
+			logger.info("Decrypted message: \"" + new String(decryptedMsg)
+					+ "\"");
+
+			SessionKeys mostRecent = ctx.getMostRecentSessionKeys();
+			if (mostRecent.localKeyID == receipientKeyID)
+				ctx.rotateLocalKeys();
+
+			if (mostRecent.remoteKeyID == senderKeyID)
+				ctx.rotateRemoteKeys(t.nextDHPublicKey);
 			break;
 		case FINISHED:
 		case PLAINTEXT:
@@ -311,7 +329,7 @@ public final class StateMachine {
 			// Uses pubA to verify sigA(MA)
 			if (!CryptoUtils.verify(remoteM.compute(), remoteX
 					.getLongTermPublicKey(), remoteX.getSignature())) {
-				logger.info("Signature verification failed.");
+				logger.error("Signature verification failed.");
 				return;
 			}
 			logger.info("Signature verification succeeded.");
@@ -405,7 +423,7 @@ public final class StateMachine {
 			// Uses pubB to verify sigB(MB)
 			if (!CryptoUtils.verify(remoteM.compute(), remoteX
 					.getLongTermPublicKey(), remoteX.getSignature())) {
-				logger.info("Signature verification failed.");
+				logger.error("Signature verification failed.");
 				return;
 			}
 			logger.info("Signature verification succeeded.");
@@ -452,13 +470,23 @@ public final class StateMachine {
 	}
 
 	private static void goSecure(ConnContext ctx, KeyPair keyPair,
-			DHPublicKey pubKey, BigInteger s) {
+			DHPublicKey pubKey, BigInteger s) throws NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException {
 
 		logger.info("Setting most recent session keys from auth.");
-		SessionKeys topKeys = ctx.getTopSessionKeys();
-		topKeys.setLocalPair(keyPair);
-		topKeys.setRemoteDHPublicKey(pubKey);
-		topKeys.setS(s);
+		for (int i = 0; i < ctx.sessionKeys[0].length; i++) {
+			SessionKeys current = ctx.sessionKeys[0][i];
+			current.setLocalPair(keyPair, 1);
+			current.setRemoteDHPublicKey(pubKey, 1);
+			current.setS(s);
+		}
+
+		KeyPair nextDH = CryptoUtils.generateDHKeyPair();
+		for (int i = 0; i < ctx.sessionKeys[1].length; i++) {
+			SessionKeys current = ctx.sessionKeys[1][i];
+			current.setRemoteDHPublicKey(pubKey, 1);
+			current.setLocalPair(nextDH, 2);
+		}
 
 		ctx.authenticationInfo.reset();
 		ctx.messageState = MessageState.ENCRYPTED;
@@ -723,7 +751,7 @@ public final class StateMachine {
 			// Sends Alice r, AESc(XB), MACm2(AESc(XB))
 			auth.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getC(), null,
 					xbytes));
-			
+
 			auth.setLocalXEncryptedMac(CryptoUtils.sha256Hmac160(auth
 					.getLocalXEncrypted(), auth.getM2()));
 
