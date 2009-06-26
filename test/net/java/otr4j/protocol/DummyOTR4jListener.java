@@ -26,26 +26,27 @@ public class DummyOTR4jListener implements OTR4jListener {
 
 	@Override
 	public void injectMessage(String msg) {
+
+		this.lastInjectedMessage = msg;
 		String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10) + "..."
 				: msg;
-		this.lastInjectedMessage = msg;
-		logger.debug("IM injects message: " + msgDisplay);
+		logger.info("IM injects message: " + msgDisplay);
 	}
 
 	@Override
 	public void showError(String error) {
-		logger.debug("IM shows error to user: " + error);
+		logger.error("IM shows error to user: " + error);
 	}
 
 	@Override
 	public void showWarning(String warning) {
-		logger.debug("IM shows warning to user: " + warning);
+		logger.warn("IM shows warning to user: " + warning);
 	}
 
 	@Override
 	public KeyPair getKeyPair(String account, String protocol)
 			throws NoSuchAlgorithmException {
-		logger.debug("IM generates a DSA key pair.");
+		logger.info("IM generates a DSA key pair.");
 		return CryptoUtils.generateDsaKeyPair();
 	}
 

@@ -1,7 +1,5 @@
 package net.java.otr4j.crypto;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
@@ -30,8 +28,6 @@ import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-
-import net.java.otr4j.message.encoded.SerializationUtils;
 
 public class CryptoUtils {
 
@@ -203,60 +199,5 @@ public class CryptoUtils {
 		signer.initVerify(pubKey);
 		signer.update(b);
 		return (signer.verify(signature));
-	}
-
-	private static byte[] h1(byte b, BigInteger s)
-			throws NoSuchAlgorithmException, IOException {
-
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		SerializationUtils.writeMpi(bos, s);
-		byte[] secbytes = bos.toByteArray();
-		bos.close();
-
-		int len = secbytes.length + 1;
-		ByteBuffer buff = ByteBuffer.allocate(len);
-		buff.put(b);
-		buff.put(secbytes);
-		byte[] result = CryptoUtils.sha1Hash(buff.array());
-		return result;
-	}
-
-	public static byte[] calculateSendingAESKey(Boolean high, BigInteger s)
-			throws IOException, NoSuchAlgorithmException {
-
-		byte sendbyte = CryptoConstants.LOW_SEND_BYTE;
-		if (high)
-			sendbyte = CryptoConstants.HIGH_SEND_BYTE;
-
-		byte[] h1 = h1(sendbyte, s);
-
-		byte[] key = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
-		ByteBuffer buff = ByteBuffer.wrap(h1);
-		buff.get(key);
-		return key;
-	}
-
-	public static byte[] calculateSendingMACKey(byte[] sendingAESKey)
-			throws NoSuchAlgorithmException {
-		return sha1Hash(sendingAESKey);
-	}
-
-	public static byte[] calculateReceivingAESKey(Boolean high, BigInteger s)
-			throws NoSuchAlgorithmException, IOException {
-		byte receivebyte = CryptoConstants.LOW_RECEIVE_BYTE;
-		if (high)
-			receivebyte = CryptoConstants.HIGH_RECEIVE_BYTE;
-
-		byte[] h1 = h1(receivebyte, s);
-
-		byte[] key = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
-		ByteBuffer buff = ByteBuffer.wrap(h1);
-		buff.get(key);
-		return key;
-	}
-
-	public static byte[] calculateReceivingMACKey(byte[] receivingAESKey)
-			throws NoSuchAlgorithmException {
-		return sha1Hash(receivingAESKey);
 	}
 }

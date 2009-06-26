@@ -15,6 +15,19 @@ public abstract class EncodedMessageBase extends MessageBase {
 	public abstract void readObject(ByteArrayInputStream stream)
 			throws IOException;
 
+	public String toUnsafeString() throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		try {
+			this.writeObject(bos);
+		} catch (IOException e) {
+			return super.toString();
+		}
+
+		String encodedMessage = EncodedMessageUtils.encodeMessage(bos
+				.toByteArray());
+		return encodedMessage;
+	}
+
 	public void setProtocolVersion(int protocolVersion) {
 		this.protocolVersion = protocolVersion;
 	}

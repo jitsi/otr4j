@@ -1,7 +1,9 @@
 package net.java.otr4j.context.auth;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -16,13 +18,14 @@ import org.apache.log4j.Logger;
 import net.java.otr4j.Utils;
 import net.java.otr4j.crypto.CryptoConstants;
 import net.java.otr4j.crypto.CryptoUtils;
+import net.java.otr4j.message.encoded.SerializationUtils;
 
 public class AuthenticationInfo {
 
 	private static Logger logger = Logger.getLogger(AuthenticationInfo.class);
 
 	public AuthenticationInfo() {
-		this.setAuthenticationState(AuthenticationState.NONE);
+		this.reset();
 	}
 
 	private AuthenticationState authenticationState;
@@ -35,6 +38,7 @@ public class AuthenticationInfo {
 
 	private KeyPair localDHKeyPair;
 	private int localDHPrivateKeyID;
+	private byte[] localDHPublicKeyBytes;
 	private byte[] localDHPublicKeyHash;
 	private byte[] localDHPublicKeyEncrypted;
 
@@ -51,29 +55,29 @@ public class AuthenticationInfo {
 
 	private KeyPair localLongTermKeyPair;
 
-	public void initialize() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeyException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException {
-		this.setAuthenticationState(AuthenticationState.NONE);
+	public void reset() {
+		logger.info("Resetting authentication state.");
+		authenticationState = AuthenticationState.NONE;
+		r = null;
 
-		logger.debug("Picking random key r.");
-		this.setR(Utils.getRandomBytes(CryptoConstants.AES_KEY_BYTE_LENGTH));
+		remoteDHPublicKey = null;
+		remoteDHPPublicKeyID = -1;
+		remoteDHPublicKeyEncrypted = null;
+		remoteDHPublicKeyHash = null;
 
-		logger.debug("Generating own D-H key pair.");
-		this.setLocalDHKeyPair(CryptoUtils.generateDHKeyPair());
-		
-		logger.debug("Setting our keyID to 1.");
-		this.setLocalDHPrivateKeyID(1);
+		localDHKeyPair = null;
+		localDHPrivateKeyID = 1;
+		localDHPublicKeyBytes = null;
+		localDHPublicKeyHash = null;
+		localDHPublicKeyEncrypted = null;
 
-		byte[] gx = ((DHPublicKey) getLocalDHKeyPair().getPublic()).getY()
-				.toByteArray();
+		s = null;
+		c = m1 = m2 = cp = m1p = m2p = null;
 
-		logger.debug("Hashing gx");
-		this.setLocalDHPublicKeyHash(CryptoUtils.sha256Hash(gx));
+		localXEncrypted = null;
+		localXEncryptedMac = null;
 
-		logger.debug("Encrypting gx");
-		this.setLocalDHPublicKeyEncrypted(CryptoUtils.aesEncrypt(getR(), null, gx));
+		localLongTermKeyPair = null;
 	}
 
 	public void setAuthenticationState(AuthenticationState authenticationState) {
@@ -84,11 +88,11 @@ public class AuthenticationInfo {
 		return authenticationState;
 	}
 
-	public void setR(byte[] r) {
-		this.r = r;
-	}
-
 	public byte[] getR() {
+		if (r == null) {
+			logger.info("Picking random key r.");
+			r = Utils.getRandomBytes(CryptoConstants.AES_KEY_BYTE_LENGTH);
+		}
 		return r;
 	}
 
@@ -100,8 +104,8 @@ public class AuthenticationInfo {
 		return remoteDHPublicKey;
 	}
 
-	public void setRemoteDHPublicKeyEncrypted(
-			byte[] remoteDHPublicKeyEncrypted) {
+	public void setRemoteDHPublicKeyEncrypted(byte[] remoteDHPublicKeyEncrypted) {
+		logger.info("Storing encrypted remote public key.");
 		this.remoteDHPublicKeyEncrypted = remoteDHPublicKeyEncrypted;
 	}
 
@@ -110,6 +114,7 @@ public class AuthenticationInfo {
 	}
 
 	public void setRemoteDHPublicKeyHash(byte[] remoteDHPublicKeyHash) {
+		logger.info("Storing encrypted remote public key hash.");
 		this.remoteDHPublicKeyHash = remoteDHPublicKeyHash;
 	}
 
@@ -117,101 +122,143 @@ public class AuthenticationInfo {
 		return remoteDHPublicKeyHash;
 	}
 
-	public void setLocalDHKeyPair(KeyPair localDHKeyPair) {
-		this.localDHKeyPair = localDHKeyPair;
-	}
-
-	public KeyPair getLocalDHKeyPair() {
+	public KeyPair getLocalDHKeyPair() throws NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException {
+		if (localDHKeyPair == null) {
+			localDHKeyPair = CryptoUtils.generateDHKeyPair();
+			logger.info("Generated local D-H key pair.");
+		}
 		return localDHKeyPair;
-	}
-
-	public void setLocalDHPrivateKeyID(int localDHPrivateKeyID) {
-		this.localDHPrivateKeyID = localDHPrivateKeyID;
 	}
 
 	public int getLocalDHKeyPairID() {
 		return localDHPrivateKeyID;
 	}
 
-	public void setLocalDHPublicKeyHash(byte[] localDHPublicKeyHash) {
-		this.localDHPublicKeyHash = localDHPublicKeyHash;
-	}
-
-	public byte[] getLocalDHPublicKeyHash() {
+	public byte[] getLocalDHPublicKeyHash() throws NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException {
+		if (localDHPublicKeyHash == null) {
+			localDHPublicKeyHash = CryptoUtils
+					.sha256Hash(getLocalDHPublicKeyBytes());
+			logger.info("Hashed local D-H public key.");
+		}
 		return localDHPublicKeyHash;
 	}
 
-	public void setLocalDHPublicKeyEncrypted(byte[] localDHPublicKeyEncrypted) {
-		this.localDHPublicKeyEncrypted = localDHPublicKeyEncrypted;
-	}
-
-	public byte[] getLocalDHPublicKeyEncrypted() {
+	public byte[] getLocalDHPublicKeyEncrypted() throws InvalidKeyException,
+			NoSuchAlgorithmException, NoSuchPaddingException,
+			InvalidAlgorithmParameterException, IllegalBlockSizeException,
+			BadPaddingException, NoSuchProviderException {
+		if (localDHPublicKeyEncrypted == null) {
+			localDHPublicKeyEncrypted = CryptoUtils.aesEncrypt(getR(), null,
+					getLocalDHPublicKeyBytes());
+			logger.info("Encrypted our D-H public key.");
+		}
 		return localDHPublicKeyEncrypted;
 	}
 
-	public void setS(BigInteger s) throws NoSuchAlgorithmException, IOException {
-		this.s = s;
-		this.setC(AuthenticationInfoUtils.getC(s));
-		this.setCp(AuthenticationInfoUtils.getCp(s));
-		this.setM1(AuthenticationInfoUtils.getM1(s));
-		this.setM1p(AuthenticationInfoUtils.getM1p(s));
-		this.setM2(AuthenticationInfoUtils.getM2(s));
-		this.setM2p(AuthenticationInfoUtils.getM2p(s));
-	}
-
-	public BigInteger getS() {
+	public BigInteger getS() throws InvalidKeyException,
+			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
+			NoSuchProviderException {
+		if (s == null) {
+			s = CryptoUtils.generateSecret(this.getLocalDHKeyPair()
+					.getPrivate(), this.getRemoteDHPublicKey());
+			logger.info("Generated shared secret.");
+		}
 		return s;
 	}
 
-	private void setC(byte[] c) {
-		this.c = c;
-	}
-
-	public byte[] getC() {
+	public byte[] getC() throws NoSuchAlgorithmException, IOException {
+		if (c != null)
+			return c;
+		
+		byte[] h2 = h2(CryptoConstants.C_START, s);
+		ByteBuffer buff = ByteBuffer.wrap(h2);
+		this.c = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
+		buff.get(this.c);
+		logger.info("Computed c.");
 		return c;
+
 	}
 
-	private void setM1(byte[] m1) {
+	public byte[] getM1() throws NoSuchAlgorithmException, IOException,
+			InvalidKeyException, InvalidAlgorithmParameterException,
+			NoSuchProviderException {
+		if (m1 != null)
+			return m1;
+		
+		byte[] h2 = h2(CryptoConstants.M1_START, this.getS());
+		ByteBuffer buff = ByteBuffer.wrap(h2);
+		byte[] m1 = new byte[CryptoConstants.SHA256_HMAC_KEY_BYTE_LENGTH];
+		buff.get(m1);
+		logger.info("Computed m1.");
 		this.m1 = m1;
-	}
-
-	public byte[] getM1() {
 		return m1;
 	}
 
-	private void setM2(byte[] m2) {
-		this.m2 = m2;
-	}
+	public byte[] getM2() throws NoSuchAlgorithmException, IOException,
+			InvalidKeyException, InvalidAlgorithmParameterException,
+			NoSuchProviderException {
+		if (m2 != null)
+			return m2;
 
-	public byte[] getM2() {
+		byte[] h2 = h2(CryptoConstants.M2_START, this.getS());
+		ByteBuffer buff = ByteBuffer.wrap(h2);
+		byte[] m2 = new byte[CryptoConstants.SHA256_HMAC_KEY_BYTE_LENGTH];
+		buff.get(m2);
+		logger.info("Computed m2.");
+		this.m2 = m2;
 		return m2;
 	}
 
-	private void setCp(byte[] cp) {
-		this.cp = cp;
-	}
+	public byte[] getCp() throws NoSuchAlgorithmException, IOException,
+			InvalidKeyException, InvalidAlgorithmParameterException,
+			NoSuchProviderException {
+		if (cp != null)
+			return cp;
 
-	public byte[] getCp() {
+		byte[] h2 = h2(CryptoConstants.C_START, this.getS());
+		ByteBuffer buff = ByteBuffer.wrap(h2);
+		byte[] cp = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
+		buff.position(CryptoConstants.AES_KEY_BYTE_LENGTH);
+		buff.get(cp);
+		logger.info("Computed c'.");
+		this.cp = cp;
 		return cp;
 	}
 
-	private void setM1p(byte[] m1p) {
-		this.m1p = m1p;
-	}
+	public byte[] getM1p() throws NoSuchAlgorithmException, IOException,
+			InvalidKeyException, InvalidAlgorithmParameterException,
+			NoSuchProviderException {
+		if (m1p != null)
+			return m1p;
 
-	public byte[] getM1p() {
+		byte[] h2 = h2(CryptoConstants.M1p_START, this.getS());
+		ByteBuffer buff = ByteBuffer.wrap(h2);
+		byte[] m1p = new byte[CryptoConstants.SHA256_HMAC_KEY_BYTE_LENGTH];
+		buff.get(m1p);
+		this.m1p = m1p;
+		logger.info("Computed m1'.");
 		return m1p;
 	}
 
-	private void setM2p(byte[] m2p) {
-		this.m2p = m2p;
-	}
+	public byte[] getM2p() throws NoSuchAlgorithmException, IOException,
+			InvalidKeyException, InvalidAlgorithmParameterException,
+			NoSuchProviderException {
+		if (m2p != null)
+			return m2p;
 
-	public byte[] getM2p() {
+		byte[] h2 = h2(CryptoConstants.M2p_START, this.getS());
+		ByteBuffer buff = ByteBuffer.wrap(h2);
+		byte[] m2p = new byte[CryptoConstants.SHA256_HMAC_KEY_BYTE_LENGTH];
+		buff.get(m2p);
+		this.m2p = m2p;
+		logger.info("Computed m2'.");
 		return m2p;
 	}
 
 	public void setLocalXEncrypted(byte[] localXEncrypted) {
+		logger.info("Set local X");
 		this.localXEncrypted = localXEncrypted;
 	}
 
@@ -221,6 +268,7 @@ public class AuthenticationInfo {
 
 	public void setLocalXEncryptedMac(byte[] localXEncryptedMac) {
 		this.localXEncryptedMac = localXEncryptedMac;
+		logger.info("Set local encrypted X hash.");
 	}
 
 	public byte[] getLocalXEncryptedMac() {
@@ -241,5 +289,29 @@ public class AuthenticationInfo {
 
 	public int getRemoteDHPPublicKeyID() {
 		return remoteDHPPublicKeyID;
+	}
+
+	private static byte[] h2(byte b, BigInteger s)
+			throws NoSuchAlgorithmException, IOException {
+
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		SerializationUtils.writeMpi(bos, s);
+		byte[] secbytes = bos.toByteArray();
+		bos.close();
+
+		int len = secbytes.length + 1;
+		ByteBuffer buff = ByteBuffer.allocate(len);
+		buff.put(b);
+		buff.put(secbytes);
+		return CryptoUtils.sha256Hash(buff.array());
+	}
+
+	public byte[] getLocalDHPublicKeyBytes() throws NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException {
+		if (localDHPublicKeyBytes == null)
+
+			localDHPublicKeyBytes = ((DHPublicKey) getLocalDHKeyPair()
+					.getPublic()).getY().toByteArray();
+		return localDHPublicKeyBytes;
 	}
 }

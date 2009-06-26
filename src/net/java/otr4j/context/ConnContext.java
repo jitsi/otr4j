@@ -11,6 +11,8 @@ import java.util.Vector;
 
 import javax.crypto.interfaces.DHPublicKey;
 
+import org.apache.log4j.Logger;
+
 import net.java.otr4j.context.auth.AuthenticationInfo;
 import net.java.otr4j.crypto.CryptoUtils;
 
@@ -26,10 +28,8 @@ public class ConnContext {
 
 	public AuthenticationInfo authenticationInfo;
 
-	/*
-	 * sesskeys[i][j] are the session keys derived from DH key[our_keyid-i] and
-	 * mpi Y[their_keyid-j]
-	 */
+	private static Logger logger = Logger.getLogger(ConnContext.class);
+
 	interface KeyIndex {
 		public final int Previous = 0;
 		public final int Current = 1;
@@ -58,12 +58,18 @@ public class ConnContext {
 	public SessionKeys[][] sessionKeys = new SessionKeys[2][2];
 
 	public SessionKeys findSessionKeys(int localKeyID, int remoteKeyID) {
+		logger
+				.info("Searching for session keys with (localKeyID, remoteKeyID) = ("
+						+ localKeyID + "," + remoteKeyID + ")");
+
 		for (int i = 0; i < sessionKeys.length; i++) {
 			for (int j = 0; j < sessionKeys[i].length; j++) {
 				SessionKeys current = sessionKeys[i][j];
 				if (current.localKeyID == localKeyID
-						&& current.remoteKeyID == remoteKeyID)
+						&& current.remoteKeyID == remoteKeyID) {
+					logger.info("Matching keys found.");
 					return current;
+				}
 			}
 		}
 
@@ -89,11 +95,11 @@ public class ConnContext {
 			throws NoSuchAlgorithmException, IOException, InvalidKeyException {
 
 		SessionKeys sess1 = sessionKeys[KeyIndex.Current][KeyIndex.Previous];
-		if (sess1.isUsedReceivingMACKey)
+		if (sess1.getIsUsedReceivingMACKey())
 			oldMacKeys.add(sess1.getReceivingMACKey());
 
 		SessionKeys sess2 = sessionKeys[KeyIndex.Previous][KeyIndex.Previous];
-		if (sess2.isUsedReceivingMACKey)
+		if (sess2.getIsUsedReceivingMACKey())
 			oldMacKeys.add(sess2.getReceivingMACKey());
 
 		sessionKeys[KeyIndex.Current][KeyIndex.Previous] = sessionKeys[KeyIndex.Current][KeyIndex.Current];
@@ -109,11 +115,11 @@ public class ConnContext {
 			IOException, InvalidKeyException {
 
 		SessionKeys sess1 = sessionKeys[KeyIndex.Previous][KeyIndex.Current];
-		if (sess1.isUsedReceivingMACKey)
+		if (sess1.getIsUsedReceivingMACKey())
 			oldMacKeys.add(sess1.getReceivingMACKey());
 
 		SessionKeys sess2 = sessionKeys[KeyIndex.Previous][KeyIndex.Previous];
-		if (sess2.isUsedReceivingMACKey)
+		if (sess2.getIsUsedReceivingMACKey())
 			oldMacKeys.add(sess2.getReceivingMACKey());
 
 		sessionKeys[KeyIndex.Previous][KeyIndex.Current] = sessionKeys[KeyIndex.Current][KeyIndex.Current];
