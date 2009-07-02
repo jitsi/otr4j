@@ -5,10 +5,10 @@ import java.math.*;
 import java.security.*;
 import java.security.spec.*;
 import java.util.*;
+import java.util.logging.*;
+
 import javax.crypto.*;
 import javax.crypto.interfaces.*;
-
-import org.apache.log4j.*;
 
 import net.java.otr4j.context.*;
 import net.java.otr4j.context.auth.*;
@@ -20,7 +20,7 @@ import net.java.otr4j.message.unencoded.*;
 import net.java.otr4j.message.unencoded.query.*;
 
 public final class StateMachine {
-	private static Logger logger = Logger.getLogger(StateMachine.class);
+	private static Logger logger = Logger.getLogger(StateMachine.class.getName());
 
 	public static String sendingMessage(OTR4jListener listener,
 			UserState userState, String user, String account, String protocol,
@@ -34,7 +34,7 @@ public final class StateMachine {
 		switch (ctx.messageState) {
 		case PLAINTEXT:
 			logger.info("Message state is PLAINTEXT.");
-			logger.warn("State handling not implemented.");
+			logger.warning("State handling not implemented.");
 			return msgText;
 		case ENCRYPTED:
 			logger.info("Message state is ENCRYPTED.");
@@ -82,7 +82,7 @@ public final class StateMachine {
 			return msg.toUnsafeString();
 		case FINISHED:
 			logger.info("Message state is FINISHED.");
-			logger.warn("State handling not implemented.");
+			logger.warning("State handling not implemented.");
 			return msgText;
 		default:
 			return msgText;
@@ -195,11 +195,11 @@ public final class StateMachine {
 			logger.info("User needs to know nothing about Query messages.");
 			break;
 		case MessageType.V1_KEY_EXCHANGE:
-			logger.warn("Received V1 key exchange which is not supported.");
+			logger.warning("Received V1 key exchange which is not supported.");
 			throw new UnsupportedOperationException();
 		case MessageType.UKNOWN:
 		default:
-			logger.warn("Unrecognizable OTR message received.");
+			logger.warning("Unrecognizable OTR message received.");
 			break;
 		}
 
@@ -225,7 +225,7 @@ public final class StateMachine {
 					senderKeyID);
 
 			if (matchingKeys == null) {
-				logger.error("No matching keys found!!!");
+				logger.severe("No matching keys found!!!");
 				return;
 			}
 
@@ -240,7 +240,7 @@ public final class StateMachine {
 					receivingmackey, DataLength.MAC);
 
 			if (!Arrays.equals(computedMAC, msg.getMac())) {
-				logger.error("MAC verification failed.");
+				logger.severe("MAC verification failed.");
 				return;
 			}
 
@@ -314,7 +314,7 @@ public final class StateMachine {
 			// Uses pubA to verify sigA(MA)
 			if (!CryptoUtils.verify(remoteM.compute(), remoteX
 					.getLongTermPublicKey(), remoteX.getSignature())) {
-				logger.error("Signature verification failed.");
+				logger.severe("Signature verification failed.");
 				return;
 			}
 			logger.info("Signature verification succeeded.");
@@ -408,7 +408,7 @@ public final class StateMachine {
 			// Uses pubB to verify sigB(MB)
 			if (!CryptoUtils.verify(remoteM.compute(), remoteX
 					.getLongTermPublicKey(), remoteX.getSignature())) {
-				logger.error("Signature verification failed.");
+				logger.severe("Signature verification failed.");
 				return;
 			}
 			logger.info("Signature verification succeeded.");

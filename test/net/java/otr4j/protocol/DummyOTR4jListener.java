@@ -2,8 +2,7 @@ package net.java.otr4j.protocol;
 
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-
-import org.apache.log4j.Logger;
+import java.util.logging.*;
 
 import net.java.otr4j.OTR4jListener;
 import net.java.otr4j.context.ConnContext;
@@ -15,7 +14,7 @@ public class DummyOTR4jListener implements OTR4jListener {
 		this.policy = policy;
 	}
 
-	private static Logger logger = Logger.getLogger(DummyOTR4jListener.class);
+	private static Logger logger = Logger.getLogger(DummyOTR4jListener.class.getName());
 	private int policy;
 	public String lastInjectedMessage;
 
@@ -35,12 +34,12 @@ public class DummyOTR4jListener implements OTR4jListener {
 
 	@Override
 	public void showError(String error) {
-		logger.error("IM shows error to user: " + error);
+		logger.severe("IM shows error to user: " + error);
 	}
 
 	@Override
 	public void showWarning(String warning) {
-		logger.warn("IM shows warning to user: " + warning);
+		logger.warning("IM shows warning to user: " + warning);
 	}
 
 	@Override

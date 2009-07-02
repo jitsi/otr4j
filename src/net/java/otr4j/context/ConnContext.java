@@ -4,10 +4,9 @@ import java.io.*;
 import java.nio.*;
 import java.security.*;
 import java.util.*;
+import java.util.logging.*;
 
 import javax.crypto.interfaces.*;
-
-import org.apache.log4j.*;
 
 import net.java.otr4j.context.auth.*;
 import net.java.otr4j.crypto.*;
@@ -24,7 +23,7 @@ public class ConnContext {
 
 	public AuthenticationInfo authenticationInfo;
 
-	private static Logger logger = Logger.getLogger(ConnContext.class);
+	private static Logger logger = Logger.getLogger(ConnContext.class.getName());
 
 	interface SessionKeysIndex {
 		public final int Previous = 0;

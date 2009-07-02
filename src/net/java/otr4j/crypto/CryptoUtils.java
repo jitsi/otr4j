@@ -8,12 +8,13 @@ import java.security.spec.*;
 import javax.crypto.*;
 import javax.crypto.interfaces.*;
 import javax.crypto.spec.*;
+import org.bouncycastle.jce.provider.*;
 
 public class CryptoUtils {
 
 	static {
 		Security
-				.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+				.addProvider(new BouncyCastleProvider());
 	}
 
 	public static KeyPair generateDsaKeyPair() throws NoSuchAlgorithmException {

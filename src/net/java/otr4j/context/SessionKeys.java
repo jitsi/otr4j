@@ -5,17 +5,16 @@ import java.math.*;
 import java.nio.*;
 import java.security.*;
 import java.util.*;
+import java.util.logging.*;
 
 import javax.crypto.interfaces.*;
-
-import org.apache.log4j.*;
 
 import net.java.otr4j.crypto.*;
 import net.java.otr4j.message.encoded.*;
 
 public class SessionKeys {
 
-	private static Logger logger = Logger.getLogger(SessionKeys.class);
+	private static Logger logger = Logger.getLogger(SessionKeys.class.getName());
 
 	private String keyDescription;
 

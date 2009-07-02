@@ -4,10 +4,10 @@ import java.io.*;
 import java.math.*;
 import java.nio.*;
 import java.security.*;
+import java.util.logging.*;
+
 import javax.crypto.*;
 import javax.crypto.interfaces.*;
-
-import org.apache.log4j.*;
 
 import net.java.otr4j.*;
 import net.java.otr4j.crypto.*;
@@ -15,7 +15,7 @@ import net.java.otr4j.message.encoded.*;
 
 public class AuthenticationInfo {
 
-	private static Logger logger = Logger.getLogger(AuthenticationInfo.class);
+	private static Logger logger = Logger.getLogger(AuthenticationInfo.class.getName());
 
 	public AuthenticationInfo() {
 		this.reset();
