@@ -1,9 +1,8 @@
 package net.java.otr4j.message.encoded.signature;
 
-import java.io.IOException;
-import net.java.otr4j.message.MessageType;
-import net.java.otr4j.message.encoded.DeserializationUtils;
-import net.java.otr4j.message.encoded.SerializationUtils;
+import java.io.*;
+import net.java.otr4j.message.*;
+import net.java.otr4j.message.encoded.*;
 
 public final class RevealSignatureMessage extends SignatureMessageBase {
 

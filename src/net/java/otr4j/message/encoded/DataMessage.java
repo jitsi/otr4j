@@ -1,9 +1,7 @@
 package net.java.otr4j.message.encoded;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import net.java.otr4j.message.MessageType;
+import java.io.*;
+import net.java.otr4j.message.*;
 
 public class DataMessage extends EncodedMessageBase {
 

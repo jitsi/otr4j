@@ -1,7 +1,6 @@
 package net.java.otr4j.message.unencoded;
 
-import net.java.otr4j.message.MessageHeader;
-import net.java.otr4j.message.MessageType;
+import net.java.otr4j.message.*;
 
 public final class ErrorMessage extends UnencodedMessageBase {
 	public String error;

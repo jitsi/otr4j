@@ -1,10 +1,7 @@
 package net.java.otr4j.message.encoded;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
-import javax.crypto.interfaces.DHPublicKey;
+import java.io.*;
+import javax.crypto.interfaces.*;
 
 public class MysteriousT {
 	public int senderKeyID;

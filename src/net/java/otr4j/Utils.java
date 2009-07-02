@@ -1,9 +1,6 @@
 package net.java.otr4j;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.Random;
+import java.util.*;
 
 public final class Utils {
 
@@ -11,7 +8,7 @@ public final class Utils {
         return s == null || s.length() < 1;
     }
 
-	private static String byteToHex(byte b) {
+	/*private static String byteToHex(byte b) {
 		return "0x" + Integer.toString((b & 0xff) + 0x100, 16).substring(1);
 	}
 
@@ -28,7 +25,7 @@ public final class Utils {
 
 	public static String dump(Object o) {
 		return dump(o, true, 5);
-	}
+	}*/
 
 	/**
 	 * 
@@ -40,7 +37,7 @@ public final class Utils {
 	 *            Field value maximum printable characters.
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
+	/*@SuppressWarnings("unchecked")
 	public static String dump(Object o, Boolean root, int maxLength) {
 		if (o == null)
 			return "";
@@ -128,7 +125,7 @@ public final class Utils {
 			buffer.append(" }");
 		}
 		return buffer.toString();
-	}
+	}*/
 
 	public static byte[] intToByteArray(int value, int length) {
 		byte[] b = new byte[length];

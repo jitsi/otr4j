@@ -1,11 +1,8 @@
 package net.java.otr4j.message.encoded;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import javax.crypto.interfaces.DHPublicKey;
+import java.io.*;
+import java.security.*;
+import javax.crypto.interfaces.*;
 
 import net.java.otr4j.crypto.CryptoUtils;
 

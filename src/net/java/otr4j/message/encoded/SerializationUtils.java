@@ -1,18 +1,13 @@
 package net.java.otr4j.message.encoded;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.security.InvalidKeyException;
-import java.security.PublicKey;
-import java.security.interfaces.DSAParams;
-import java.security.interfaces.DSAPublicKey;
-import java.util.Arrays;
+import java.io.*;
+import java.math.*;
+import java.security.*;
+import java.security.interfaces.*;
+import java.util.*;
+import javax.crypto.interfaces.*;
 
-import javax.crypto.interfaces.DHPublicKey;
-
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.*;
 
 import net.java.otr4j.Utils;
 import net.java.otr4j.crypto.CryptoConstants;

@@ -1,24 +1,17 @@
 package net.java.otr4j.context.auth;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.interfaces.DHPublicKey;
-import org.apache.log4j.Logger;
+import java.io.*;
+import java.math.*;
+import java.nio.*;
+import java.security.*;
+import javax.crypto.*;
+import javax.crypto.interfaces.*;
 
-import net.java.otr4j.Utils;
-import net.java.otr4j.crypto.CryptoConstants;
-import net.java.otr4j.crypto.CryptoUtils;
-import net.java.otr4j.message.encoded.SerializationUtils;
+import org.apache.log4j.*;
+
+import net.java.otr4j.*;
+import net.java.otr4j.crypto.*;
+import net.java.otr4j.message.encoded.*;
 
 public class AuthenticationInfo {
 

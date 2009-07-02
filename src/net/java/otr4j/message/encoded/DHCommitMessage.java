@@ -1,7 +1,7 @@
 package net.java.otr4j.message.encoded;
 
-import java.io.IOException;
-import net.java.otr4j.message.MessageType;
+import java.io.*;
+import net.java.otr4j.message.*;
 
 public final class DHCommitMessage extends EncodedMessageBase {
 

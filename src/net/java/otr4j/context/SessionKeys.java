@@ -1,22 +1,17 @@
 package net.java.otr4j.context;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
+import java.io.*;
+import java.math.*;
+import java.nio.*;
+import java.security.*;
+import java.util.*;
 
-import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.interfaces.*;
 
-import org.apache.log4j.Logger;
+import org.apache.log4j.*;
 
-import net.java.otr4j.Utils;
-import net.java.otr4j.crypto.CryptoConstants;
-import net.java.otr4j.crypto.CryptoUtils;
-import net.java.otr4j.message.encoded.SerializationUtils;
+import net.java.otr4j.crypto.*;
+import net.java.otr4j.message.encoded.*;
 
 public class SessionKeys {
 
@@ -59,13 +54,11 @@ public class SessionKeys {
 	public void incrementSendingCtr() {
 		logger.info("Incrementing counter for (localkeyID, remoteKeyID) = ("
 				+ localKeyID + "," + remoteKeyID + ")");
-		logger.debug("Counter prior increament: "
-				+ Utils.dump(sendingCtr, true, 16));
+		//logger.debug("Counter prior increament: "				+ Utils.dump(sendingCtr, true, 16));
 		for (int i = 7; i >= 0; i--)
 			if (++sendingCtr[i] != 0)
 				break;
-		logger.debug("Counter after increament: "
-				+ Utils.dump(sendingCtr, true, 16));
+		//logger.debug("Counter after increament: "				+ Utils.dump(sendingCtr, true, 16));
 	}
 
 	public byte[] getSendingCtr() {

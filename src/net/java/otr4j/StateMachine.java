@@ -1,38 +1,23 @@
 package net.java.otr4j;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
-import java.util.Vector;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.interfaces.DHPublicKey;
-import org.apache.log4j.Logger;
+import java.io.*;
+import java.math.*;
+import java.security.*;
+import java.security.spec.*;
+import java.util.*;
+import javax.crypto.*;
+import javax.crypto.interfaces.*;
 
-import net.java.otr4j.context.ConnContext;
-import net.java.otr4j.context.MessageState;
-import net.java.otr4j.context.SessionKeys;
-import net.java.otr4j.context.auth.AuthenticationInfo;
-import net.java.otr4j.context.auth.AuthenticationState;
-import net.java.otr4j.crypto.CryptoConstants;
-import net.java.otr4j.crypto.CryptoUtils;
+import org.apache.log4j.*;
+
+import net.java.otr4j.context.*;
+import net.java.otr4j.context.auth.*;
+import net.java.otr4j.crypto.*;
 import net.java.otr4j.message.*;
 import net.java.otr4j.message.encoded.*;
-import net.java.otr4j.message.encoded.signature.RevealSignatureMessage;
-import net.java.otr4j.message.encoded.signature.SignatureMessage;
+import net.java.otr4j.message.encoded.signature.*;
 import net.java.otr4j.message.unencoded.*;
-import net.java.otr4j.message.unencoded.query.PlainTextMessage;
-import net.java.otr4j.message.unencoded.query.QueryMessage;
+import net.java.otr4j.message.unencoded.query.*;
 
 public final class StateMachine {
 	private static Logger logger = Logger.getLogger(StateMachine.class);

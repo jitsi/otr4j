@@ -1,10 +1,8 @@
 package net.java.otr4j.message.encoded;
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
+import java.io.*;
+import java.security.*;
+import java.security.spec.*;
 
 public class MysteriousX {
 

@@ -1,8 +1,7 @@
 package net.java.otr4j;
 
-import java.util.Vector;
-
-import net.java.otr4j.context.ConnContext;
+import java.util.*;
+import net.java.otr4j.context.*;
 
 public final class UserState {
 

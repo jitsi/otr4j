@@ -1,9 +1,8 @@
 package net.java.otr4j;
 
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 
-import net.java.otr4j.context.ConnContext;
+import net.java.otr4j.context.*;
 
 public interface OTR4jListener {
 	public void injectMessage(String msg);

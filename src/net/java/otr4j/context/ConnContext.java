@@ -1,20 +1,16 @@
 package net.java.otr4j.context;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.util.Vector;
+import java.io.*;
+import java.nio.*;
+import java.security.*;
+import java.util.*;
 
-import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.interfaces.*;
 
-import org.apache.log4j.Logger;
+import org.apache.log4j.*;
 
-import net.java.otr4j.context.auth.AuthenticationInfo;
-import net.java.otr4j.crypto.CryptoUtils;
+import net.java.otr4j.context.auth.*;
+import net.java.otr4j.crypto.*;
 
 /**
  * 
@@ -59,7 +55,7 @@ public class ConnContext {
 	}
 
 	public SessionKeys[][] sessionKeys = new SessionKeys[2][2];
-	
+
 	public SessionKeys findSessionKeysByID(int localKeyID, int remoteKeyID) {
 		logger
 				.info("Searching for session keys with (localKeyID, remoteKeyID) = ("

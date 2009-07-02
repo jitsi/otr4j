@@ -1,7 +1,7 @@
 package net.java.otr4j.message.encoded;
 
 
-import net.java.otr4j.message.MessageHeader;
+import net.java.otr4j.message.*;
 
 public final class EncodedMessageUtils {
 

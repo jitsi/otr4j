@@ -1,23 +1,16 @@
 package net.java.otr4j.message.encoded;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ByteArrayInputStream;
-import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.interfaces.DSAParams;
-import java.security.interfaces.DSAPublicKey;
-import java.security.spec.DSAPublicKeySpec;
-import java.security.spec.InvalidKeySpecException;
+import java.io.*;
+import java.math.*;
+import java.security.*;
+import java.security.interfaces.*;
+import java.security.spec.*;
 
-import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.interfaces.*;
 
 import org.bouncycastle.asn1.*;
-import net.java.otr4j.Utils;
-import net.java.otr4j.crypto.CryptoConstants;
-import net.java.otr4j.crypto.CryptoUtils;
+import net.java.otr4j.*;
+import net.java.otr4j.crypto.*;
 
 public class DeserializationUtils {
 

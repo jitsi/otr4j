@@ -1,6 +1,6 @@
 package net.java.otr4j.message.encoded.signature;
 
-import net.java.otr4j.message.encoded.EncodedMessageBase;
+import net.java.otr4j.message.encoded.*;
 
 public abstract class SignatureMessageBase extends EncodedMessageBase {
 

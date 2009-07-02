@@ -1,17 +1,11 @@
 package net.java.otr4j.message.encoded.signature;
 
-import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import java.io.*;
+import java.security.*;
+import javax.crypto.*;
 
-import net.java.otr4j.message.MessageType;
-import net.java.otr4j.message.encoded.DeserializationUtils;
-import net.java.otr4j.message.encoded.SerializationUtils;
+import net.java.otr4j.message.*;
+import net.java.otr4j.message.encoded.*;
 
 public final class SignatureMessage extends SignatureMessageBase {
 

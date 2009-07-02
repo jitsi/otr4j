@@ -1,8 +1,6 @@
 package net.java.otr4j.message.encoded;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 import net.java.otr4j.message.MessageBase;
 

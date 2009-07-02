@@ -1,9 +1,8 @@
 package net.java.otr4j.message.encoded;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import javax.crypto.interfaces.DHPublicKey;
-import net.java.otr4j.message.MessageType;
+import java.io.*;
+import javax.crypto.interfaces.*;
+import net.java.otr4j.message.*;
 
 public final class DHKeyMessage extends EncodedMessageBase {
 
