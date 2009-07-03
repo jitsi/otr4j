@@ -1,7 +1,6 @@
 <project name="otr4j" basedir="." default="main">
 
 	<property name="src.dir" value="src" />
-	<property name="backup.dir" value="../otr4j_backup" />
 	<property name="test.dir" value="test" />
 	<property name="lib.dir" value="lib" />
 	<property name="build.dir" value="bin/debug" />
@@ -29,18 +28,18 @@
 
 	<target name="jar" depends="compile">
 		<mkdir dir="${jar.dir}" />
-		<jar destfile="${application}" basedir="${classes.dir}" />
+		<jar destfile="${application}" basedir="${classes.dir}" excludes="**/*Test.class"/>
 	</target>
 
 	<target name="rebuild" depends="clean,jar" />
 
 	<target name="main" depends="jar" />
 
-	<target name="junit-all" depends="jar">
+	<target name="junit-all" depends="compile">
 		<junit printsummary="yes">
 			<classpath>
 				<path refid="classpath" />
-				<path refid="application" />
+				<path location="${classes.dir}" />
 			</classpath>
 			<formatter type="brief" usefile="off" />
 			<batchtest fork="yes">
@@ -49,11 +48,11 @@
 		</junit>
 	</target>
 
-	<target name="junit" depends="jar">
+	<target name="junit" depends="compile">
 		<junit printsummary="yes">
 			<classpath>
 				<path refid="classpath" />
-				<path refid="application" />
+				<path location="${classes.dir}" />
 			</classpath>
 			<formatter type="brief" usefile="off" />
 			<batchtest fork="yes">

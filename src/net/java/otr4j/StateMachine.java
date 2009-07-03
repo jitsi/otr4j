@@ -20,9 +20,22 @@ import net.java.otr4j.message.unencoded.*;
 import net.java.otr4j.message.unencoded.query.*;
 
 public final class StateMachine {
-	private static Logger logger = Logger.getLogger(StateMachine.class.getName());
+	private static Logger logger = Logger.getLogger(StateMachine.class
+			.getName());
 
 	public static String sendingMessage(OTR4jListener listener,
+			UserState userState, String user, String account, String protocol,
+			String msgText) {
+		try {
+			return sendingMessageUnsafe(listener, userState, user, account,
+					protocol, msgText);
+		} catch (Exception e) {
+			logger.severe(e.getMessage());
+			return msgText;
+		}
+	}
+
+	private static String sendingMessageUnsafe(OTR4jListener listener,
 			UserState userState, String user, String account, String protocol,
 			String msgText) throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
@@ -90,6 +103,19 @@ public final class StateMachine {
 	}
 
 	public static String receivingMessage(OTR4jListener listener,
+			UserState userState, String user, String account, String protocol,
+			String msgText) {
+		try {
+			return receivingMessageUnsafe(listener, userState, user, account,
+					protocol, msgText);
+
+		} catch (Exception e) {
+			logger.severe(e.getMessage());
+			return msgText;
+		}
+	}
+
+	private static String receivingMessageUnsafe(OTR4jListener listener,
 			UserState userState, String user, String account, String protocol,
 			String msgText) throws NoSuchAlgorithmException,
 			InvalidKeySpecException, InvalidKeyException,
