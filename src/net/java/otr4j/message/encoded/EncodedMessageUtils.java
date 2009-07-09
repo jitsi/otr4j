@@ -2,6 +2,7 @@ package net.java.otr4j.message.encoded;
 
 
 import net.java.otr4j.message.*;
+import org.bouncycastle.util.encoders.*;
 
 public final class EncodedMessageUtils {
 
@@ -14,7 +15,7 @@ public final class EncodedMessageUtils {
 
 		String base64 = msg.substring(MessageHeader.ENCODED_MESSAGE.length(),
 				end);
-		byte[] decodedMessage = org.bouncycastle.util.encoders.Base64.decode(base64.getBytes());
+		byte[] decodedMessage = Base64.decode(base64.getBytes());
 		return decodedMessage;
 	}
 
@@ -22,7 +23,7 @@ public final class EncodedMessageUtils {
 		if (msgBytes == null || msgBytes.length < 1)
 			return "";
 
-		byte[] encodedMessage = org.bouncycastle.util.encoders.Base64.encode(msgBytes);
+		byte[] encodedMessage = Base64.encode(msgBytes);
 		return MessageHeader.ENCODED_MESSAGE + new String(encodedMessage) + ".";
 	}
 }

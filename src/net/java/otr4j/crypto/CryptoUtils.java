@@ -5,17 +5,16 @@ import java.nio.*;
 import java.security.*;
 import java.security.interfaces.*;
 import java.security.spec.*;
+
 import javax.crypto.*;
 import javax.crypto.interfaces.*;
 import javax.crypto.spec.*;
-import org.bouncycastle.jce.provider.*;
+
+import org.bouncycastle.crypto.*;
+import org.bouncycastle.crypto.generators.*;
+import org.bouncycastle.crypto.params.*;
 
 public class CryptoUtils {
-
-	static {
-		Security
-				.addProvider(new BouncyCastleProvider());
-	}
 
 	public static KeyPair generateDsaKeyPair() throws NoSuchAlgorithmException {
 		KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
@@ -23,16 +22,38 @@ public class CryptoUtils {
 	}
 
 	public static KeyPair generateDHKeyPair() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException {
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException {
 
-		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "BC");
-		DHParameterSpec dhSpec = new DHParameterSpec(CryptoConstants.MODULUS,
-				CryptoConstants.GENERATOR,
+		// Generate a AsymmetricCipherKeyPair using BC.
+		DHParameters dhParams = new DHParameters(CryptoConstants.MODULUS,
+				CryptoConstants.GENERATOR, null,
 				CryptoConstants.DH_PRIVATE_KEY_MINIMUM_BIT_LENGTH);
+		DHKeyGenerationParameters params = new DHKeyGenerationParameters(
+				new SecureRandom(), dhParams);
+		DHKeyPairGenerator kpGen = new DHKeyPairGenerator();
 
-		keyGen.initialize(dhSpec);
+		kpGen.init(params);
+		AsymmetricCipherKeyPair pair = kpGen.generateKeyPair();
 
-		return keyGen.generateKeyPair();
+		// Convert this AsymmetricCipherKeyPair to a standard JCE KeyPair.
+		DHPublicKeyParameters pub = (DHPublicKeyParameters) pair.getPublic();
+		DHPrivateKeyParameters priv = (DHPrivateKeyParameters) pair
+				.getPrivate();
+
+		KeyFactory keyFac = KeyFactory.getInstance("DH");
+
+		DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(pub.getY(),
+				CryptoConstants.MODULUS, CryptoConstants.GENERATOR);
+		DHPublicKey pubKey = (DHPublicKey) keyFac.generatePublic(pubKeySpecs);
+
+		DHParameters dhParameters = priv.getParameters();
+		DHPrivateKeySpec privKeySpecs = new DHPrivateKeySpec(priv.getX(),
+				dhParameters.getP(), dhParameters.getG());
+		DHPrivateKey privKey = (DHPrivateKey) keyFac
+				.generatePrivate(privKeySpecs);
+
+		return new KeyPair(pubKey, privKey);
 	}
 
 	public static DHPublicKey getDHPublicKey(byte[] mpiBytes)
@@ -152,7 +173,8 @@ public class CryptoUtils {
 		KeyAgreement ka = KeyAgreement.getInstance("DH");
 		ka.init(privKey);
 		ka.doPhase(pubKey, true);
-		BigInteger s = new BigInteger(ka.generateSecret());
+		byte[] sb = ka.generateSecret();
+		BigInteger s = new BigInteger(1, sb);
 		return s;
 	}
 

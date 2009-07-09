@@ -4,6 +4,7 @@ import java.io.*;
 import java.math.*;
 import java.nio.*;
 import java.security.*;
+import java.security.spec.*;
 import java.util.logging.*;
 
 import javax.crypto.*;
@@ -15,7 +16,8 @@ import net.java.otr4j.message.encoded.*;
 
 public class AuthenticationInfo {
 
-	private static Logger logger = Logger.getLogger(AuthenticationInfo.class.getName());
+	private static Logger logger = Logger.getLogger(AuthenticationInfo.class
+			.getName());
 
 	public AuthenticationInfo() {
 		this.reset();
@@ -116,7 +118,8 @@ public class AuthenticationInfo {
 	}
 
 	public KeyPair getLocalDHKeyPair() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException {
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException {
 		if (localDHKeyPair == null) {
 			localDHKeyPair = CryptoUtils.generateDHKeyPair();
 			logger.info("Generated local D-H key pair.");
@@ -129,7 +132,8 @@ public class AuthenticationInfo {
 	}
 
 	public byte[] getLocalDHPublicKeyHash() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException {
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException, IOException {
 		if (localDHPublicKeyHash == null) {
 			localDHPublicKeyHash = CryptoUtils
 					.sha256Hash(getLocalDHPublicKeyBytes());
@@ -141,7 +145,8 @@ public class AuthenticationInfo {
 	public byte[] getLocalDHPublicKeyEncrypted() throws InvalidKeyException,
 			NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException,
-			BadPaddingException, NoSuchProviderException {
+			BadPaddingException, NoSuchProviderException,
+			InvalidKeySpecException, IOException {
 		if (localDHPublicKeyEncrypted == null) {
 			localDHPublicKeyEncrypted = CryptoUtils.aesEncrypt(getR(), null,
 					getLocalDHPublicKeyBytes());
@@ -152,7 +157,7 @@ public class AuthenticationInfo {
 
 	public BigInteger getS() throws InvalidKeyException,
 			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
-			NoSuchProviderException {
+			NoSuchProviderException, InvalidKeySpecException {
 		if (s == null) {
 			s = CryptoUtils.generateSecret(this.getLocalDHKeyPair()
 					.getPrivate(), this.getRemoteDHPublicKey());
@@ -164,7 +169,7 @@ public class AuthenticationInfo {
 	public byte[] getC() throws NoSuchAlgorithmException, IOException {
 		if (c != null)
 			return c;
-		
+
 		byte[] h2 = h2(CryptoConstants.C_START, s);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
 		this.c = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
@@ -176,10 +181,10 @@ public class AuthenticationInfo {
 
 	public byte[] getM1() throws NoSuchAlgorithmException, IOException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException {
+			NoSuchProviderException, InvalidKeySpecException {
 		if (m1 != null)
 			return m1;
-		
+
 		byte[] h2 = h2(CryptoConstants.M1_START, this.getS());
 		ByteBuffer buff = ByteBuffer.wrap(h2);
 		byte[] m1 = new byte[CryptoConstants.SHA256_HMAC_KEY_BYTE_LENGTH];
@@ -191,7 +196,7 @@ public class AuthenticationInfo {
 
 	public byte[] getM2() throws NoSuchAlgorithmException, IOException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException {
+			NoSuchProviderException, InvalidKeySpecException {
 		if (m2 != null)
 			return m2;
 
@@ -206,7 +211,7 @@ public class AuthenticationInfo {
 
 	public byte[] getCp() throws NoSuchAlgorithmException, IOException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException {
+			NoSuchProviderException, InvalidKeySpecException {
 		if (cp != null)
 			return cp;
 
@@ -222,7 +227,7 @@ public class AuthenticationInfo {
 
 	public byte[] getM1p() throws NoSuchAlgorithmException, IOException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException {
+			NoSuchProviderException, InvalidKeySpecException {
 		if (m1p != null)
 			return m1p;
 
@@ -237,7 +242,7 @@ public class AuthenticationInfo {
 
 	public byte[] getM2p() throws NoSuchAlgorithmException, IOException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException {
+			NoSuchProviderException, InvalidKeySpecException {
 		if (m2p != null)
 			return m2p;
 
@@ -300,11 +305,14 @@ public class AuthenticationInfo {
 	}
 
 	public byte[] getLocalDHPublicKeyBytes() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException {
-		if (localDHPublicKeyBytes == null)
-
-			localDHPublicKeyBytes = ((DHPublicKey) getLocalDHKeyPair()
-					.getPublic()).getY().toByteArray();
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException, IOException {
+		if (localDHPublicKeyBytes == null) {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			SerializationUtils.writeMpi(out, ((DHPublicKey) getLocalDHKeyPair()
+					.getPublic()).getY());
+			this.localDHPublicKeyBytes = out.toByteArray();
+		}
 		return localDHPublicKeyBytes;
 	}
 }

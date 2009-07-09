@@ -168,8 +168,7 @@ public final class StateMachine {
 			DataMessage data = new DataMessage();
 			data.readObject(new ByteArrayInputStream(EncodedMessageUtils
 					.decodeMessage(msgText)));
-			receivingDataMessage(ctx, listener, data);
-			break;
+			return receivingDataMessage(ctx, listener, data);
 		case MessageType.DH_COMMIT:
 			logger.info(account + " received a D-H commit message from " + user
 					+ " throught " + protocol + ".");
@@ -177,7 +176,7 @@ public final class StateMachine {
 			dhCommit.readObject(new ByteArrayInputStream(EncodedMessageUtils
 					.decodeMessage(msgText)));
 			receivingDHCommitMessage(ctx, listener, dhCommit);
-			break;
+			return null;
 		case MessageType.DH_KEY:
 			logger.info(account + " received a D-H key message from " + user
 					+ " throught " + protocol + ".");
@@ -185,7 +184,7 @@ public final class StateMachine {
 			dhKey.readObject(new ByteArrayInputStream(EncodedMessageUtils
 					.decodeMessage(msgText)));
 			receivingDHKeyMessage(ctx, listener, dhKey, account, protocol);
-			break;
+			return null;
 		case MessageType.REVEALSIG:
 			logger.info(account + " received a reveal signature message from "
 					+ user + " throught " + protocol + ".");
@@ -194,7 +193,7 @@ public final class StateMachine {
 					EncodedMessageUtils.decodeMessage(msgText)));
 			receivingRevealSignatureMessage(ctx, listener, revealSigMessage,
 					account, protocol);
-			break;
+			return null;
 		case MessageType.SIGNATURE:
 			logger.info(account + " received a signature message from " + user
 					+ " throught " + protocol + ".");
@@ -202,12 +201,11 @@ public final class StateMachine {
 			sigMessage.readObject(new ByteArrayInputStream(EncodedMessageUtils
 					.decodeMessage(msgText)));
 			receivingSignatureMessage(ctx, listener, sigMessage);
-			break;
+			return null;
 		case MessageType.ERROR:
 			logger.info(account + " received an error message from " + user
 					+ " throught " + protocol + ".");
 			receivingErrorMessage(ctx, listener, new ErrorMessage(msgText));
-			logger.info("User needs to know nothing about Query messages.");
 			break;
 		case MessageType.PLAINTEXT:
 			logger.info(account + " received a plaintext message from " + user
@@ -219,7 +217,7 @@ public final class StateMachine {
 					+ " throught " + protocol + ".");
 			receivingQueryMessage(ctx, listener, new QueryMessage(msgText));
 			logger.info("User needs to know nothing about Query messages.");
-			break;
+			return null;
 		case MessageType.V1_KEY_EXCHANGE:
 			logger.warning("Received V1 key exchange which is not supported.");
 			throw new UnsupportedOperationException();
@@ -232,12 +230,12 @@ public final class StateMachine {
 		return msgText;
 	}
 
-	private static void receivingDataMessage(ConnContext ctx,
+	private static String receivingDataMessage(ConnContext ctx,
 			OTR4jListener listener, DataMessage msg)
 			throws InvalidKeyException, NoSuchAlgorithmException, IOException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
-			NoSuchProviderException {
+			NoSuchProviderException, InvalidKeySpecException {
 
 		switch (ctx.messageState) {
 		case ENCRYPTED:
@@ -252,7 +250,7 @@ public final class StateMachine {
 
 			if (matchingKeys == null) {
 				logger.severe("No matching keys found!!!");
-				return;
+				return "OTR Error: No matching keys found.";
 			}
 
 			logger.info("Transforming T to byte[] to calculate it's HmacSHA1.");
@@ -267,7 +265,7 @@ public final class StateMachine {
 
 			if (!Arrays.equals(computedMAC, msg.getMac())) {
 				logger.severe("MAC verification failed.");
-				return;
+				return "OTR Error: MAC verification failed.";
 			}
 
 			logger.info("Computed HmacSHA1 value matches sent one.");
@@ -278,8 +276,8 @@ public final class StateMachine {
 			byte[] decryptedMsg = CryptoUtils.aesDecrypt(matchingKeys
 					.getReceivingAESKey(), matchingKeys.getReceivingCtr(),
 					t.encryptedMsg);
-			logger.info("Decrypted message: \"" + new String(decryptedMsg)
-					+ "\"");
+			String decryptedMsgContent = new String(decryptedMsg);
+			logger.info("Decrypted message: \"" + decryptedMsgContent + "\"");
 
 			SessionKeys mostRecent = ctx.getMostRecentSessionKeys();
 			if (mostRecent.localKeyID == receipientKeyID)
@@ -287,7 +285,8 @@ public final class StateMachine {
 
 			if (mostRecent.remoteKeyID == senderKeyID)
 				ctx.rotateRemoteKeys(t.nextDHPublicKey);
-			break;
+
+			return decryptedMsgContent;
 		case FINISHED:
 		case PLAINTEXT:
 			listener.showWarning("unreadable encrypted message was received");
@@ -295,6 +294,8 @@ public final class StateMachine {
 			listener.injectMessage(errormsg.toString());
 			break;
 		}
+
+		return null;
 	}
 
 	private static void receivingSignatureMessage(ConnContext ctx,
@@ -387,8 +388,10 @@ public final class StateMachine {
 			}
 
 			// Verifies that Bob's gx is a legal value (2 <= gx <= modulus-2)
-			BigInteger remoteDHPublicKeyMpi = new BigInteger(
+			ByteArrayInputStream inmpi = new ByteArrayInputStream(
 					remoteDHPublicKeyDecrypted);
+			BigInteger remoteDHPublicKeyMpi = DeserializationUtils
+					.readMpi(inmpi);
 			if (remoteDHPublicKeyMpi
 					.compareTo(CryptoConstants.MODULUS_MINUS_TWO) > 0) {
 				logger.info("gx <= modulus-2, ignoring message.");
@@ -482,7 +485,8 @@ public final class StateMachine {
 
 	private static void goSecure(ConnContext ctx, KeyPair keyPair,
 			DHPublicKey pubKey, BigInteger s) throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException {
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException {
 
 		logger.info("Setting most recent session keys from auth.");
 		for (int i = 0; i < ctx.sessionKeys[0].length; i++) {
@@ -509,7 +513,7 @@ public final class StateMachine {
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
-			NoSuchProviderException, IOException {
+			NoSuchProviderException, IOException, InvalidKeySpecException {
 		Vector<Integer> versions = msg.versions;
 		int policy = listener.getPolicy(ctx);
 		if (versions.size() < 1) {
@@ -583,7 +587,7 @@ public final class StateMachine {
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
-			NoSuchProviderException, IOException {
+			NoSuchProviderException, IOException, InvalidKeySpecException {
 
 		Vector<Integer> versions = msg.versions;
 		int policy = listener.getPolicy(ctx);
@@ -635,7 +639,8 @@ public final class StateMachine {
 			throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeyException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+			IllegalBlockSizeException, BadPaddingException, IOException,
+			InvalidKeySpecException {
 
 		if (!PolicyUtils.getAllowV2(listener.getPolicy(ctx))) {
 			logger.info("ALLOW_V2 is not set, ignore this message.");
@@ -708,7 +713,7 @@ public final class StateMachine {
 			NoSuchAlgorithmException, SignatureException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException, IOException,
-			NoSuchProviderException {
+			NoSuchProviderException, InvalidKeySpecException {
 
 		if (!PolicyUtils.getAllowV2(listener.getPolicy(ctx))) {
 			logger.info("If ALLOW_V2 is not set, ignore this message.");

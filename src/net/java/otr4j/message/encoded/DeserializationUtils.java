@@ -9,6 +9,7 @@ import java.security.spec.*;
 import javax.crypto.interfaces.*;
 
 import org.bouncycastle.asn1.*;
+
 import net.java.otr4j.*;
 import net.java.otr4j.crypto.*;
 
@@ -66,13 +67,12 @@ public class DeserializationUtils {
 		return b;
 	}
 
-	static BigInteger readMpi(ByteArrayInputStream in) throws IOException {
+	public static BigInteger readMpi(ByteArrayInputStream in) throws IOException {
 		int len = readDataLen(in);
 
 		byte[] b = new byte[len];
 		in.read(b);
-
-		return new BigInteger(1, Utils.trim(b));
+		return new BigInteger(1, b);
 	}
 
 	public static int readInt(ByteArrayInputStream stream) throws IOException {

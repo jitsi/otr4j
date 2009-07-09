@@ -145,20 +145,6 @@ public final class Utils {
 		return value;
 	}
 
-	public static byte[] trim(byte[] b) {
-		// find leading zero count
-		int i = 0;
-		while ((int) b[i] == 0)
-			i++;
-	
-		// remove leading 0's
-		byte[] tmp = new byte[b.length - i];
-		for (int j = 0; j < tmp.length; j++)
-			tmp[j] = b[j + i];
-	
-		return tmp;
-	}
-
 	public static byte[] getRandomBytes(int length) {
 		byte[] b = new byte[length];
 		Random rnd = new Random();

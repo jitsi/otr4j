@@ -4,13 +4,13 @@ import java.io.*;
 import java.math.*;
 import java.security.*;
 import java.security.interfaces.*;
-import java.util.*;
+/* import java.util.*; */
+
 import javax.crypto.interfaces.*;
-
 import org.bouncycastle.asn1.*;
-
-import net.java.otr4j.Utils;
-import net.java.otr4j.crypto.CryptoConstants;
+import org.bouncycastle.util.*;
+import net.java.otr4j.*;
+import net.java.otr4j.crypto.*;
 
 public class SerializationUtils {
 
@@ -37,12 +37,14 @@ public class SerializationUtils {
 
 	public static void writeDHPublicKey(ByteArrayOutputStream stream,
 			DHPublicKey pubKey) throws IOException {
-		writeData(stream, Utils.trim(pubKey.getY().toByteArray()));
+		byte[] b = BigIntegers.asUnsignedByteArray(pubKey.getY());
+		writeData(stream, b);
 	}
 
 	public static void writeMpi(ByteArrayOutputStream stream, BigInteger i)
 			throws IOException {
-		writeData(stream, Utils.trim(i.toByteArray()));
+		byte[] b = BigIntegers.asUnsignedByteArray(i);
+		writeData(stream, b);
 	}
 
 	public static void writePublicKey(ByteArrayOutputStream stream,
@@ -80,8 +82,8 @@ public class SerializationUtils {
 		DERInteger r = (DERInteger) derSequence.getObjectAt(0);
 		DERInteger s = (DERInteger) derSequence.getObjectAt(1);
 
-		byte[] rb = Utils.trim(r.getValue().toByteArray());
-		byte[] sb = Utils.trim(s.getValue().toByteArray());
+		byte[] rb = BigIntegers.asUnsignedByteArray(r.getValue());
+		byte[] sb = BigIntegers.asUnsignedByteArray(s.getValue());
 
 		stream.write(rb);
 		stream.write(sb);
@@ -97,7 +99,7 @@ public class SerializationUtils {
 
 	public static void writeCtr(ByteArrayOutputStream out, byte[] ctr)
 			throws IOException {
-		out.write(Arrays.copyOfRange(ctr, 0, DataLength.CTR));
+		out.write(java.util.Arrays.copyOfRange(ctr, 0, DataLength.CTR));
 	}
 
 }

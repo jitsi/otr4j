@@ -3,6 +3,7 @@ package net.java.otr4j.context;
 import java.io.*;
 import java.nio.*;
 import java.security.*;
+import java.security.spec.*;
 import java.util.*;
 import java.util.logging.*;
 
@@ -119,7 +120,7 @@ public class ConnContext {
 
 	public void rotateLocalKeys() throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
-			IOException, InvalidKeyException {
+			IOException, InvalidKeyException, InvalidKeySpecException {
 
 		logger.info("Rotating local keys.");
 		SessionKeys sess1 = sessionKeys[SessionKeysIndex.Previous][SessionKeysIndex.Current];
