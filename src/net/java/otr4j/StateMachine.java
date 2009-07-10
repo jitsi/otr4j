@@ -317,8 +317,14 @@ public final class StateMachine {
 		case AWAITING_SIG:
 			// Uses m2' to verify MACm2'(AESc'(XA))
 			byte[] remoteXEncrypted = msg.getXEncrypted();
-			byte[] remoteXEncryptedMAC = CryptoUtils.sha256Hmac160(
-					remoteXEncrypted, auth.getM2p());
+
+			ByteArrayOutputStream out_ = new ByteArrayOutputStream();
+			SerializationUtils.writeData(out_, remoteXEncrypted);
+			byte[] tmp_ = out_.toByteArray();
+			out_.close();
+
+			byte[] remoteXEncryptedMAC = CryptoUtils.sha256Hmac160(tmp_, auth
+					.getM2p());
 			if (!Arrays.equals(remoteXEncryptedMAC, msg.getXEncryptedMAC())) {
 				logger.info("Signature MACs are not equal, ignoring message.");
 				return;
@@ -413,8 +419,14 @@ public final class StateMachine {
 
 			// Uses m2 to verify MACm2(AESc(XB))
 			byte[] remoteXEncrypted = msg.getXEncrypted();
-			byte[] remoteXEncryptedMAC = CryptoUtils.sha256Hmac160(
-					remoteXEncrypted, auth.getM2());
+
+			ByteArrayOutputStream out_ = new ByteArrayOutputStream();
+			SerializationUtils.writeData(out_, remoteXEncrypted);
+			byte[] tmp_ = out_.toByteArray();
+			out_.close();
+
+			byte[] remoteXEncryptedMAC = CryptoUtils.sha256Hmac160(tmp_, auth
+					.getM2());
 			if (!Arrays.equals(remoteXEncryptedMAC, msg.getXEncryptedMAC())) {
 				logger.info("Signature MACs are not equal, ignoring message.");
 				return;
@@ -468,15 +480,23 @@ public final class StateMachine {
 			// Sends Bob AESc'(XA), MACm2'(AESc'(XA))
 			auth.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getCp(), null,
 					localXbytes));
-			auth.setLocalXEncryptedMac(CryptoUtils.sha256Hmac160(auth
-					.getLocalXEncrypted(), auth.getM2p()));
+
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			SerializationUtils.writeData(out, auth.getLocalXEncrypted());
+			byte[] tmp = out.toByteArray();
+			out.close();
+
+			auth.setLocalXEncryptedMac(CryptoUtils.sha256Hmac160(tmp, auth
+					.getM2p()));
 
 			SignatureMessage msgSig = new SignatureMessage(2, auth
 					.getLocalXEncryptedMac(), auth.getLocalXEncrypted());
 
 			goSecure(ctx, auth.getLocalDHKeyPair(),
 					auth.getRemoteDHPublicKey(), s);
-			listener.injectMessage(msgSig.toUnsafeString());
+
+			String msgText = msgSig.toUnsafeString();
+			listener.injectMessage(msgText);
 			break;
 		default:
 			break;
@@ -768,8 +788,14 @@ public final class StateMachine {
 			auth.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getC(), null,
 					xbytes));
 
-			auth.setLocalXEncryptedMac(CryptoUtils.sha256Hmac160(auth
-					.getLocalXEncrypted(), auth.getM2()));
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			SerializationUtils.writeData(out, auth.getLocalXEncrypted());
+			byte[] tmp = out.toByteArray();
+			out.close();
+
+			byte[] localXEncryptedMac = CryptoUtils.sha256Hmac160(tmp, auth
+					.getM2());
+			auth.setLocalXEncryptedMac(localXEncryptedMac);
 
 			replyRevealSig = true;
 			break;

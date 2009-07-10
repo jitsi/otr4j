@@ -37,7 +37,7 @@ public class MysteriousM {
 
 		byte[] result = bos.toByteArray();
 		bos.close();
-		return CryptoUtils.sha256Hash(result);
+		return CryptoUtils.sha256Hmac(result, getM1());
 	}
 
 	public void setM1(byte[] m1) {
