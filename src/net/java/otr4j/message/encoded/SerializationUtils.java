@@ -7,7 +7,7 @@ import java.security.interfaces.*;
 /* import java.util.*; */
 
 import javax.crypto.interfaces.*;
-import org.bouncycastle.asn1.*;
+/*import org.bouncycastle.asn1.*;*/
 import org.bouncycastle.util.*;
 import net.java.otr4j.*;
 import net.java.otr4j.crypto.*;
@@ -73,7 +73,7 @@ public class SerializationUtils {
 		// http://www.codeproject.com/KB/security/CryptoInteropSign.aspx
 		// http://java.sun.com/j2se/1.4.2/docs/guide/security/CryptoSpec.html
 
-		DERSequence derSequence = null;
+		/*DERSequence derSequence = null;
 		try {
 			derSequence = (DERSequence) DERSequence.fromByteArray(signature);
 		} catch (Exception ex) {
@@ -82,11 +82,12 @@ public class SerializationUtils {
 		DERInteger r = (DERInteger) derSequence.getObjectAt(0);
 		DERInteger s = (DERInteger) derSequence.getObjectAt(1);
 
-		byte[] rb = BigIntegers.asUnsignedByteArray(r.getValue());
-		byte[] sb = BigIntegers.asUnsignedByteArray(s.getValue());
+		byte[] rb = BigIntegers.asUnsignedByteArray(r.getPositiveValue());
+		byte[] sb = BigIntegers.asUnsignedByteArray(s.getPositiveValue());
 
 		stream.write(rb);
-		stream.write(sb);
+		stream.write(sb);*/
+		stream.write(signature);
 	}
 
 	public static void writeMac(ByteArrayOutputStream stream, byte[] mac)
@@ -100,6 +101,30 @@ public class SerializationUtils {
 	public static void writeCtr(ByteArrayOutputStream out, byte[] ctr)
 			throws IOException {
 		out.write(java.util.Arrays.copyOfRange(ctr, 0, DataLength.CTR));
+	}
+
+	public static void writePublicKeyFingerPrint(ByteArrayOutputStream bos,
+			PublicKey pubKey) throws InvalidKeyException,
+			IOException, NoSuchAlgorithmException {
+		
+		if (!(pubKey instanceof DSAPublicKey))
+			throw new UnsupportedOperationException(
+					"Key types other than DSA are not supported at the moment.");
+
+		writeShort(bos, CryptoConstants.DSA_PUB_TYPE);
+		
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		DSAPublicKey dsaKey = (DSAPublicKey) pubKey;
+		DSAParams dsaParams = dsaKey.getParams();
+		writeMpi(out, dsaParams.getP());
+		writeMpi(out, dsaParams.getQ());
+		writeMpi(out, dsaParams.getG());
+		writeMpi(out, dsaKey.getY());
+		byte[] b = out.toByteArray();
+		out.close();
+		
+		byte[] fingerprint = CryptoUtils.sha1Hash(b); 
+		writeData(bos, fingerprint);
 	}
 
 }

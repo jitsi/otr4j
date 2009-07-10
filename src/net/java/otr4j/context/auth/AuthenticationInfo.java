@@ -301,7 +301,8 @@ public class AuthenticationInfo {
 		ByteBuffer buff = ByteBuffer.allocate(len);
 		buff.put(b);
 		buff.put(secbytes);
-		return CryptoUtils.sha256Hash(buff.array());
+		byte[] sdata = buff.array();
+		return CryptoUtils.sha256Hash(sdata);
 	}
 
 	public byte[] getLocalDHPublicKeyBytes() throws NoSuchAlgorithmException,

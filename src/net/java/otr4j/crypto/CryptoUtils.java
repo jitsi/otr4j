@@ -13,6 +13,8 @@ import javax.crypto.spec.*;
 import org.bouncycastle.crypto.*;
 import org.bouncycastle.crypto.generators.*;
 import org.bouncycastle.crypto.params.*;
+import org.bouncycastle.crypto.signers.*;
+import org.bouncycastle.util.BigIntegers;
 
 public class CryptoUtils {
 
@@ -185,10 +187,31 @@ public class CryptoUtils {
 		if (!(privatekey instanceof DSAPrivateKey))
 			throw new IllegalArgumentException();
 
-		Signature signer = Signature.getInstance(privatekey.getAlgorithm());
-		signer.initSign(privatekey);
-		signer.update(b);
-		return signer.sign();
+		/*
+		 * Signature signer = Signature.getInstance(privatekey.getAlgorithm());
+		 * signer.initSign(privatekey); signer.update(b); return signer.sign();
+		 */
+
+		// construct the BC objects from pub key specs
+		DSAParams dsaParams = ((DSAPrivateKey) privatekey).getParams();
+		DSAParameters bcDSAParams = new DSAParameters(dsaParams.getP(),
+				dsaParams.getQ(), dsaParams.getG());
+
+		DSAPrivateKey dsaPrivateKey = (DSAPrivateKey) privatekey;
+		DSAPrivateKeyParameters dsaPrivParms = new DSAPrivateKeyParameters(
+				dsaPrivateKey.getX(), bcDSAParams);
+
+		// and now do the signature verification
+		DSASigner dsaSigner = new DSASigner();
+		dsaSigner.init(true, dsaPrivParms);
+
+		BigInteger[] rs = dsaSigner.generateSignature(b);
+		byte[] rb = BigIntegers.asUnsignedByteArray(rs[0]);
+		byte[] sb = BigIntegers.asUnsignedByteArray(rs[1]);
+		ByteBuffer buff = ByteBuffer.allocate(rb.length + sb.length);
+		buff.put(rb);
+		buff.put(sb);
+		return buff.array();
 	}
 
 	public static Boolean verify(byte[] b, PublicKey pubKey, byte[] signature)
@@ -201,6 +224,6 @@ public class CryptoUtils {
 		Signature signer = Signature.getInstance(pubKey.getAlgorithm());
 		signer.initVerify(pubKey);
 		signer.update(b);
-		return (signer.verify(signature));
+		return signer.verify(signature);
 	}
 }
