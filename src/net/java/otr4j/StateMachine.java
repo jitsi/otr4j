@@ -2,13 +2,18 @@ package net.java.otr4j;
 
 import java.io.*;
 import java.math.*;
+import java.nio.ByteBuffer;
 import java.security.*;
+import java.security.interfaces.DSAParams;
 import java.security.spec.*;
 import java.util.*;
 import java.util.logging.*;
 
 import javax.crypto.*;
 import javax.crypto.interfaces.*;
+
+import org.apache.commons.io.HexDump;
+import org.bouncycastle.util.BigIntegers;
 
 import net.java.otr4j.context.*;
 import net.java.otr4j.context.auth.*;
@@ -466,7 +471,8 @@ public final class StateMachine {
 							.getLocalLongTermKeyPair().getPublic(), auth
 							.getLocalDHKeyPairID());
 
-			byte[] localSignature = CryptoUtils.sign(localM.compute(), auth
+			byte[] localMHash = localM.compute();
+			byte[] localSignature = CryptoUtils.sign(localMHash, auth
 					.getLocalLongTermKeyPair().getPrivate());
 
 			// Computes XA = pubA, keyidA, sigA(MA)
@@ -770,11 +776,31 @@ public final class StateMachine {
 			MysteriousM m = new MysteriousM(auth.getM1(), ourDHPublicKey, auth
 					.getRemoteDHPublicKey(), auth.getLocalLongTermKeyPair()
 					.getPublic(), auth.getLocalDHKeyPairID());
-
 			byte[] mbytes = m.compute();
 			byte[] signature = CryptoUtils.sign(mbytes, auth
 					.getLocalLongTermKeyPair().getPrivate());
 
+			java.security.interfaces.DSAPublicKey pubKey = (java.security.interfaces.DSAPublicKey) auth
+					.getLocalLongTermKeyPair().getPublic();
+			DSAParams pubParams = pubKey.getParams();
+			
+			System.out.write("q:\n".getBytes());
+			HexDump.dump(BigIntegers.asUnsignedByteArray(pubParams.getQ()), 0,
+					System.out, 0);
+			System.out.write("p:\n".getBytes());
+			HexDump.dump(BigIntegers.asUnsignedByteArray(pubParams.getP()), 0,
+					System.out, 0);
+			System.out.write("g:\n".getBytes());
+			HexDump.dump(BigIntegers.asUnsignedByteArray(pubParams.getG()), 0,
+					System.out, 0);
+			System.out.write("y:\n".getBytes());
+			HexDump.dump(BigIntegers.asUnsignedByteArray(pubKey.getY()), 0,
+					System.out, 0);
+			System.out.write("hash:\n".getBytes());
+			HexDump.dump(mbytes, 0, System.out, 0);
+			System.out.write("sig:\n".getBytes());
+			HexDump.dump(signature, 0, System.out, 0);
+			
 			// Computes XB = pubB, keyidB, sigB(MB)
 			logger.info("Computing X");
 			MysteriousX x = new MysteriousX(auth.getLocalLongTermKeyPair()

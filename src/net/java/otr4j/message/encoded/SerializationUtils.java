@@ -69,24 +69,6 @@ public class SerializationUtils {
 			byte[] signature, PublicKey pubKey) throws IOException {
 		if (!pubKey.getAlgorithm().equals("DSA"))
 			throw new UnsupportedOperationException();
-
-		// http://www.codeproject.com/KB/security/CryptoInteropSign.aspx
-		// http://java.sun.com/j2se/1.4.2/docs/guide/security/CryptoSpec.html
-
-		/*DERSequence derSequence = null;
-		try {
-			derSequence = (DERSequence) DERSequence.fromByteArray(signature);
-		} catch (Exception ex) {
-			throw new IOException(ex);
-		}
-		DERInteger r = (DERInteger) derSequence.getObjectAt(0);
-		DERInteger s = (DERInteger) derSequence.getObjectAt(1);
-
-		byte[] rb = BigIntegers.asUnsignedByteArray(r.getPositiveValue());
-		byte[] sb = BigIntegers.asUnsignedByteArray(s.getPositiveValue());
-
-		stream.write(rb);
-		stream.write(sb);*/
 		stream.write(signature);
 	}
 

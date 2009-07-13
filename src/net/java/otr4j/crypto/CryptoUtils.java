@@ -187,43 +187,88 @@ public class CryptoUtils {
 		if (!(privatekey instanceof DSAPrivateKey))
 			throw new IllegalArgumentException();
 
-		/*
-		 * Signature signer = Signature.getInstance(privatekey.getAlgorithm());
-		 * signer.initSign(privatekey); signer.update(b); return signer.sign();
-		 */
-
-		// construct the BC objects from pub key specs
 		DSAParams dsaParams = ((DSAPrivateKey) privatekey).getParams();
-		DSAParameters bcDSAParams = new DSAParameters(dsaParams.getP(),
+		DSAParameters bcDSAParameters = new DSAParameters(dsaParams.getP(),
 				dsaParams.getQ(), dsaParams.getG());
 
 		DSAPrivateKey dsaPrivateKey = (DSAPrivateKey) privatekey;
-		DSAPrivateKeyParameters dsaPrivParms = new DSAPrivateKeyParameters(
-				dsaPrivateKey.getX(), bcDSAParams);
+		DSAPrivateKeyParameters bcDSAPrivateKeyParms = new DSAPrivateKeyParameters(
+				dsaPrivateKey.getX(), bcDSAParameters);
 
-		// and now do the signature verification
 		DSASigner dsaSigner = new DSASigner();
-		dsaSigner.init(true, dsaPrivParms);
+		dsaSigner.init(true, bcDSAPrivateKeyParms);
 
 		BigInteger[] rs = dsaSigner.generateSignature(b);
+
+		int siglen = dsaParams.getQ().bitLength() / 4;
+		int rslen = siglen / 2;
 		byte[] rb = BigIntegers.asUnsignedByteArray(rs[0]);
 		byte[] sb = BigIntegers.asUnsignedByteArray(rs[1]);
-		ByteBuffer buff = ByteBuffer.allocate(rb.length + sb.length);
-		buff.put(rb);
-		buff.put(sb);
-		return buff.array();
+
+		// Create the final signature array, padded with zeros if necessary.
+		byte[] sig = new byte[siglen];
+		Boolean writeR = false;
+		Boolean writeS = false;
+		for (int i = 0; i < siglen; i++) {
+			if (i < rslen) {
+				if (!writeR)
+					writeR = rb.length >= rslen - i; 
+				sig[i] = (writeR) ? rb[i] : (byte) 0x0;
+			} else {
+				int j = i - rslen; // Rebase.
+				if (!writeS)
+					writeS = sb.length >= rslen - j;
+				sig[i] = (writeS) ? sb[j] : (byte) 0x0;
+			}
+		}
+		return sig;
 	}
 
-	public static Boolean verify(byte[] b, PublicKey pubKey, byte[] signature)
+	public static Boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
 			throws NoSuchAlgorithmException, InvalidKeyException,
 			SignatureException {
 
 		if (!(pubKey instanceof DSAPublicKey))
 			throw new IllegalArgumentException();
 
-		Signature signer = Signature.getInstance(pubKey.getAlgorithm());
-		signer.initVerify(pubKey);
-		signer.update(b);
-		return signer.verify(signature);
+		DSAParams dsaParams = ((DSAPublicKey) pubKey).getParams();
+		int qlen = dsaParams.getQ().bitLength() / 8;
+		ByteBuffer buff = ByteBuffer.wrap(rs);
+		byte[] r = new byte[qlen];
+		buff.get(r);
+		byte[] s = new byte[qlen];
+		buff.get(s);
+		return verify(b, pubKey, r, s);
+	}
+
+	private static Boolean verify(byte[] b, PublicKey pubKey, byte[] r,
+			byte[] s) throws InvalidKeyException, NoSuchAlgorithmException,
+			SignatureException {
+		Boolean result = verify(b, pubKey, new BigInteger(1, r),
+				new BigInteger(1, s));
+		return result;
+	}
+
+	private static Boolean verify(byte[] b, PublicKey pubKey, BigInteger r,
+			BigInteger s) throws NoSuchAlgorithmException, InvalidKeyException,
+			SignatureException {
+
+		if (!(pubKey instanceof DSAPublicKey))
+			throw new IllegalArgumentException();
+
+		// construct the BC objects from pub key specs
+		DSAParams dsaParams = ((DSAPublicKey) pubKey).getParams();
+		DSAParameters bcDSAParams = new DSAParameters(dsaParams.getP(),
+				dsaParams.getQ(), dsaParams.getG());
+
+		DSAPublicKey dsaPrivateKey = (DSAPublicKey) pubKey;
+		DSAPublicKeyParameters dsaPrivParms = new DSAPublicKeyParameters(
+				dsaPrivateKey.getY(), bcDSAParams);
+
+		// and now do the signature verification
+		DSASigner dsaSigner = new DSASigner();
+		dsaSigner.init(false, dsaPrivParms);
+		Boolean result = dsaSigner.verifySignature(b, r, s);
+		return result;
 	}
 }

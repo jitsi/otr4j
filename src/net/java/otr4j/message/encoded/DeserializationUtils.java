@@ -5,11 +5,7 @@ import java.math.*;
 import java.security.*;
 import java.security.interfaces.*;
 import java.security.spec.*;
-
 import javax.crypto.interfaces.*;
-
-import org.bouncycastle.asn1.*;
-
 import net.java.otr4j.*;
 import net.java.otr4j.crypto.*;
 
@@ -94,25 +90,9 @@ public class DeserializationUtils {
 
 		DSAPublicKey dsaPubKey = (DSAPublicKey) pubKey;
 		DSAParams dsaParams = dsaPubKey.getParams();
-		int qlen = dsaParams.getQ().bitLength() / 8;
-		// http://www.codeproject.com/KB/security/CryptoInteropSign.aspx
-		// http://java.sun.com/j2se/1.4.2/docs/guide/security/CryptoSpec.html
-
-		byte[] r = new byte[qlen];
-		byte[] s = new byte[qlen];
-
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		DERSequenceGenerator seqGen = new DERSequenceGenerator(bos);
-
-		stream.read(r);
-		seqGen.addObject(new DERInteger(new BigInteger(1, r)));
-		stream.read(s);
-		seqGen.addObject(new DERInteger(new BigInteger(1, s)));
-		seqGen.close();
-
-		byte[] result = bos.toByteArray();
-		bos.close();
-		return result;
+		byte[] sig = new byte[dsaParams.getQ().bitLength() / 4];
+		stream.read(sig);
+		return sig;
 	}
 
 	static DHPublicKey readDHPublicKey(ByteArrayInputStream in)
