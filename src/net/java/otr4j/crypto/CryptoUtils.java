@@ -9,12 +9,10 @@ import java.security.spec.*;
 import javax.crypto.*;
 import javax.crypto.interfaces.*;
 import javax.crypto.spec.*;
-
 import org.bouncycastle.crypto.*;
 import org.bouncycastle.crypto.generators.*;
 import org.bouncycastle.crypto.params.*;
-import org.bouncycastle.crypto.signers.*;
-import org.bouncycastle.util.BigIntegers;
+import org.bouncycastle.util.*;
 
 public class CryptoUtils {
 
@@ -195,7 +193,7 @@ public class CryptoUtils {
 		DSAPrivateKeyParameters bcDSAPrivateKeyParms = new DSAPrivateKeyParameters(
 				dsaPrivateKey.getX(), bcDSAParameters);
 
-		DSASigner dsaSigner = new DSASigner();
+		BuggyDSASigner dsaSigner = new BuggyDSASigner();
 		dsaSigner.init(true, bcDSAPrivateKeyParms);
 
 		BigInteger[] rs = dsaSigner.generateSignature(b);
@@ -212,7 +210,7 @@ public class CryptoUtils {
 		for (int i = 0; i < siglen; i++) {
 			if (i < rslen) {
 				if (!writeR)
-					writeR = rb.length >= rslen - i; 
+					writeR = rb.length >= rslen - i;
 				sig[i] = (writeR) ? rb[i] : (byte) 0x0;
 			} else {
 				int j = i - rslen; // Rebase.
@@ -241,8 +239,8 @@ public class CryptoUtils {
 		return verify(b, pubKey, r, s);
 	}
 
-	private static Boolean verify(byte[] b, PublicKey pubKey, byte[] r,
-			byte[] s) throws InvalidKeyException, NoSuchAlgorithmException,
+	private static Boolean verify(byte[] b, PublicKey pubKey, byte[] r, byte[] s)
+			throws InvalidKeyException, NoSuchAlgorithmException,
 			SignatureException {
 		Boolean result = verify(b, pubKey, new BigInteger(1, r),
 				new BigInteger(1, s));
@@ -266,7 +264,7 @@ public class CryptoUtils {
 				dsaPrivateKey.getY(), bcDSAParams);
 
 		// and now do the signature verification
-		DSASigner dsaSigner = new DSASigner();
+		BuggyDSASigner dsaSigner = new BuggyDSASigner();
 		dsaSigner.init(false, dsaPrivParms);
 		Boolean result = dsaSigner.verifySignature(b, r, s);
 		return result;

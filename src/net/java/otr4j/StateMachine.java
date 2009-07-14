@@ -2,18 +2,18 @@ package net.java.otr4j;
 
 import java.io.*;
 import java.math.*;
-import java.nio.ByteBuffer;
 import java.security.*;
-import java.security.interfaces.DSAParams;
+import java.security.interfaces.*;
 import java.security.spec.*;
 import java.util.*;
+import java.util.Arrays; /* This needs to be done explicitly */
 import java.util.logging.*;
 
 import javax.crypto.*;
 import javax.crypto.interfaces.*;
 
-import org.apache.commons.io.HexDump;
-import org.bouncycastle.util.BigIntegers;
+import org.apache.commons.io.*;
+import org.bouncycastle.util.*;
 
 import net.java.otr4j.context.*;
 import net.java.otr4j.context.auth.*;
@@ -783,7 +783,7 @@ public final class StateMachine {
 			java.security.interfaces.DSAPublicKey pubKey = (java.security.interfaces.DSAPublicKey) auth
 					.getLocalLongTermKeyPair().getPublic();
 			DSAParams pubParams = pubKey.getParams();
-			
+
 			System.out.write("q:\n".getBytes());
 			HexDump.dump(BigIntegers.asUnsignedByteArray(pubParams.getQ()), 0,
 					System.out, 0);
@@ -800,7 +800,7 @@ public final class StateMachine {
 			HexDump.dump(mbytes, 0, System.out, 0);
 			System.out.write("sig:\n".getBytes());
 			HexDump.dump(signature, 0, System.out, 0);
-			
+
 			// Computes XB = pubB, keyidB, sigB(MB)
 			logger.info("Computing X");
 			MysteriousX x = new MysteriousX(auth.getLocalLongTermKeyPair()
