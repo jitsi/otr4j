@@ -1,11 +1,9 @@
 package net.java.otr4j.message.encoded;
 
 import java.io.*;
-import net.java.otr4j.message.*;
 
-public class DataMessage extends EncodedMessageBase {
+public class DataMessage {
 
-	private int flags;
 	private byte[] mac;
 	private byte[] oldMACKeys;
 	public MysteriousT t;
@@ -14,23 +12,14 @@ public class DataMessage extends EncodedMessageBase {
 
 	}
 
-	public DataMessage(int protocolVersion, int flags, MysteriousT t,
-			byte[] mac, byte[] oldMacKeys) {
+	public DataMessage(MysteriousT t, byte[] mac, byte[] oldMacKeys) {
 
-		this.setMessageType(MessageType.DATA);
-		this.setProtocolVersion(protocolVersion);
-		this.setFlags(flags);
 		this.setMac(mac);
 		this.t = t;
 		this.setOldMACKeys(oldMacKeys);
 	}
 
 	public void readObject(ByteArrayInputStream stream) throws IOException {
-
-		this.setProtocolVersion(DeserializationUtils.readShort(stream));
-		this.setMessageType(DeserializationUtils.readByte(stream));
-		this.setFlags(DeserializationUtils.readByte(stream));
-
 		t = new MysteriousT();
 		t.readObject(stream);
 
@@ -38,25 +27,12 @@ public class DataMessage extends EncodedMessageBase {
 		this.setOldMACKeys(DeserializationUtils.readData(stream));
 	}
 
-	@Override
 	public void writeObject(ByteArrayOutputStream stream) throws IOException {
-
-		SerializationUtils.writeShort(stream, this.getProtocolVersion());
-		SerializationUtils.writeByte(stream, this.getMessageType());
-		SerializationUtils.writeByte(stream, this.getFlags());
 
 		t.writeObject(stream);
 
 		SerializationUtils.writeMac(stream, this.getMac());
 		SerializationUtils.writeData(stream, this.getOldMACKeys());
-	}
-
-	public void setFlags(int flags) {
-		this.flags = flags;
-	}
-
-	public int getFlags() {
-		return flags;
 	}
 
 	public void setMac(byte[] mac) {
@@ -73,5 +49,18 @@ public class DataMessage extends EncodedMessageBase {
 
 	public byte[] getOldMACKeys() {
 		return oldMACKeys;
+	}
+	
+	public String toUnsafeString() throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		try {
+			this.writeObject(bos);
+		} catch (IOException e) {
+			return super.toString();
+		}
+
+		String encodedMessage = EncodedMessageUtils.encodeMessage(bos
+				.toByteArray());
+		return encodedMessage;
 	}
 }

@@ -3,17 +3,13 @@ package net.java.otr4j;
 import java.io.*;
 import java.math.*;
 import java.security.*;
-import java.security.interfaces.*;
 import java.security.spec.*;
 import java.util.*;
-import java.util.Arrays; /* This needs to be done explicitly */
+import java.util.Arrays; /* This needs to be done explicitly due to conflicting name */
 import java.util.logging.*;
 
 import javax.crypto.*;
 import javax.crypto.interfaces.*;
-
-import org.apache.commons.io.*;
-import org.bouncycastle.util.*;
 
 import net.java.otr4j.context.*;
 import net.java.otr4j.context.auth.*;
@@ -81,7 +77,7 @@ public final class StateMachine {
 			byte[] oldMacKeys = ctx.getOldMacKeys();
 
 			MysteriousT t = new MysteriousT(senderKeyID, receipientKeyID,
-					nextDH, ctr, encryptedMsg);
+					nextDH, ctr, encryptedMsg, 2, 0);
 
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			t.writeObject(out);
@@ -94,7 +90,7 @@ public final class StateMachine {
 			byte[] mac = CryptoUtils.sha1Hmac(serializedT, sendingmackey,
 					DataLength.MAC);
 
-			DataMessage msg = new DataMessage(2, 0, t, mac, oldMacKeys);
+			DataMessage msg = new DataMessage(t, mac, oldMacKeys);
 
 			logger.info("Injecting message.");
 			return msg.toUnsafeString();
@@ -120,26 +116,7 @@ public final class StateMachine {
 		}
 	}
 
-	private static String receivingMessageUnsafe(OTR4jListener listener,
-			UserState userState, String user, String account, String protocol,
-			String msgText) throws NoSuchAlgorithmException,
-			InvalidKeySpecException, InvalidKeyException,
-			NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException,
-			NoSuchProviderException, SignatureException, IOException {
-
-		if (Utils.IsNullOrEmpty(msgText))
-			return msgText;
-
-		ConnContext ctx = userState.getConnContext(user, account, protocol);
-		int policy = listener.getPolicy(ctx);
-
-		if (!PolicyUtils.getAllowV1(policy) && !PolicyUtils.getAllowV2(policy)) {
-			logger
-					.info("Policy does not allow neither V1 not V2, ignoring message.");
-			return msgText;
-		}
-
+	private static int getMessageType(String msgText) {
 		int msgType = 0;
 		if (!msgText.startsWith(MessageHeader.BASE)) {
 			msgType = MessageType.PLAINTEXT;
@@ -165,7 +142,30 @@ public final class StateMachine {
 			msgType = MessageType.UKNOWN;
 		}
 
-		switch (msgType) {
+		return msgType;
+	}
+
+	private static String receivingMessageUnsafe(OTR4jListener listener,
+			UserState userState, String user, String account, String protocol,
+			String msgText) throws NoSuchAlgorithmException,
+			InvalidKeySpecException, InvalidKeyException,
+			NoSuchPaddingException, InvalidAlgorithmParameterException,
+			IllegalBlockSizeException, BadPaddingException,
+			NoSuchProviderException, SignatureException, IOException {
+
+		if (Utils.IsNullOrEmpty(msgText))
+			return msgText;
+
+		ConnContext ctx = userState.getConnContext(user, account, protocol);
+		int policy = listener.getPolicy(ctx);
+
+		if (!PolicyUtils.getAllowV1(policy) && !PolicyUtils.getAllowV2(policy)) {
+			logger
+					.info("Policy does not allow neither V1 not V2, ignoring message.");
+			return msgText;
+		}
+
+		switch (getMessageType(msgText)) {
 		case MessageType.DATA:
 			logger
 					.info(account + " received a data message from " + user
@@ -258,15 +258,8 @@ public final class StateMachine {
 				return "OTR Error: No matching keys found.";
 			}
 
-			logger.info("Transforming T to byte[] to calculate it's HmacSHA1.");
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			t.writeObject(out);
-			byte[] serializedT = out.toByteArray();
-			out.close();
-
-			byte[] receivingmackey = matchingKeys.getReceivingMACKey();
-			byte[] computedMAC = CryptoUtils.sha1Hmac(serializedT,
-					receivingmackey, DataLength.MAC);
+			byte[] mackey = matchingKeys.getReceivingMACKey();
+			byte[] computedMAC = t.sha1Hmac(mackey);
 
 			if (!Arrays.equals(computedMAC, msg.getMac())) {
 				logger.severe("MAC verification failed.");
@@ -278,10 +271,8 @@ public final class StateMachine {
 
 			matchingKeys.setReceivingCtr(t.ctr);
 
-			byte[] decryptedMsg = CryptoUtils.aesDecrypt(matchingKeys
-					.getReceivingAESKey(), matchingKeys.getReceivingCtr(),
-					t.encryptedMsg);
-			String decryptedMsgContent = new String(decryptedMsg);
+			String decryptedMsgContent = t.getDecryptedMessage(matchingKeys
+					.getReceivingAESKey(), matchingKeys.getReceivingCtr());
 			logger.info("Decrypted message: \"" + decryptedMsgContent + "\"");
 
 			SessionKeys mostRecent = ctx.getMostRecentSessionKeys();
@@ -294,7 +285,7 @@ public final class StateMachine {
 			return decryptedMsgContent;
 		case FINISHED:
 		case PLAINTEXT:
-			listener.showWarning("unreadable encrypted message was received");
+			listener.showWarning("Unreadable encrypted message was received");
 			ErrorMessage errormsg = new ErrorMessage("Oups.");
 			listener.injectMessage(errormsg.toString());
 			break;
@@ -321,37 +312,28 @@ public final class StateMachine {
 		switch (auth.getAuthenticationState()) {
 		case AWAITING_SIG:
 			// Uses m2' to verify MACm2'(AESc'(XA))
-			byte[] remoteXEncrypted = msg.getXEncrypted();
-
-			ByteArrayOutputStream out_ = new ByteArrayOutputStream();
-			SerializationUtils.writeData(out_, remoteXEncrypted);
-			byte[] tmp_ = out_.toByteArray();
-			out_.close();
-
-			byte[] remoteXEncryptedMAC = CryptoUtils.sha256Hmac160(tmp_, auth
-					.getM2p());
-			if (!Arrays.equals(remoteXEncryptedMAC, msg.getXEncryptedMAC())) {
+			if (!Arrays.equals(msg.getXEncryptedCalculatedMAC(auth.getM2p()),
+					msg.getXEncryptedMAC())) {
 				logger.info("Signature MACs are not equal, ignoring message.");
 				return;
 			}
 
 			// Uses c' to decrypt AESc'(XA) to obtain XA = pubA, keyidA,
 			// sigA(MA)
-			byte[] remoteXDecrypted = CryptoUtils.aesDecrypt(auth.getCp(),
-					null, remoteXEncrypted);
+			byte[] remoteXDecrypted = msg.decrypt(auth.getCp());
 
 			// Computes MA = MACm1'(gy, gx, pubA, keyidA)
 			MysteriousX remoteX = new MysteriousX();
 			remoteX.readObject(new ByteArrayInputStream(remoteXDecrypted));
 			auth.setRemoteDHPPublicKeyID(remoteX.getDhKeyID());
-			MysteriousM remoteM = new MysteriousM(auth.getM1p(), auth
-					.getRemoteDHPublicKey(), (DHPublicKey) auth
-					.getLocalDHKeyPair().getPublic(), remoteX
-					.getLongTermPublicKey(), remoteX.getDhKeyID());
+
+			MysteriousM remoteM = new MysteriousM(auth.getRemoteDHPublicKey(),
+					(DHPublicKey) auth.getLocalDHKeyPair().getPublic(), remoteX
+							.getLongTermPublicKey(), remoteX.getDhKeyID());
 
 			// Uses pubA to verify sigA(MA)
-			if (!CryptoUtils.verify(remoteM.compute(), remoteX
-					.getLongTermPublicKey(), remoteX.getSignature())) {
+			if (!remoteM.verify(auth.getM1p(), remoteX.getLongTermPublicKey(),
+					remoteX.getSignature())) {
 				logger.severe("Signature verification failed.");
 				return;
 			}
@@ -384,37 +366,7 @@ public final class StateMachine {
 		AuthenticationInfo auth = ctx.authenticationInfo;
 		switch (auth.getAuthenticationState()) {
 		case AWAITING_REVEALSIG:
-			// Uses r to decrypt the value of gx sent earlier
-			byte[] revealedKey = msg.getRevealedKey();
-			byte[] remoteDHPublicKeyDecrypted = CryptoUtils.aesDecrypt(
-					revealedKey, null, auth.getRemoteDHPublicKeyEncrypted());
-
-			// Verifies that HASH(gx) matches the value sent earlier
-			byte[] remoteDHPublicKeyHash = CryptoUtils
-					.sha256Hash(remoteDHPublicKeyDecrypted);
-			if (!Arrays.equals(remoteDHPublicKeyHash, auth
-					.getRemoteDHPublicKeyHash())) {
-				logger.info("Hashes don't match, ignoring message.");
-				return;
-			}
-
-			// Verifies that Bob's gx is a legal value (2 <= gx <= modulus-2)
-			ByteArrayInputStream inmpi = new ByteArrayInputStream(
-					remoteDHPublicKeyDecrypted);
-			BigInteger remoteDHPublicKeyMpi = DeserializationUtils
-					.readMpi(inmpi);
-			if (remoteDHPublicKeyMpi
-					.compareTo(CryptoConstants.MODULUS_MINUS_TWO) > 0) {
-				logger.info("gx <= modulus-2, ignoring message.");
-				return;
-			} else if (remoteDHPublicKeyMpi
-					.compareTo(CryptoConstants.BIGINTEGER_TWO) < 0) {
-				logger.info("2 <= gx, ignoring message.");
-				return;
-			}
-
-			auth.setRemoteDHPublicKey(CryptoUtils
-					.getDHPublicKey(remoteDHPublicKeyMpi));
+			auth.setRemoteDHPublicKey(msg.getRevealedKey());
 
 			// Computes s = (gx)y (note that this will be the same as the value
 			// of s Bob calculated)
@@ -423,37 +375,27 @@ public final class StateMachine {
 			BigInteger s = auth.getS();
 
 			// Uses m2 to verify MACm2(AESc(XB))
-			byte[] remoteXEncrypted = msg.getXEncrypted();
-
-			ByteArrayOutputStream out_ = new ByteArrayOutputStream();
-			SerializationUtils.writeData(out_, remoteXEncrypted);
-			byte[] tmp_ = out_.toByteArray();
-			out_.close();
-
-			byte[] remoteXEncryptedMAC = CryptoUtils.sha256Hmac160(tmp_, auth
-					.getM2());
-			if (!Arrays.equals(remoteXEncryptedMAC, msg.getXEncryptedMAC())) {
+			if (!Arrays.equals(msg.getXEncryptedCalculatedMAC(auth.getM2()),
+					msg.getXEncryptedMAC())) {
 				logger.info("Signature MACs are not equal, ignoring message.");
 				return;
 			}
 
 			// Uses c to decrypt AESc(XB) to obtain XB = pubB, keyidB, sigB(MB)
-			byte[] remoteXDecrypted = CryptoUtils.aesDecrypt(auth.getC(), null,
-					remoteXEncrypted);
+			byte[] remoteXDecrypted = msg.decrypt(auth.getC());
 
 			MysteriousX remoteX = new MysteriousX();
 			remoteX.readObject(new ByteArrayInputStream(remoteXDecrypted));
 			auth.setRemoteDHPPublicKeyID(remoteX.getDhKeyID());
 
 			// Computes MB = MACm1(gx, gy, pubB, keyidB)
-			MysteriousM remoteM = new MysteriousM(auth.getM1(), auth
-					.getRemoteDHPublicKey(), (DHPublicKey) auth
-					.getLocalDHKeyPair().getPublic(), remoteX
-					.getLongTermPublicKey(), remoteX.getDhKeyID());
+			MysteriousM remoteM = new MysteriousM(auth.getRemoteDHPublicKey(),
+					(DHPublicKey) auth.getLocalDHKeyPair().getPublic(), remoteX
+							.getLongTermPublicKey(), remoteX.getDhKeyID());
 
 			// Uses pubB to verify sigB(MB)
-			if (!CryptoUtils.verify(remoteM.compute(), remoteX
-					.getLongTermPublicKey(), remoteX.getSignature())) {
+			if (!remoteM.verify(auth.getM1(), remoteX.getLongTermPublicKey(),
+					remoteX.getSignature())) {
 				logger.severe("Signature verification failed.");
 				return;
 			}
@@ -463,40 +405,12 @@ public final class StateMachine {
 			auth
 					.setLocalLongTermKeyPair(listener.getKeyPair(account,
 							protocol));
-			logger.info("Calculating our M and our X.");
-			DHPublicKey localDHPublicKey = (DHPublicKey) auth
-					.getLocalDHKeyPair().getPublic();
-			MysteriousM localM = new MysteriousM(auth.getM1p(),
-					localDHPublicKey, auth.getRemoteDHPublicKey(), auth
-							.getLocalLongTermKeyPair().getPublic(), auth
-							.getLocalDHKeyPairID());
-
-			byte[] localMHash = localM.compute();
-			byte[] localSignature = CryptoUtils.sign(localMHash, auth
-					.getLocalLongTermKeyPair().getPrivate());
-
-			// Computes XA = pubA, keyidA, sigA(MA)
-			MysteriousX localX = new MysteriousX(auth.getLocalLongTermKeyPair()
-					.getPublic(), auth.getLocalDHKeyPairID(), localSignature);
-
-			ByteArrayOutputStream localXbos = new ByteArrayOutputStream();
-			localX.writeObject(localXbos);
-			byte[] localXbytes = localXbos.toByteArray();
 
 			// Sends Bob AESc'(XA), MACm2'(AESc'(XA))
-			auth.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getCp(), null,
-					localXbytes));
 
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			SerializationUtils.writeData(out, auth.getLocalXEncrypted());
-			byte[] tmp = out.toByteArray();
-			out.close();
-
-			auth.setLocalXEncryptedMac(CryptoUtils.sha256Hmac160(tmp, auth
-					.getM2p()));
-
-			SignatureMessage msgSig = new SignatureMessage(2, auth
-					.getLocalXEncryptedMac(), auth.getLocalXEncrypted());
+			MysteriousX x = auth.getLocalMysteriousX(true);
+			SignatureMessage msgSig = new SignatureMessage(2, x.hash,
+					x.encrypted);
 
 			goSecure(ctx, auth.getLocalDHKeyPair(),
 					auth.getRemoteDHPublicKey(), s);
@@ -751,78 +665,12 @@ public final class StateMachine {
 		AuthenticationInfo auth = ctx.authenticationInfo;
 		switch (auth.getAuthenticationState()) {
 		case AWAITING_DHKEY:
-			// Verifies that Alice's gy is a legal value (2 <= gy <= modulus-2)
-			if (msg.getDhPublicKey().getY().compareTo(
-					CryptoConstants.MODULUS_MINUS_TWO) > 0) {
-				logger.info("Illegal D-H Public Key value, Ignoring message.");
-				return;
-			} else if (msg.getDhPublicKey().getY().compareTo(
-					CryptoConstants.BIGINTEGER_TWO) < 0) {
-				logger.info("Illegal D-H Public Key value, Ignoring message.");
-				return;
-			}
-			logger.info("Received D-H Public Key is a legal value.");
-
-			// Computes s = (gy)x
 			auth.setRemoteDHPublicKey(msg.getDhPublicKey());
 
 			// Computes MB = MACm1(gx, gy, pubB, keyidB)
 			logger.info("Computing M");
 			KeyPair keyPair = listener.getKeyPair(account, protocol);
 			auth.setLocalLongTermKeyPair(keyPair);
-
-			DHPublicKey ourDHPublicKey = (DHPublicKey) auth.getLocalDHKeyPair()
-					.getPublic();
-			MysteriousM m = new MysteriousM(auth.getM1(), ourDHPublicKey, auth
-					.getRemoteDHPublicKey(), auth.getLocalLongTermKeyPair()
-					.getPublic(), auth.getLocalDHKeyPairID());
-			byte[] mbytes = m.compute();
-			byte[] signature = CryptoUtils.sign(mbytes, auth
-					.getLocalLongTermKeyPair().getPrivate());
-
-			java.security.interfaces.DSAPublicKey pubKey = (java.security.interfaces.DSAPublicKey) auth
-					.getLocalLongTermKeyPair().getPublic();
-			DSAParams pubParams = pubKey.getParams();
-
-			System.out.write("q:\n".getBytes());
-			HexDump.dump(BigIntegers.asUnsignedByteArray(pubParams.getQ()), 0,
-					System.out, 0);
-			System.out.write("p:\n".getBytes());
-			HexDump.dump(BigIntegers.asUnsignedByteArray(pubParams.getP()), 0,
-					System.out, 0);
-			System.out.write("g:\n".getBytes());
-			HexDump.dump(BigIntegers.asUnsignedByteArray(pubParams.getG()), 0,
-					System.out, 0);
-			System.out.write("y:\n".getBytes());
-			HexDump.dump(BigIntegers.asUnsignedByteArray(pubKey.getY()), 0,
-					System.out, 0);
-			System.out.write("hash:\n".getBytes());
-			HexDump.dump(mbytes, 0, System.out, 0);
-			System.out.write("sig:\n".getBytes());
-			HexDump.dump(signature, 0, System.out, 0);
-
-			// Computes XB = pubB, keyidB, sigB(MB)
-			logger.info("Computing X");
-			MysteriousX x = new MysteriousX(auth.getLocalLongTermKeyPair()
-					.getPublic(), auth.getLocalDHKeyPairID(), signature);
-
-			ByteArrayOutputStream xstream = new ByteArrayOutputStream();
-			x.writeObject(xstream);
-			byte[] xbytes = xstream.toByteArray();
-
-			// Sends Alice r, AESc(XB), MACm2(AESc(XB))
-			auth.setLocalXEncrypted(CryptoUtils.aesEncrypt(auth.getC(), null,
-					xbytes));
-
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			SerializationUtils.writeData(out, auth.getLocalXEncrypted());
-			byte[] tmp = out.toByteArray();
-			out.close();
-
-			byte[] localXEncryptedMac = CryptoUtils.sha256Hmac160(tmp, auth
-					.getM2());
-			auth.setLocalXEncryptedMac(localXEncryptedMac);
-
 			replyRevealSig = true;
 			break;
 		case AWAITING_SIG:
@@ -838,9 +686,9 @@ public final class StateMachine {
 		if (replyRevealSig) {
 			int protocolVersion = 2;
 
+			MysteriousX x = auth.getLocalMysteriousX(false);
 			RevealSignatureMessage revealSignatureMessage = new RevealSignatureMessage(
-					protocolVersion, auth.getR(), auth.getLocalXEncryptedMac(),
-					auth.getLocalXEncrypted());
+					protocolVersion, auth.getR(), x.hash, x.encrypted);
 
 			auth.setAuthenticationState(AuthenticationState.AWAITING_SIG);
 			logger.info("Sending Reveal Signature.");

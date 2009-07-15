@@ -3,29 +3,26 @@ package net.java.otr4j.message.encoded;
 import java.io.*;
 import java.security.*;
 import javax.crypto.interfaces.*;
-
-import net.java.otr4j.crypto.CryptoUtils;
+import net.java.otr4j.crypto.*;
 
 public class MysteriousM {
 
-	public MysteriousM(byte[] m1, DHPublicKey ourDHPublicKey,
+	public MysteriousM(DHPublicKey ourDHPublicKey,
 			DHPublicKey theirDHPublicKey, PublicKey ourLongTermPublicKey,
 			int ourDHPrivateKeyID) {
 
-		this.setM1(m1);
 		this.setOurDHPublicKey(ourDHPublicKey);
 		this.setTheirDHPublicKey(theirDHPublicKey);
 		this.setOurLongTermPublicKey(ourLongTermPublicKey);
 		this.setOurDHPrivatecKeyID(ourDHPrivateKeyID);
 	}
 
-	private byte[] m1;
 	private DHPublicKey ourDHPublicKey;
 	private DHPublicKey theirDHPublicKey;
 	private PublicKey ourLongTermPublicKey;
 	private int ourDHPrivatecKeyID;
 
-	public byte[] compute() throws InvalidKeyException, IOException,
+	private byte[] sha256Hmac(byte[] key) throws InvalidKeyException, IOException,
 			NoSuchAlgorithmException {
 
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -37,15 +34,7 @@ public class MysteriousM {
 
 		byte[] result = bos.toByteArray();
 		bos.close();
-		return CryptoUtils.sha256Hmac(result, getM1());
-	}
-
-	public void setM1(byte[] m1) {
-		this.m1 = m1;
-	}
-
-	public byte[] getM1() {
-		return m1;
+		return CryptoUtils.sha256Hmac(result, key);
 	}
 
 	public void setOurDHPublicKey(DHPublicKey ourDHPublicKey) {
@@ -78,5 +67,18 @@ public class MysteriousM {
 
 	public int getOurDHPrivatecKeyID() {
 		return ourDHPrivatecKeyID;
+	}
+
+	public Boolean verify(byte[] key, PublicKey pubKey, byte[] signature)
+			throws InvalidKeyException, NoSuchAlgorithmException,
+			SignatureException, IOException {
+		return CryptoUtils.verify(this.sha256Hmac(key), pubKey, signature);
+	}
+
+	public byte[] sign(byte[] key, PrivateKey privateKey)
+			throws InvalidKeyException, NoSuchAlgorithmException, IOException,
+			SignatureException {
+		byte[] hash = this.sha256Hmac(key);
+		return CryptoUtils.sign(hash, privateKey);
 	}
 }

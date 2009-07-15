@@ -3,6 +3,9 @@ package net.java.otr4j.message.encoded;
 import java.io.*;
 import java.security.*;
 import java.security.spec.*;
+import javax.crypto.*;
+
+import net.java.otr4j.crypto.*;
 
 public class MysteriousX {
 
@@ -22,8 +25,8 @@ public class MysteriousX {
 			InvalidKeySpecException {
 		this.setLongTermPublicKey(DeserializationUtils.readPublicKey(stream));
 		this.setDhKeyID(DeserializationUtils.readInt(stream));
-		this.setSignature(DeserializationUtils.readSignature(stream,
-				this.getLongTermPublicKey()));
+		this.setSignature(DeserializationUtils.readSignature(stream, this
+				.getLongTermPublicKey()));
 	}
 
 	private PublicKey longTermPublicKey;
@@ -35,8 +38,8 @@ public class MysteriousX {
 
 		SerializationUtils.writePublicKey(stream, this.getLongTermPublicKey());
 		SerializationUtils.writeInt(stream, this.getDhKeyID());
-		SerializationUtils.writeSignature(stream, this.getSignature(),
-				this.getLongTermPublicKey());
+		SerializationUtils.writeSignature(stream, this.getSignature(), this
+				.getLongTermPublicKey());
 	}
 
 	public void setLongTermPublicKey(PublicKey longTermPublicKey) {
@@ -62,4 +65,25 @@ public class MysteriousX {
 	public byte[] getSignature() {
 		return signature;
 	}
+
+	public byte[] encrypted;
+	public byte[] hash;
+
+	public void update(byte[] encryptionKey, byte[] hashKey)
+			throws InvalidKeyException, IOException, NoSuchAlgorithmException,
+			NoSuchPaddingException, InvalidAlgorithmParameterException,
+			IllegalBlockSizeException, BadPaddingException {
+		ByteArrayOutputStream localXbos = new ByteArrayOutputStream();
+		this.writeObject(localXbos);
+		byte[] localXbytes = localXbos.toByteArray();
+		encrypted = CryptoUtils.aesEncrypt(encryptionKey, null, localXbytes);
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		SerializationUtils.writeData(out, encrypted);
+		byte[] tmp = out.toByteArray();
+		out.close();
+
+		hash = CryptoUtils.sha256Hmac160(tmp, hashKey);
+	}
+
 }

@@ -5,6 +5,7 @@ import java.math.*;
 import java.nio.*;
 import java.security.*;
 import java.security.spec.*;
+import java.util.Arrays; /* This needs to be done explicitly due to conflicting name */
 import java.util.logging.*;
 
 import javax.crypto.*;
@@ -45,9 +46,6 @@ public class AuthenticationInfo {
 	private byte[] m1p;
 	private byte[] m2p;
 
-	private byte[] localXEncrypted;
-	private byte[] localXEncryptedMac;
-
 	private KeyPair localLongTermKeyPair;
 
 	public void reset() {
@@ -69,8 +67,7 @@ public class AuthenticationInfo {
 		s = null;
 		c = m1 = m2 = cp = m1p = m2p = null;
 
-		localXEncrypted = null;
-		localXEncryptedMac = null;
+		mysteriousX = null;
 
 		localLongTermKeyPair = null;
 	}
@@ -91,8 +88,45 @@ public class AuthenticationInfo {
 		return r;
 	}
 
-	public void setRemoteDHPublicKey(DHPublicKey remoteDHPublicKey) {
-		this.remoteDHPublicKey = remoteDHPublicKey;
+	public void setRemoteDHPublicKey(DHPublicKey dhPublicKey) {
+		// Verifies that Alice's gy is a legal value (2 <= gy <= modulus-2)
+		if (dhPublicKey.getY().compareTo(CryptoConstants.MODULUS_MINUS_TWO) > 0) {
+			throw new IllegalArgumentException(
+					"Illegal D-H Public Key value, Ignoring message.");
+		} else if (dhPublicKey.getY().compareTo(CryptoConstants.BIGINTEGER_TWO) < 0) {
+			throw new IllegalArgumentException(
+					"Illegal D-H Public Key value, Ignoring message.");
+		}
+		logger.info("Received D-H Public Key is a legal value.");
+
+		this.remoteDHPublicKey = dhPublicKey;
+	}
+
+	public void setRemoteDHPublicKey(byte[] revealedKey)
+			throws InvalidKeyException, NoSuchAlgorithmException,
+			NoSuchPaddingException, InvalidAlgorithmParameterException,
+			IllegalBlockSizeException, BadPaddingException, IOException,
+			InvalidKeySpecException {
+		// Uses r to decrypt the value of gx sent earlier
+		byte[] remoteDHPublicKeyDecrypted = CryptoUtils.aesDecrypt(revealedKey,
+				null, this.getRemoteDHPublicKeyEncrypted());
+
+		// Verifies that HASH(gx) matches the value sent earlier
+		byte[] remoteDHPublicKeyHash = CryptoUtils
+				.sha256Hash(remoteDHPublicKeyDecrypted);
+		if (!Arrays.equals(remoteDHPublicKeyHash, this
+				.getRemoteDHPublicKeyHash())) {
+			throw new IllegalArgumentException(
+					"Hashes don't match, ignoring message.");
+		}
+
+		// Verifies that Bob's gx is a legal value (2 <= gx <= modulus-2)
+		ByteArrayInputStream inmpi = new ByteArrayInputStream(
+				remoteDHPublicKeyDecrypted);
+		BigInteger remoteDHPublicKeyMpi = DeserializationUtils.readMpi(inmpi);
+
+		this.setRemoteDHPublicKey(CryptoUtils
+				.getDHPublicKey(remoteDHPublicKeyMpi));
 	}
 
 	public DHPublicKey getRemoteDHPublicKey() {
@@ -255,22 +289,37 @@ public class AuthenticationInfo {
 		return m2p;
 	}
 
-	public void setLocalXEncrypted(byte[] localXEncrypted) {
-		logger.info("Set local X");
-		this.localXEncrypted = localXEncrypted;
-	}
+	private MysteriousX mysteriousX;
 
-	public byte[] getLocalXEncrypted() {
-		return localXEncrypted;
-	}
+	private Boolean pSet;
+	public MysteriousX getLocalMysteriousX(Boolean pSet)
+			throws InvalidKeyException, NoSuchAlgorithmException,
+			SignatureException, InvalidAlgorithmParameterException,
+			NoSuchProviderException, InvalidKeySpecException, IOException,
+			NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException {
 
-	public void setLocalXEncryptedMac(byte[] localXEncryptedMac) {
-		this.localXEncryptedMac = localXEncryptedMac;
-		logger.info("Set local encrypted X hash.");
-	}
+		if (this.mysteriousX == null || (this.pSet != pSet)) {
+			DHPublicKey ourDHPublicKey = (DHPublicKey) this.getLocalDHKeyPair()
+					.getPublic();
+			MysteriousM m = new MysteriousM(ourDHPublicKey, this
+					.getRemoteDHPublicKey(), this.getLocalLongTermKeyPair()
+					.getPublic(), this.getLocalDHKeyPairID());
 
-	public byte[] getLocalXEncryptedMac() {
-		return localXEncryptedMac;
+			byte[] signatureHashKey = (pSet) ? this.getM1p() : this.getM1();
+			byte[] xEncryptionKey = (pSet) ? this.getCp() : this.getC();
+			byte[] xHashKey = (pSet) ? this.getM2p() : this.getM2();
+
+			byte[] signature = m.sign(signatureHashKey, this
+					.getLocalLongTermKeyPair().getPrivate());
+
+			// Computes XB = pubB, keyidB, sigB(MB)
+			logger.info("Computing X");
+			this.mysteriousX = new MysteriousX(this.getLocalLongTermKeyPair()
+					.getPublic(), this.getLocalDHKeyPairID(), signature);
+			this.mysteriousX.update(xEncryptionKey, xHashKey);
+		}
+		return this.mysteriousX;
 	}
 
 	public void setLocalLongTermKeyPair(KeyPair localLongTermKeyPair) {
