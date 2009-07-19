@@ -2,12 +2,13 @@ package net.java.otr4j.message.encoded;
 
 import java.io.*;
 import java.security.*;
-import java.security.spec.*;
+
 import javax.crypto.*;
 
+import net.java.otr4j.*;
 import net.java.otr4j.crypto.*;
 
-public class MysteriousX {
+public class MysteriousX implements OtrSerializable {
 
 	public MysteriousX() {
 
@@ -20,10 +21,24 @@ public class MysteriousX {
 		this.setSignature(signature);
 	}
 
+	public void readObject(byte[] b) throws IOException {
+		ByteArrayInputStream bis = null;
+		try {
+			bis = new ByteArrayInputStream(b);
+			this.readObject(bis);
+		} catch (Exception e) {
+			bis.close();
+		}
+	}
+
 	public void readObject(java.io.ByteArrayInputStream stream)
-			throws IOException, NoSuchAlgorithmException,
-			InvalidKeySpecException {
-		this.setLongTermPublicKey(DeserializationUtils.readPublicKey(stream));
+			throws IOException {
+		try {
+			this.setLongTermPublicKey(DeserializationUtils
+					.readPublicKey(stream));
+		} catch (Exception e) {
+			throw new IOException(e);
+		}
 		this.setDhKeyID(DeserializationUtils.readInt(stream));
 		this.setSignature(DeserializationUtils.readSignature(stream, this
 				.getLongTermPublicKey()));
@@ -34,9 +49,14 @@ public class MysteriousX {
 	private byte[] signature;
 
 	public void writeObject(java.io.ByteArrayOutputStream stream)
-			throws IOException, InvalidKeyException {
+			throws IOException {
 
-		SerializationUtils.writePublicKey(stream, this.getLongTermPublicKey());
+		try {
+			SerializationUtils.writePublicKey(stream, this
+					.getLongTermPublicKey());
+		} catch (Exception e) {
+			throw new IOException(e);
+		}
 		SerializationUtils.writeInt(stream, this.getDhKeyID());
 		SerializationUtils.writeSignature(stream, this.getSignature(), this
 				.getLongTermPublicKey());

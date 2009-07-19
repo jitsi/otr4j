@@ -6,8 +6,8 @@ import net.java.otr4j.message.encoded.*;
 
 public final class RevealSignatureMessage extends SignatureMessageBase {
 
-	public RevealSignatureMessage(int protocolVersion, byte[] r, byte[] xEncryptedMAC,
-			byte[] xEncrypted) {
+	public RevealSignatureMessage(int protocolVersion, byte[] r,
+			byte[] xEncryptedMAC, byte[] xEncrypted) {
 
 		this.setMessageType(MessageType.REVEALSIG);
 		this.setProtocolVersion(protocolVersion);
@@ -32,7 +32,8 @@ public final class RevealSignatureMessage extends SignatureMessageBase {
 		SerializationUtils.writeMac(stream, this.getXEncryptedMAC());
 	}
 
-	public void readObject(java.io.ByteArrayInputStream stream) throws IOException {
+	public void readObject(java.io.ByteArrayInputStream stream)
+			throws IOException {
 		this.setProtocolVersion(DeserializationUtils.readShort(stream));
 		this.setMessageType(DeserializationUtils.readByte(stream));
 		this.setRevealedKey(DeserializationUtils.readData(stream));

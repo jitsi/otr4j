@@ -2,6 +2,7 @@ package net.java.otr4j.message.encoded.signature;
 
 import java.io.*;
 import java.security.*;
+import java.util.Arrays;
 
 import javax.crypto.*;
 
@@ -29,8 +30,9 @@ public abstract class SignatureMessageBase extends EncodedMessageBase {
 		return xEncrypted;
 	}
 
-	public byte[] getXEncryptedCalculatedMAC(byte[] key) throws IOException,
-			InvalidKeyException, NoSuchAlgorithmException {
+	protected byte[] hash(byte[] key) throws IOException, InvalidKeyException,
+			NoSuchAlgorithmException {
+
 		ByteArrayOutputStream out_ = new ByteArrayOutputStream();
 		SerializationUtils.writeData(out_, this.xEncrypted);
 		byte[] tmp_ = out_.toByteArray();
@@ -45,5 +47,10 @@ public abstract class SignatureMessageBase extends EncodedMessageBase {
 			InvalidAlgorithmParameterException, IllegalBlockSizeException,
 			BadPaddingException {
 		return CryptoUtils.aesDecrypt(key, null, this.xEncrypted);
+	}
+
+	public Boolean verify(byte[] key) throws InvalidKeyException,
+			NoSuchAlgorithmException, IOException {
+		return Arrays.equals(this.hash(key), this.getXEncryptedMAC());
 	}
 }

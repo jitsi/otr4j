@@ -87,7 +87,7 @@ public class MysteriousT extends EncodedMessageBase {
 		return null;
 	}
 
-	public byte[] sha1Hmac(byte[] key) throws IOException, InvalidKeyException,
+	public byte[] hash(byte[] key) throws IOException, InvalidKeyException,
 			NoSuchAlgorithmException {
 		logger.info("Transforming T to byte[] to calculate it's HmacSHA1.");
 		ByteArrayOutputStream out = new ByteArrayOutputStream();

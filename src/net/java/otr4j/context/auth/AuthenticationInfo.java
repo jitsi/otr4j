@@ -330,7 +330,7 @@ public class AuthenticationInfo {
 		return localLongTermKeyPair;
 	}
 
-	public void setRemoteDHPPublicKeyID(int remoteDHPPublicKeyID) {
+	public void setRemoteDHPublicKeyID(int remoteDHPPublicKeyID) {
 		this.remoteDHPPublicKeyID = remoteDHPPublicKeyID;
 	}
 

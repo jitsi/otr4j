@@ -1,6 +1,9 @@
 package net.java.otr4j.message.encoded;
 
 import java.io.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 public class DataMessage {
 
@@ -50,17 +53,25 @@ public class DataMessage {
 	public byte[] getOldMACKeys() {
 		return oldMACKeys;
 	}
-	
-	public String toUnsafeString() throws IOException {
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		try {
-			this.writeObject(bos);
-		} catch (IOException e) {
-			return super.toString();
-		}
 
-		String encodedMessage = EncodedMessageUtils.encodeMessage(bos
-				.toByteArray());
-		return encodedMessage;
+	public String toUnsafeString() throws IOException {
+		ByteArrayOutputStream bos = null;
+		try {
+			bos = new ByteArrayOutputStream();
+			this.writeObject(bos);
+
+			String encodedMessage = EncodedMessageUtils.encodeMessage(bos
+					.toByteArray());
+			return encodedMessage;
+		} finally {
+			bos.close();
+		}
+	}
+
+	public Boolean verify(byte[] key) throws InvalidKeyException,
+			NoSuchAlgorithmException, IOException {
+		byte[] computedMAC = t.hash(key);
+
+		return Arrays.equals(computedMAC, this.getMac());
 	}
 }

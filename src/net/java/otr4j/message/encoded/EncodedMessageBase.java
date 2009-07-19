@@ -4,7 +4,7 @@ import java.io.*;
 
 import net.java.otr4j.message.MessageBase;
 
-public abstract class EncodedMessageBase extends MessageBase {
+public abstract class EncodedMessageBase extends MessageBase  {
 	private int protocolVersion;
 
 	public abstract void writeObject(ByteArrayOutputStream stream)
