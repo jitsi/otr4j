@@ -12,6 +12,7 @@ import javax.crypto.spec.*;
 import org.bouncycastle.crypto.*;
 import org.bouncycastle.crypto.generators.*;
 import org.bouncycastle.crypto.params.*;
+import org.bouncycastle.crypto.signers.*;
 import org.bouncycastle.util.*;
 
 public class CryptoUtils {
@@ -193,12 +194,21 @@ public class CryptoUtils {
 		DSAPrivateKeyParameters bcDSAPrivateKeyParms = new DSAPrivateKeyParameters(
 				dsaPrivateKey.getX(), bcDSAParameters);
 
-		BuggyDSASigner dsaSigner = new BuggyDSASigner();
+		DSASigner dsaSigner = new DSASigner();
 		dsaSigner.init(true, bcDSAPrivateKeyParms);
 
-		BigInteger[] rs = dsaSigner.generateSignature(b);
+		BigInteger q = dsaParams.getQ();
 
-		int siglen = dsaParams.getQ().bitLength() / 4;
+		// Ian: Note that if you can get the standard DSA implementation you're
+		// using to not hash its input, you should be able to pass it ((256-bit
+		// value) mod q), (rather than truncating the 256-bit value) and all
+		// should be well.
+		// ref: Interop problems with libotr - DSA signature
+		BigInteger bmpi = new BigInteger(1, b);
+		BigInteger[] rs = dsaSigner.generateSignature(BigIntegers
+				.asUnsignedByteArray(bmpi.mod(q)));
+
+		int siglen = q.bitLength() / 4;
 		int rslen = siglen / 2;
 		byte[] rb = BigIntegers.asUnsignedByteArray(rs[0]);
 		byte[] sb = BigIntegers.asUnsignedByteArray(rs[1]);
@@ -254,19 +264,27 @@ public class CryptoUtils {
 		if (!(pubKey instanceof DSAPublicKey))
 			throw new IllegalArgumentException();
 
-		// construct the BC objects from pub key specs
 		DSAParams dsaParams = ((DSAPublicKey) pubKey).getParams();
-		DSAParameters bcDSAParams = new DSAParameters(dsaParams.getP(),
-				dsaParams.getQ(), dsaParams.getG());
+
+		BigInteger q = dsaParams.getQ();
+		DSAParameters bcDSAParams = new DSAParameters(dsaParams.getP(), q,
+				dsaParams.getG());
 
 		DSAPublicKey dsaPrivateKey = (DSAPublicKey) pubKey;
 		DSAPublicKeyParameters dsaPrivParms = new DSAPublicKeyParameters(
 				dsaPrivateKey.getY(), bcDSAParams);
 
-		// and now do the signature verification
-		BuggyDSASigner dsaSigner = new BuggyDSASigner();
+		// Ian: Note that if you can get the standard DSA implementation you're
+		// using to not hash its input, you should be able to pass it ((256-bit
+		// value) mod q), (rather than truncating the 256-bit value) and all
+		// should be well.
+		// ref: Interop problems with libotr - DSA signature
+		DSASigner dsaSigner = new DSASigner();
 		dsaSigner.init(false, dsaPrivParms);
-		Boolean result = dsaSigner.verifySignature(b, r, s);
+
+		BigInteger bmpi = new BigInteger(1, b);
+		Boolean result = dsaSigner.verifySignature(BigIntegers
+				.asUnsignedByteArray(bmpi.mod(q)), r, s);
 		return result;
 	}
 }
