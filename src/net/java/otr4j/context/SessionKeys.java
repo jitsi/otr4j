@@ -1,24 +1,34 @@
 package net.java.otr4j.context;
 
-import java.io.*;
-import java.math.*;
-import java.nio.*;
-import java.security.*;
-import java.util.*;
-import java.util.logging.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.logging.Logger;
 
-import javax.crypto.interfaces.*;
+import javax.crypto.interfaces.DHPublicKey;
 
-import net.java.otr4j.crypto.*;
-import net.java.otr4j.message.encoded.*;
+import net.java.otr4j.crypto.CryptoConstants;
+import net.java.otr4j.crypto.CryptoUtils;
+import net.java.otr4j.message.encoded.SerializationUtils;
 
-public class SessionKeys {
+/**
+ * 
+ * @author George Politis
+ */
+class SessionKeys {
 
-	private static Logger logger = Logger.getLogger(SessionKeys.class.getName());
-
+	public static final int Previous = 0;
+	public static final int Current = 1;
+	private static Logger logger = Logger
+			.getLogger(SessionKeys.class.getName());
 	private String keyDescription;
 
-	public SessionKeys(int localKeyIndex, int remoteKeyIndex) {
+	SessionKeys(int localKeyIndex, int remoteKeyIndex) {
 		if (localKeyIndex == 0)
 			keyDescription = "(Previous local, ";
 		else
@@ -31,44 +41,48 @@ public class SessionKeys {
 
 	}
 
-	public void setLocalPair(KeyPair keyPair, int localPairKeyID) {
+	void setLocalPair(KeyPair keyPair, int localPairKeyID) {
 		this.localPair = keyPair;
-		this.localKeyID = localPairKeyID;
+		this.setLocalKeyID(localPairKeyID);
 		logger.info(keyDescription + " current local key ID: "
-				+ this.localKeyID);
+				+ this.getLocalKeyID());
 		this.reset();
 	}
 
-	public void setRemoteDHPublicKey(DHPublicKey pubKey, int remoteKeyID) {
-		this.remoteKey = pubKey;
-		this.remoteKeyID = remoteKeyID;
+	void setRemoteDHPublicKey(DHPublicKey pubKey, int remoteKeyID) {
+		this.setRemoteKey(pubKey);
+		this.setRemoteKeyID(remoteKeyID);
 		logger.info(keyDescription + " current remote key ID: "
-				+ this.remoteKeyID);
+				+ this.getRemoteKeyID());
 		this.reset();
 	}
 
 	private byte[] sendingCtr = new byte[16];
 	private byte[] receivingCtr = new byte[16];
 
-	public void incrementSendingCtr() {
+	void incrementSendingCtr() {
 		logger.info("Incrementing counter for (localkeyID, remoteKeyID) = ("
-				+ localKeyID + "," + remoteKeyID + ")");
-		//logger.debug("Counter prior increament: "				+ Utils.dump(sendingCtr, true, 16));
+				+ getLocalKeyID() + "," + getRemoteKeyID() + ")");
+		// logger.debug("Counter prior increament: " +
+		// Utils.dump(sendingCtr,
+		// true, 16));
 		for (int i = 7; i >= 0; i--)
 			if (++sendingCtr[i] != 0)
 				break;
-		//logger.debug("Counter after increament: "				+ Utils.dump(sendingCtr, true, 16));
+		// logger.debug("Counter after increament: " +
+		// Utils.dump(sendingCtr,
+		// true, 16));
 	}
 
-	public byte[] getSendingCtr() {
+	byte[] getSendingCtr() {
 		return sendingCtr;
 	}
 
-	public byte[] getReceivingCtr() {
+	byte[] getReceivingCtr() {
 		return receivingCtr;
 	}
 
-	public void setReceivingCtr(byte[] ctr) {
+	void setReceivingCtr(byte[] ctr) {
 		for (int i = 0; i < ctr.length; i++)
 			receivingCtr[i] = ctr[i];
 	}
@@ -83,18 +97,18 @@ public class SessionKeys {
 		this.receivingMACKey = null;
 		this.setIsUsedReceivingMACKey(false);
 		this.s = null;
-		if (localPair != null && remoteKey != null) {
-			this.isHigh = ((DHPublicKey) localPair.getPublic()).getY().abs()
-					.compareTo(remoteKey.getY().abs()) == 1;
+		if (getLocalPair() != null && getRemoteKey() != null) {
+			this.isHigh = ((DHPublicKey) getLocalPair().getPublic()).getY()
+					.abs().compareTo(getRemoteKey().getY().abs()) == 1;
 		}
 
 	}
 
-	private static byte[] h1(byte b, BigInteger s)
-			throws NoSuchAlgorithmException, IOException {
+	private byte[] h1(byte b) throws NoSuchAlgorithmException, IOException,
+			InvalidKeyException {
 
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		SerializationUtils.writeMpi(bos, s);
+		SerializationUtils.writeMpi(bos, getS());
 		byte[] secbytes = bos.toByteArray();
 		bos.close();
 
@@ -106,7 +120,7 @@ public class SessionKeys {
 		return result;
 	}
 
-	public byte[] getSendingAESKey() throws InvalidKeyException,
+	byte[] getSendingAESKey() throws InvalidKeyException,
 			NoSuchAlgorithmException, IOException {
 		if (sendingAESKey != null)
 			return sendingAESKey;
@@ -115,7 +129,7 @@ public class SessionKeys {
 		if (this.isHigh)
 			sendbyte = CryptoConstants.HIGH_SEND_BYTE;
 
-		byte[] h1 = h1(sendbyte, this.getS());
+		byte[] h1 = h1(sendbyte);
 
 		byte[] key = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
 		ByteBuffer buff = ByteBuffer.wrap(h1);
@@ -125,7 +139,7 @@ public class SessionKeys {
 		return sendingAESKey;
 	}
 
-	public byte[] getReceivingAESKey() throws InvalidKeyException,
+	byte[] getReceivingAESKey() throws InvalidKeyException,
 			NoSuchAlgorithmException, IOException {
 		if (receivingAESKey != null)
 			return receivingAESKey;
@@ -134,7 +148,7 @@ public class SessionKeys {
 		if (this.isHigh)
 			receivebyte = CryptoConstants.HIGH_RECEIVE_BYTE;
 
-		byte[] h1 = h1(receivebyte, this.getS());
+		byte[] h1 = h1(receivebyte);
 
 		byte[] key = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
 		ByteBuffer buff = ByteBuffer.wrap(h1);
@@ -145,7 +159,7 @@ public class SessionKeys {
 		return receivingAESKey;
 	}
 
-	public byte[] getSendingMACKey() throws NoSuchAlgorithmException,
+	byte[] getSendingMACKey() throws NoSuchAlgorithmException,
 			InvalidKeyException, IOException {
 		if (sendingMACKey != null)
 			return sendingAESKey;
@@ -155,7 +169,7 @@ public class SessionKeys {
 		return sendingMACKey;
 	}
 
-	public byte[] getReceivingMACKey() throws NoSuchAlgorithmException,
+	byte[] getReceivingMACKey() throws NoSuchAlgorithmException,
 			InvalidKeyException, IOException {
 		if (receivingMACKey == null) {
 			receivingMACKey = CryptoUtils.sha1Hash(getReceivingAESKey());
@@ -167,34 +181,63 @@ public class SessionKeys {
 	private BigInteger getS() throws InvalidKeyException,
 			NoSuchAlgorithmException {
 		if (s == null) {
-			s = CryptoUtils.generateSecret(localPair.getPrivate(), remoteKey);
+			s = CryptoUtils.generateSecret(getLocalPair().getPrivate(),
+					getRemoteKey());
 			logger.info("Calculating shared secret S.");
 		}
 		return s;
 	}
 
-	public void setS(BigInteger s) {
+	void setS(BigInteger s) {
 		this.s = s;
 	}
 
-	public void setIsUsedReceivingMACKey(Boolean isUsedReceivingMACKey) {
+	void setIsUsedReceivingMACKey(Boolean isUsedReceivingMACKey) {
 		this.isUsedReceivingMACKey = isUsedReceivingMACKey;
 	}
 
-	public Boolean getIsUsedReceivingMACKey() {
+	Boolean getIsUsedReceivingMACKey() {
 		return isUsedReceivingMACKey;
 	}
 
-	public int localKeyID;
-	public int remoteKeyID;
-	public DHPublicKey remoteKey;
-	public KeyPair localPair;
+	private void setLocalKeyID(int localKeyID) {
+		this.localKeyID = localKeyID;
+	}
+
+	int getLocalKeyID() {
+		return localKeyID;
+	}
+
+	private void setRemoteKeyID(int remoteKeyID) {
+		this.remoteKeyID = remoteKeyID;
+	}
+
+	int getRemoteKeyID() {
+		return remoteKeyID;
+	}
+
+	private void setRemoteKey(DHPublicKey remoteKey) {
+		this.remoteKey = remoteKey;
+	}
+
+	DHPublicKey getRemoteKey() {
+		return remoteKey;
+	}
+
+	KeyPair getLocalPair() {
+		return localPair;
+	}
+
+	private int localKeyID;
+	private int remoteKeyID;
+	private DHPublicKey remoteKey;
+	private KeyPair localPair;
 
 	private byte[] sendingAESKey;
 	private byte[] receivingAESKey;
 	private byte[] sendingMACKey;
 	private byte[] receivingMACKey;
-	private Boolean isUsedReceivingMACKey = false;
+	private Boolean isUsedReceivingMACKey;
 	private BigInteger s;
 	private Boolean isHigh;
 }

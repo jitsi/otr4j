@@ -13,25 +13,14 @@ import java.security.*;
 import java.security.spec.*;
 import java.util.*;
 import java.util.logging.*;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
 import javax.crypto.interfaces.*;
-
-import net.java.otr4j.OTR4jListener;
-import net.java.otr4j.OtrException;
-import net.java.otr4j.PolicyUtils;
-import net.java.otr4j.context.auth.*;
+import net.java.otr4j.*;
 import net.java.otr4j.crypto.*;
-import net.java.otr4j.message.MessageHeader;
-import net.java.otr4j.message.MessageType;
-import net.java.otr4j.message.encoded.DataMessage;
-import net.java.otr4j.message.encoded.EncodedMessageUtils;
-import net.java.otr4j.message.encoded.MysteriousT;
-import net.java.otr4j.message.unencoded.ErrorMessage;
-import net.java.otr4j.message.unencoded.query.PlainTextMessage;
-import net.java.otr4j.message.unencoded.query.QueryMessage;
+import net.java.otr4j.message.*;
+import net.java.otr4j.message.encoded.*;
+import net.java.otr4j.message.unencoded.*;
+import net.java.otr4j.message.unencoded.query.*;
 
 /**
  * 
@@ -42,37 +31,34 @@ public class ConnContext {
 	private String account;
 	private String protocol;
 	private OTR4jListener listener;
-	private MessageState messageState;
-	private AuthenticationInfo authenticationInfo;
-	private SessionKeys[][] sessionKeys = new SessionKeys[2][2];
-	private Vector<byte[]> oldMacKeys = new Vector<byte[]>();
+	private int messageState;
+	private AuthContext authenticationInfo;
+	private SessionKeys[][] sessionKeys;
+	private Vector<byte[]> oldMacKeys;
 	private static Logger logger = Logger
 			.getLogger(ConnContext.class.getName());
 
-	interface SessionKeysIndex {
-		public final int Previous = 0;
-		public final int Current = 1;
-	}
+	private static final int PLAINTEXT = 0;
+	private static final int ENCRYPTED = 1;
+	private static final int FINISHED = 2;
 
 	public ConnContext(String user, String account, String protocol,
 			OTR4jListener listener) {
 		this.setUser(user);
 		this.setAccount(account);
 		this.setProtocol(protocol);
-		this.listener = listener;
-		this.setMessageState(MessageState.PLAINTEXT);
+		this.setListener(listener);
+		this.setMessageState(PLAINTEXT);
 	}
 
 	private SessionKeys getEncryptionSessionKeys() {
 		logger.info("Getting encryption keys");
-		return getSessionKeysByIndex(SessionKeysIndex.Previous,
-				SessionKeysIndex.Current);
+		return getSessionKeysByIndex(SessionKeys.Previous, SessionKeys.Current);
 	}
 
 	private SessionKeys getMostRecentSessionKeys() {
 		logger.info("Getting most recent keys.");
-		return getSessionKeysByIndex(SessionKeysIndex.Current,
-				SessionKeysIndex.Current);
+		return getSessionKeysByIndex(SessionKeys.Current, SessionKeys.Current);
 	}
 
 	private SessionKeys getSessionKeysByID(int localKeyID, int remoteKeyID) {
@@ -80,11 +66,11 @@ public class ConnContext {
 				.info("Searching for session keys with (localKeyID, remoteKeyID) = ("
 						+ localKeyID + "," + remoteKeyID + ")");
 
-		for (int i = 0; i < sessionKeys.length; i++) {
-			for (int j = 0; j < sessionKeys[i].length; j++) {
+		for (int i = 0; i < getSessionKeys().length; i++) {
+			for (int j = 0; j < getSessionKeys()[i].length; j++) {
 				SessionKeys current = getSessionKeysByIndex(i, j);
-				if (current.localKeyID == localKeyID
-						&& current.remoteKeyID == remoteKeyID) {
+				if (current.getLocalKeyID() == localKeyID
+						&& current.getRemoteKeyID() == remoteKeyID) {
 					logger.info("Matching keys found.");
 					return current;
 				}
@@ -96,139 +82,101 @@ public class ConnContext {
 
 	private SessionKeys getSessionKeysByIndex(int localKeyIndex,
 			int remoteKeyIndex) {
-		if (sessionKeys[localKeyIndex][remoteKeyIndex] == null)
-			sessionKeys[localKeyIndex][remoteKeyIndex] = new SessionKeys(
+		if (getSessionKeys()[localKeyIndex][remoteKeyIndex] == null)
+			getSessionKeys()[localKeyIndex][remoteKeyIndex] = new SessionKeys(
 					localKeyIndex, remoteKeyIndex);
 
-		return sessionKeys[localKeyIndex][remoteKeyIndex];
+		return getSessionKeys()[localKeyIndex][remoteKeyIndex];
 	}
 
-	private byte[] getOldMacKeys() {
-		logger.info("Collecting old MAC keys to be revealed.");
-		int len = 0;
-		for (int i = 0; i < oldMacKeys.size(); i++)
-			len += oldMacKeys.get(i).length;
-
-		ByteBuffer buff = ByteBuffer.allocate(len);
-		for (int i = 0; i < oldMacKeys.size(); i++)
-			buff.put(oldMacKeys.get(i));
-
-		oldMacKeys.clear();
-		return buff.array();
-	}
-
-	private void rotateKeys(int receipientKeyID, int senderKeyID,
-			DHPublicKey pubKey) throws InvalidKeyException,
-			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException, IOException {
-		SessionKeys mostRecent = this.getMostRecentSessionKeys();
-		if (mostRecent.localKeyID == receipientKeyID)
-			this.rotateLocalKeys();
-
-		if (mostRecent.remoteKeyID == senderKeyID)
-			this.rotateRemoteKeys(pubKey);
-	}
-
-	private void rotateRemoteKeys(DHPublicKey pubKey)
+	private void rotateRemoteSessionKeys(DHPublicKey pubKey)
 			throws NoSuchAlgorithmException, IOException, InvalidKeyException {
 
 		logger.info("Rotating remote keys.");
-		SessionKeys sess1 = getSessionKeysByIndex(SessionKeysIndex.Current,
-				SessionKeysIndex.Previous);
+		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.Current,
+				SessionKeys.Previous);
 		if (sess1.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
-			oldMacKeys.add(sess1.getReceivingMACKey());
+			getOldMacKeys().add(sess1.getReceivingMACKey());
 		}
 
-		SessionKeys sess2 = getSessionKeysByIndex(SessionKeysIndex.Previous,
-				SessionKeysIndex.Previous);
+		SessionKeys sess2 = getSessionKeysByIndex(SessionKeys.Previous,
+				SessionKeys.Previous);
 		if (sess2.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
-			oldMacKeys.add(sess2.getReceivingMACKey());
+			getOldMacKeys().add(sess2.getReceivingMACKey());
 		}
 
-		SessionKeys sess3 = getSessionKeysByIndex(SessionKeysIndex.Current,
-				SessionKeysIndex.Current);
-		sess1.setRemoteDHPublicKey(sess3.remoteKey, sess3.remoteKeyID);
+		SessionKeys sess3 = getSessionKeysByIndex(SessionKeys.Current,
+				SessionKeys.Current);
+		sess1
+				.setRemoteDHPublicKey(sess3.getRemoteKey(), sess3
+						.getRemoteKeyID());
 
-		SessionKeys sess4 = getSessionKeysByIndex(SessionKeysIndex.Previous,
-				SessionKeysIndex.Current);
-		sess2.setRemoteDHPublicKey(sess4.remoteKey, sess4.remoteKeyID);
+		SessionKeys sess4 = getSessionKeysByIndex(SessionKeys.Previous,
+				SessionKeys.Current);
+		sess2
+				.setRemoteDHPublicKey(sess4.getRemoteKey(), sess4
+						.getRemoteKeyID());
 
-		sess3.setRemoteDHPublicKey(pubKey, sess3.remoteKeyID + 1);
-		sess4.setRemoteDHPublicKey(pubKey, sess4.remoteKeyID + 1);
+		sess3.setRemoteDHPublicKey(pubKey, sess3.getRemoteKeyID() + 1);
+		sess4.setRemoteDHPublicKey(pubKey, sess4.getRemoteKeyID() + 1);
 	}
 
-	private void rotateLocalKeys() throws NoSuchAlgorithmException,
+	private void rotateLocalSessionKeys() throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			IOException, InvalidKeyException, InvalidKeySpecException {
 
 		logger.info("Rotating local keys.");
-		SessionKeys sess1 = getSessionKeysByIndex(SessionKeysIndex.Previous,
-				SessionKeysIndex.Current);
+		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.Previous,
+				SessionKeys.Current);
 		if (sess1.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
-			oldMacKeys.add(sess1.getReceivingMACKey());
+			getOldMacKeys().add(sess1.getReceivingMACKey());
 		}
 
-		SessionKeys sess2 = getSessionKeysByIndex(SessionKeysIndex.Previous,
-				SessionKeysIndex.Previous);
+		SessionKeys sess2 = getSessionKeysByIndex(SessionKeys.Previous,
+				SessionKeys.Previous);
 		if (sess2.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
-			oldMacKeys.add(sess2.getReceivingMACKey());
+			getOldMacKeys().add(sess2.getReceivingMACKey());
 		}
 
-		SessionKeys sess3 = getSessionKeysByIndex(SessionKeysIndex.Current,
-				SessionKeysIndex.Current);
-		sess1.setLocalPair(sess3.localPair, sess3.localKeyID);
-		SessionKeys sess4 = getSessionKeysByIndex(SessionKeysIndex.Current,
-				SessionKeysIndex.Previous);
-		sess2.setLocalPair(sess4.localPair, sess4.localKeyID);
+		SessionKeys sess3 = getSessionKeysByIndex(SessionKeys.Current,
+				SessionKeys.Current);
+		sess1.setLocalPair(sess3.getLocalPair(), sess3.getLocalKeyID());
+		SessionKeys sess4 = getSessionKeysByIndex(SessionKeys.Current,
+				SessionKeys.Previous);
+		sess2.setLocalPair(sess4.getLocalPair(), sess4.getLocalKeyID());
 
 		KeyPair newPair = CryptoUtils.generateDHKeyPair();
-		sess3.setLocalPair(newPair, sess3.localKeyID + 1);
-		sess4.setLocalPair(newPair, sess4.localKeyID + 1);
+		sess3.setLocalPair(newPair, sess3.getLocalKeyID() + 1);
+		sess4.setLocalPair(newPair, sess4.getLocalKeyID() + 1);
 	}
 
-	private void goSecure() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, InvalidKeyException {
-		logger.info("Setting most recent session keys from auth.");
-		for (int i = 0; i < this.sessionKeys[0].length; i++) {
-			SessionKeys current = getSessionKeysByIndex(0, i);
-			current.setLocalPair(this.getAuthenticationInfo()
-					.getLocalDHKeyPair(), 1);
-			current.setRemoteDHPublicKey(this.getAuthenticationInfo()
-					.getRemoteDHPublicKey(), 1);
-			current.setS(this.getAuthenticationInfo().getS());
-		}
+	private byte[] collectOldMacKeys() {
+		logger.info("Collecting old MAC keys to be revealed.");
+		int len = 0;
+		for (int i = 0; i < getOldMacKeys().size(); i++)
+			len += getOldMacKeys().get(i).length;
 
-		KeyPair nextDH = CryptoUtils.generateDHKeyPair();
-		for (int i = 0; i < this.sessionKeys[1].length; i++) {
-			SessionKeys current = getSessionKeysByIndex(1, i);
-			current.setRemoteDHPublicKey(getAuthenticationInfo()
-					.getRemoteDHPublicKey(), 1);
-			current.setLocalPair(nextDH, 2);
-		}
+		ByteBuffer buff = ByteBuffer.allocate(len);
+		for (int i = 0; i < getOldMacKeys().size(); i++)
+			buff.put(getOldMacKeys().get(i));
 
-		this.setAuthenticationInfo(null);
-		this.setMessageState(MessageState.ENCRYPTED);
-		logger.info("Gone Secure.");
+		getOldMacKeys().clear();
+		return buff.array();
 	}
 
-	private void setAuthenticationInfo(AuthenticationInfo auth) {
-		this.authenticationInfo = auth;
-	}
-
-	private void setMessageState(MessageState messageState) {
+	private void setMessageState(int messageState) {
 		this.messageState = messageState;
 	}
 
-	private MessageState getMessageState() {
+	private int getMessageState() {
 		return messageState;
 	}
 
@@ -256,16 +204,36 @@ public class ConnContext {
 		return protocol;
 	}
 
-	private AuthenticationInfo getAuthenticationInfo() {
+	private void setListener(OTR4jListener listener) {
+		this.listener = listener;
+	}
+
+	private OTR4jListener getListener() {
+		return listener;
+	}
+
+	private SessionKeys[][] getSessionKeys() {
+		if (sessionKeys == null)
+			sessionKeys = new SessionKeys[2][2];
+		return sessionKeys;
+	}
+
+	private AuthContext getAuthenticationInfo() {
 		if (authenticationInfo == null)
-			authenticationInfo = new AuthenticationInfo(getAccount(),
-					getUser(), getProtocol(), listener);
+			authenticationInfo = new AuthContext(getAccount(),
+					getUser(), getProtocol(), getListener());
 		return authenticationInfo;
+	}
+
+	private Vector<byte[]> getOldMacKeys() {
+		if (oldMacKeys == null)
+			oldMacKeys = new Vector<byte[]>();
+		return oldMacKeys;
 	}
 
 	public String handleReceivingMessage(String msgText) throws Exception {
 
-		int policy = listener.getPolicy(this);
+		int policy = getListener().getPolicy(this);
 		if (!PolicyUtils.getAllowV1(policy) && !PolicyUtils.getAllowV2(policy)) {
 			logger
 					.info("Policy does not allow neither V1 not V2, ignoring message.");
@@ -292,8 +260,8 @@ public class ConnContext {
 			return null;
 		default:
 		case MessageType.UKNOWN:
-			logger.warning("Unrecognizable OTR message received.");
-			return msgText;
+			throw new UnsupportedOperationException(
+					"Received an uknown message type.");
 		}
 	}
 
@@ -302,7 +270,7 @@ public class ConnContext {
 				+ " throught " + protocol + ".");
 
 		ErrorMessage errorMessage = new ErrorMessage(msgText);
-		listener.showError(errorMessage.error);
+		getListener().showError(errorMessage.error);
 		if (PolicyUtils.getErrorStartsAKE(policy)) {
 			logger.info("Error message starts AKE.");
 			Vector<Integer> versions = new Vector<Integer>();
@@ -315,7 +283,7 @@ public class ConnContext {
 			QueryMessage queryMessage = new QueryMessage(versions);
 
 			logger.info("Sending Query");
-			listener.injectMessage(queryMessage.toString());
+			getListener().injectMessage(queryMessage.toString());
 		}
 	}
 
@@ -360,14 +328,20 @@ public class ConnContext {
 			logger.info("Decrypted message: \"" + decryptedMsgContent + "\"");
 
 			// Rotate keys if necessary.
-			this.rotateKeys(receipientKeyID, senderKeyID, t.nextDHPublicKey);
+			SessionKeys mostRecent = this.getMostRecentSessionKeys();
+			if (mostRecent.getLocalKeyID() == receipientKeyID)
+				this.rotateLocalSessionKeys();
+
+			if (mostRecent.getRemoteKeyID() == senderKeyID)
+				this.rotateRemoteSessionKeys(t.nextDHPublicKey);
 
 			return decryptedMsgContent;
 		case FINISHED:
 		case PLAINTEXT:
-			listener.showWarning("Unreadable encrypted message was received");
+			getListener().showWarning(
+					"Unreadable encrypted message was received");
 			ErrorMessage errormsg = new ErrorMessage("Oups.");
-			listener.injectMessage(errormsg.toString());
+			getListener().injectMessage(errormsg.toString());
 			break;
 		}
 
@@ -393,7 +367,8 @@ public class ConnContext {
 			case FINISHED:
 				// Display the message to the user, but warn him that the
 				// message was received unencrypted.
-				listener.showWarning("The message was received unencrypted.");
+				getListener().showWarning(
+						"The message was received unencrypted.");
 				return plainTextMessage.cleanText;
 			case PLAINTEXT:
 				// Simply display the message to the user. If
@@ -401,8 +376,8 @@ public class ConnContext {
 				// is set, warn him that the message was received
 				// unencrypted.
 				if (PolicyUtils.getRequireEncryption(policy)) {
-					listener
-							.showWarning("The message was received unencrypted.");
+					getListener().showWarning(
+							"The message was received unencrypted.");
 				}
 				return msgText;
 			}
@@ -414,15 +389,16 @@ public class ConnContext {
 				// Remove the whitespace tag and display the message to the
 				// user, but warn him that the message was received
 				// unencrypted.
-				listener.showWarning("The message was received unencrypted.");
+				getListener().showWarning(
+						"The message was received unencrypted.");
 			case PLAINTEXT:
 				// Remove the whitespace tag and display the message to the
 				// user. If REQUIRE_ENCRYPTION is set, warn him that the
 				// message
 				// was received unencrypted.
 				if (PolicyUtils.getRequireEncryption(policy)) {
-					listener
-							.showWarning("The message was received unencrypted.");
+					getListener().showWarning(
+							"The message was received unencrypted.");
 				}
 			}
 
@@ -438,10 +414,33 @@ public class ConnContext {
 			InvalidKeySpecException, IOException, InvalidKeyException,
 			NoSuchPaddingException, IllegalBlockSizeException,
 			BadPaddingException, SignatureException, OtrException {
-		this.getAuthenticationInfo().handleReceivingMessage(msgText, policy);
 
-		if (this.getAuthenticationInfo().isSecure)
-			this.goSecure();
+		AuthContext auth = this.getAuthenticationInfo();
+		auth.handleReceivingMessage(msgText, policy);
+
+		if (auth.getIsSecure()) {
+			logger.info("Setting most recent session keys from auth.");
+			for (int i = 0; i < this.getSessionKeys()[0].length; i++) {
+				SessionKeys current = getSessionKeysByIndex(0, i);
+				current.setLocalPair(this.getAuthenticationInfo()
+						.getLocalDHKeyPair(), 1);
+				current.setRemoteDHPublicKey(this.getAuthenticationInfo()
+						.getRemoteDHPublicKey(), 1);
+				current.setS(this.getAuthenticationInfo().getS());
+			}
+
+			KeyPair nextDH = CryptoUtils.generateDHKeyPair();
+			for (int i = 0; i < this.getSessionKeys()[1].length; i++) {
+				SessionKeys current = getSessionKeysByIndex(1, i);
+				current.setRemoteDHPublicKey(getAuthenticationInfo()
+						.getRemoteDHPublicKey(), 1);
+				current.setLocalPair(nextDH, 2);
+			}
+
+			auth.reset();
+			this.setMessageState(ENCRYPTED);
+			logger.info("Gone Secure.");
+		}
 	}
 
 	public String handleSendingMessage(String msgText)
@@ -457,8 +456,8 @@ public class ConnContext {
 
 			// Get encryption keys.
 			SessionKeys encryptionKeys = this.getEncryptionSessionKeys();
-			int senderKeyID = encryptionKeys.localKeyID;
-			int receipientKeyID = encryptionKeys.remoteKeyID;
+			int senderKeyID = encryptionKeys.getLocalKeyID();
+			int receipientKeyID = encryptionKeys.getRemoteKeyID();
 
 			// Increment CTR.
 			encryptionKeys.incrementSendingCtr();
@@ -473,7 +472,7 @@ public class ConnContext {
 
 			// Get most recent keys to get the next D-H public key.
 			SessionKeys mostRecentKeys = this.getMostRecentSessionKeys();
-			DHPublicKey nextDH = (DHPublicKey) mostRecentKeys.localPair
+			DHPublicKey nextDH = (DHPublicKey) mostRecentKeys.getLocalPair()
 					.getPublic();
 
 			// Calculate T.
@@ -485,7 +484,7 @@ public class ConnContext {
 			byte[] mac = t.hash(sendingMACKey);
 
 			// Get old MAC keys to be revealed.
-			byte[] oldMacKeys = this.getOldMacKeys();
+			byte[] oldMacKeys = this.collectOldMacKeys();
 			DataMessage msg = new DataMessage(t, mac, oldMacKeys);
 			return msg.toUnsafeString();
 		case FINISHED:
@@ -494,4 +493,5 @@ public class ConnContext {
 			return msgText;
 		}
 	}
+
 }

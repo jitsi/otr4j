@@ -20,15 +20,13 @@ import net.java.otr4j.context.*;
  */
 public final class UserState {
 	public UserState(OTR4jListener listener) {
-		this.listener = listener;
+		this.setListener(listener);
 	}
 
 	private OTR4jListener listener;
-
+	private Vector<ConnContext> contextPool;
 	private static Logger logger = Logger
 			.getLogger(ConnContext.class.getName());
-
-	private Vector<ConnContext> contextPool = new Vector<ConnContext>();
 
 	private ConnContext getConnContext(String user, String account,
 			String protocol) {
@@ -38,7 +36,7 @@ public final class UserState {
 			throw new IllegalArgumentException();
 		}
 
-		for (ConnContext connContext : contextPool) {
+		for (ConnContext connContext : getContextPool()) {
 			if (connContext.getAccount().equals(account)
 					&& connContext.getUser().equals(user)
 					&& connContext.getProtocol().equals(protocol)) {
@@ -46,8 +44,9 @@ public final class UserState {
 			}
 		}
 
-		ConnContext context = new ConnContext(user, account, protocol, listener);
-		contextPool.add(context);
+		ConnContext context = new ConnContext(user, account, protocol,
+				getListener());
+		getContextPool().add(context);
 
 		return context;
 	}
@@ -55,9 +54,9 @@ public final class UserState {
 	public String handleReceivingMessage(String user, String account,
 			String protocol, String msgText) throws Exception {
 
-		ConnContext ctx = this.getConnContext(user, account, protocol);
 		try {
-			return ctx.handleReceivingMessage(msgText);
+			return this.getConnContext(user, account, protocol)
+					.handleReceivingMessage(msgText);
 		} catch (Exception e) {
 			logger
 					.log(
@@ -71,9 +70,9 @@ public final class UserState {
 	public String handleSendingMessage(String user, String account,
 			String protocol, String msgText) {
 
-		ConnContext ctx = this.getConnContext(user, account, protocol);
 		try {
-			return ctx.handleSendingMessage(msgText);
+			return this.getConnContext(user, account, protocol)
+					.handleSendingMessage(msgText);
 		} catch (Exception e) {
 			logger
 					.log(
@@ -82,5 +81,19 @@ public final class UserState {
 							e);
 			return msgText;
 		}
+	}
+
+	private void setListener(OTR4jListener listener) {
+		this.listener = listener;
+	}
+
+	private OTR4jListener getListener() {
+		return listener;
+	}
+
+	private Vector<ConnContext> getContextPool() {
+		if (contextPool == null)
+			contextPool = new Vector<ConnContext>();
+		return contextPool;
 	}
 }
