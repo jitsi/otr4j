@@ -28,39 +28,39 @@ public class StateMachineTest extends junit.framework.TestCase {
 		DummyOTR4jListener listener = new DummyOTR4jListener(Policy.ALLOW_V2
 				| Policy.ERROR_START_AKE);
 
-		UserState usAlice = new UserState();
-		UserState usBob = new UserState();
+		UserState usAlice = new UserState(listener);
+		UserState usBob = new UserState(listener);
 
 		// Bob receives query, sends D-H commit.
 		@SuppressWarnings("unused")
-		String receivedMessage = usBob.handleReceivingMessage(listener,
-				miFromAlice.user, miFromAlice.account, miFromAlice.protocol,
+		String receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
+				miFromAlice.account, miFromAlice.protocol,
 				UnencodedMessageTextSample.QueryMessage_V12);
 
 		// Alice received D-H Commit, sends D-H key.
-		receivedMessage = usAlice.handleReceivingMessage(listener, miFromBob.user,
+		receivedMessage = usAlice.handleReceivingMessage(miFromBob.user,
 				miFromBob.account, miFromBob.protocol,
 				listener.lastInjectedMessage);
 
 		// Bob receives D-H Key, sends reveal signature.
-		receivedMessage = usBob.handleReceivingMessage(listener, miFromAlice.user,
+		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
 				miFromAlice.account, miFromAlice.protocol,
 				listener.lastInjectedMessage);
 
 		// Alice receives Reveal Signature, sends signature and goes secure.
-		receivedMessage = usAlice.handleReceivingMessage(listener, miFromBob.user,
+		receivedMessage = usAlice.handleReceivingMessage(miFromBob.user,
 				miFromBob.account, miFromBob.protocol,
 				listener.lastInjectedMessage);
 
 		// Bobs receives Signature, goes secure.
-		receivedMessage = usBob.handleReceivingMessage(listener, miFromAlice.user,
+		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
 				miFromAlice.account, miFromAlice.protocol,
 				listener.lastInjectedMessage);
 
 		// We are both secure, send encrypted message.
 		String sentMessage = usAlice
 				.handleSendingMessage(
-						listener,
+
 						miFromBob.user,
 						miFromBob.account,
 						miFromBob.protocol,
@@ -68,33 +68,33 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
-		receivedMessage = usBob.handleReceivingMessage(listener, miFromAlice.user,
+		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
 				miFromAlice.account, miFromAlice.protocol, sentMessage);
 
 		// Send encrypted message.
 		sentMessage = usBob
-				.handleSendingMessage(listener, miFromAlice.user,
-						miFromAlice.account, miFromAlice.protocol,
+				.handleSendingMessage(miFromAlice.user, miFromAlice.account,
+						miFromAlice.protocol,
 						"Hey Alice, it means that our communication is encrypted and authenticated.");
 		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
-		receivedMessage = usAlice.handleReceivingMessage(listener, miFromBob.user,
+		receivedMessage = usAlice.handleReceivingMessage(miFromBob.user,
 				miFromBob.account, miFromBob.protocol, sentMessage);
 
 		// Send encrypted message.
-		sentMessage = usAlice.handleSendingMessage(listener, miFromBob.user,
+		sentMessage = usAlice.handleSendingMessage(miFromBob.user,
 				miFromBob.account, miFromBob.protocol, "Oh, is that all?");
 		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
-		receivedMessage = usBob.handleReceivingMessage(listener, miFromAlice.user,
+		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
 				miFromAlice.account, miFromAlice.protocol, sentMessage);
 
 		// Send encrypted message.
 		sentMessage = usBob
 				.handleSendingMessage(
-						listener,
+
 						miFromAlice.user,
 						miFromAlice.account,
 						miFromAlice.protocol,
@@ -102,16 +102,16 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
-		receivedMessage = usAlice.handleReceivingMessage(listener, miFromBob.user,
+		receivedMessage = usAlice.handleReceivingMessage(miFromBob.user,
 				miFromBob.account, miFromBob.protocol, sentMessage);
 
 		// Send encrypted message.
-		sentMessage = usAlice.handleSendingMessage(listener, miFromBob.user,
+		sentMessage = usAlice.handleSendingMessage(miFromBob.user,
 				miFromBob.account, miFromBob.protocol, "Oh really?!");
 		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
-		receivedMessage = usBob.handleReceivingMessage(listener, miFromAlice.user,
+		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
 				miFromAlice.account, miFromAlice.protocol, sentMessage);
 
 	}

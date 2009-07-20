@@ -41,6 +41,7 @@ public class ConnContext {
 	private String user;
 	private String account;
 	private String protocol;
+	private OTR4jListener listener;
 	private MessageState messageState;
 	private AuthenticationInfo authenticationInfo;
 	private SessionKeys[][] sessionKeys = new SessionKeys[2][2];
@@ -53,10 +54,12 @@ public class ConnContext {
 		public final int Current = 1;
 	}
 
-	public ConnContext(String user, String account, String protocol) {
+	public ConnContext(String user, String account, String protocol,
+			OTR4jListener listener) {
 		this.setUser(user);
 		this.setAccount(account);
 		this.setProtocol(protocol);
+		this.listener = listener;
 		this.setMessageState(MessageState.PLAINTEXT);
 	}
 
@@ -72,7 +75,7 @@ public class ConnContext {
 				SessionKeysIndex.Current);
 	}
 
-	private SessionKeys findSessionKeysByID(int localKeyID, int remoteKeyID) {
+	private SessionKeys getSessionKeysByID(int localKeyID, int remoteKeyID) {
 		logger
 				.info("Searching for session keys with (localKeyID, remoteKeyID) = ("
 						+ localKeyID + "," + remoteKeyID + ")");
@@ -212,9 +215,13 @@ public class ConnContext {
 			current.setLocalPair(nextDH, 2);
 		}
 
-		this.getAuthenticationInfo().reset();
+		this.setAuthenticationInfo(null);
 		this.setMessageState(MessageState.ENCRYPTED);
 		logger.info("Gone Secure.");
+	}
+
+	private void setAuthenticationInfo(AuthenticationInfo auth) {
+		this.authenticationInfo = auth;
 	}
 
 	private void setMessageState(MessageState messageState) {
@@ -252,17 +259,14 @@ public class ConnContext {
 	private AuthenticationInfo getAuthenticationInfo() {
 		if (authenticationInfo == null)
 			authenticationInfo = new AuthenticationInfo(getAccount(),
-					getUser(), getProtocol());
+					getUser(), getProtocol(), listener);
 		return authenticationInfo;
 	}
 
-	public String handleReceivingMessage(String msgText, OTR4jListener listener)
-			throws Exception {
-		int policy = listener.getPolicy(this);
+	public String handleReceivingMessage(String msgText) throws Exception {
 
-		Boolean allowV1 = PolicyUtils.getAllowV1(policy);
-		Boolean allowV2 = PolicyUtils.getAllowV2(policy);
-		if (!allowV1 && !allowV2) {
+		int policy = listener.getPolicy(this);
+		if (!PolicyUtils.getAllowV1(policy) && !PolicyUtils.getAllowV2(policy)) {
 			logger
 					.info("Policy does not allow neither V1 not V2, ignoring message.");
 			return msgText;
@@ -270,192 +274,174 @@ public class ConnContext {
 
 		switch (MessageHeader.getMessageType(msgText)) {
 		case MessageType.DATA:
-			logger
-					.info(account + " received a data message from " + user
-							+ ".");
-			DataMessage data = new DataMessage();
-			ByteArrayInputStream in = new ByteArrayInputStream(
-					EncodedMessageUtils.decodeMessage(msgText));
-			data.readObject(in);
-			switch (this.getMessageState()) {
-			case ENCRYPTED:
-				logger
-						.info("Message state is ENCRYPTED. Trying to decrypt message.");
-				MysteriousT t = data.t;
-
-				// Find matching session keys.
-				int senderKeyID = t.senderKeyID;
-				int receipientKeyID = t.recipientKeyID;
-				SessionKeys matchingKeys = this.findSessionKeysByID(
-						receipientKeyID, senderKeyID);
-
-				if (matchingKeys == null)
-					throw new OtrException("No matching keys found.");
-
-				// Verify received MAC with a locally calculated MAC.
-				if (!data.verify(matchingKeys.getReceivingMACKey()))
-					throw new OtrException("MAC verification failed.");
-
-				logger.info("Computed HmacSHA1 value matches sent one.");
-
-				// Mark this MAC key as old to be revealed.
-				matchingKeys.setIsUsedReceivingMACKey(true);
-
-				matchingKeys.setReceivingCtr(t.ctr);
-
-				String decryptedMsgContent = t.getDecryptedMessage(matchingKeys
-						.getReceivingAESKey(), matchingKeys.getReceivingCtr());
-				logger.info("Decrypted message: \"" + decryptedMsgContent
-						+ "\"");
-
-				// Rotate keys if necessary.
-				this
-						.rotateKeys(receipientKeyID, senderKeyID,
-								t.nextDHPublicKey);
-
-				return decryptedMsgContent;
-			case FINISHED:
-			case PLAINTEXT:
-				listener
-						.showWarning("Unreadable encrypted message was received");
-				ErrorMessage errormsg = new ErrorMessage("Oups.");
-				listener.injectMessage(errormsg.toString());
-				break;
-			}
-
-			return null;
+			return handleDataMessage(msgText);
 		case MessageType.ERROR:
-			logger.info(account + " received an error message from " + user
-					+ " throught " + protocol + ".");
-
-			ErrorMessage errorMessage = new ErrorMessage(msgText);
-			listener.showError(errorMessage.error);
-			if (PolicyUtils.getErrorStartsAKE(policy)) {
-				logger.info("Error message starts AKE.");
-				Vector<Integer> versions = new Vector<Integer>();
-				if (PolicyUtils.getAllowV1(policy))
-					versions.add(1);
-
-				if (PolicyUtils.getAllowV2(policy))
-					versions.add(2);
-
-				QueryMessage queryMessage = new QueryMessage(versions);
-
-				logger.info("Sending Query");
-				listener.injectMessage(queryMessage.toString());
-			}
-			break;
-		case MessageType.PLAINTEXT:
-			logger.info(account + " received a plaintext message from " + user
-					+ " throught " + protocol + ".");
-
-			PlainTextMessage plainTextMessage = new PlainTextMessage(msgText);
-			Vector<Integer> versions = plainTextMessage.versions;
-			if (versions.size() < 1) {
-				logger
-						.info("Received plaintext message without the whitespace tag.");
-				switch (this.getMessageState()) {
-				case ENCRYPTED:
-				case FINISHED:
-					// Display the message to the user, but warn him that the
-					// message was received unencrypted.
-					listener
-							.showWarning("The message was received unencrypted.");
-					return plainTextMessage.cleanText;
-				case PLAINTEXT:
-					// Simply display the message to the user. If
-					// REQUIRE_ENCRYPTION
-					// is set, warn him that the message was received
-					// unencrypted.
-					if (PolicyUtils.getRequireEncryption(policy)) {
-						listener
-								.showWarning("The message was received unencrypted.");
-					}
-					break;
-				}
-			} else {
-				logger
-						.info("Received plaintext message with the whitespace tag.");
-				String cleanText = plainTextMessage.cleanText;
-				switch (this.getMessageState()) {
-				case ENCRYPTED:
-				case FINISHED:
-					// Remove the whitespace tag and display the message to the
-					// user, but warn him that the message was received
-					// unencrypted.
-					listener
-							.showWarning("The message was received unencrypted.");
-					return cleanText;
-				case PLAINTEXT:
-					// Remove the whitespace tag and display the message to the
-					// user. If REQUIRE_ENCRYPTION is set, warn him that the
-					// message
-					// was received unencrypted.
-					if (PolicyUtils.getRequireEncryption(policy)) {
-						listener
-								.showWarning("The message was received unencrypted.");
-					}
-					return cleanText;
-				}
-
-				if (PolicyUtils.getWhiteSpaceStartsAKE(policy)) {
-					logger.info("WHITESPACE_START_AKE is set");
-
-					if (versions.contains(2) && PolicyUtils.getAllowV2(policy)) {
-						logger.info("V2 tag found, starting v2 AKE.");
-						AuthenticationInfo auth = this.getAuthenticationInfo();
-						auth.reset();
-						auth.setAuthAwaitingDHKey();
-
-						logger.info("Sending D-H Commit.");
-						listener.injectMessage(auth.getDHCommitMessage()
-								.toUnsafeString());
-					} else if (versions.contains(1)
-							&& PolicyUtils.getAllowV1(policy)) {
-						throw new UnsupportedOperationException();
-					}
-				}
-			}
-			break;
-		case MessageType.QUERY:
-			logger.info(account + " received a query message from " + user
-					+ " throught " + protocol + ".");
-
-			QueryMessage queryMessage = new QueryMessage(msgText);
-			if (queryMessage.versions.contains(2)
-					&& PolicyUtils.getAllowV2(policy)) {
-				logger
-						.info("Query message with V2 support found, starting V2 AKE.");
-				AuthenticationInfo auth = this.getAuthenticationInfo();
-				auth.reset();
-
-				auth.setAuthAwaitingDHKey();
-
-				logger.info("Sending D-H Commit.");
-				listener.injectMessage(auth.getDHCommitMessage()
-						.toUnsafeString());
-			} else if (queryMessage.versions.contains(1)
-					&& PolicyUtils.getAllowV1(policy)) {
-				throw new UnsupportedOperationException();
-			}
-			logger.info("User needs to know nothing about Query messages.");
+			handleError(msgText, policy);
 			return null;
+		case MessageType.PLAINTEXT:
+			return handlePlainTextMessage(msgText, policy);
 		case MessageType.V1_KEY_EXCHANGE:
-			logger.warning("Received V1 key exchange which is not supported.");
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(
+					"Received V1 key exchange which is not supported.");
+		case MessageType.QUERY:
+		case MessageType.DH_COMMIT:
+		case MessageType.DH_KEY:
+		case MessageType.REVEALSIG:
+		case MessageType.SIGNATURE:
+			handleAuthMessage(msgText, policy);
+			return null;
+		default:
 		case MessageType.UKNOWN:
 			logger.warning("Unrecognizable OTR message received.");
-			break;
-		default:
-			this.getAuthenticationInfo().handleReceivingMessage(msgText,
-					listener, policy);
+			return msgText;
+		}
+	}
 
-			if (this.getAuthenticationInfo().isSecure)
-				this.goSecure();
-			return null;
+	private void handleError(String msgText, int policy) {
+		logger.info(account + " received an error message from " + user
+				+ " throught " + protocol + ".");
+
+		ErrorMessage errorMessage = new ErrorMessage(msgText);
+		listener.showError(errorMessage.error);
+		if (PolicyUtils.getErrorStartsAKE(policy)) {
+			logger.info("Error message starts AKE.");
+			Vector<Integer> versions = new Vector<Integer>();
+			if (PolicyUtils.getAllowV1(policy))
+				versions.add(1);
+
+			if (PolicyUtils.getAllowV2(policy))
+				versions.add(2);
+
+			QueryMessage queryMessage = new QueryMessage(versions);
+
+			logger.info("Sending Query");
+			listener.injectMessage(queryMessage.toString());
+		}
+	}
+
+	private String handleDataMessage(String msgText) throws IOException,
+			OtrException, InvalidKeyException, NoSuchAlgorithmException,
+			NoSuchPaddingException, InvalidAlgorithmParameterException,
+			IllegalBlockSizeException, BadPaddingException,
+			NoSuchProviderException, InvalidKeySpecException {
+		logger.info(account + " received a data message from " + user + ".");
+		DataMessage data = new DataMessage();
+		ByteArrayInputStream in = new ByteArrayInputStream(EncodedMessageUtils
+				.decodeMessage(msgText));
+		data.readObject(in);
+		switch (this.getMessageState()) {
+		case ENCRYPTED:
+			logger
+					.info("Message state is ENCRYPTED. Trying to decrypt message.");
+			MysteriousT t = data.t;
+
+			// Find matching session keys.
+			int senderKeyID = t.senderKeyID;
+			int receipientKeyID = t.recipientKeyID;
+			SessionKeys matchingKeys = this.getSessionKeysByID(receipientKeyID,
+					senderKeyID);
+
+			if (matchingKeys == null)
+				throw new OtrException("No matching keys found.");
+
+			// Verify received MAC with a locally calculated MAC.
+			if (!data.verify(matchingKeys.getReceivingMACKey()))
+				throw new OtrException("MAC verification failed.");
+
+			logger.info("Computed HmacSHA1 value matches sent one.");
+
+			// Mark this MAC key as old to be revealed.
+			matchingKeys.setIsUsedReceivingMACKey(true);
+
+			matchingKeys.setReceivingCtr(t.ctr);
+
+			String decryptedMsgContent = t.getDecryptedMessage(matchingKeys
+					.getReceivingAESKey(), matchingKeys.getReceivingCtr());
+			logger.info("Decrypted message: \"" + decryptedMsgContent + "\"");
+
+			// Rotate keys if necessary.
+			this.rotateKeys(receipientKeyID, senderKeyID, t.nextDHPublicKey);
+
+			return decryptedMsgContent;
+		case FINISHED:
+		case PLAINTEXT:
+			listener.showWarning("Unreadable encrypted message was received");
+			ErrorMessage errormsg = new ErrorMessage("Oups.");
+			listener.injectMessage(errormsg.toString());
+			break;
 		}
 
 		return null;
+	}
+
+	private String handlePlainTextMessage(String msgText, int policy)
+			throws NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException, IOException, InvalidKeyException,
+			NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, SignatureException, OtrException {
+		logger.info(account + " received a plaintext message from " + user
+				+ " throught " + protocol + ".");
+
+		PlainTextMessage plainTextMessage = new PlainTextMessage(msgText);
+		Vector<Integer> versions = plainTextMessage.versions;
+		if (versions.size() < 1) {
+			logger
+					.info("Received plaintext message without the whitespace tag.");
+			switch (this.getMessageState()) {
+			case ENCRYPTED:
+			case FINISHED:
+				// Display the message to the user, but warn him that the
+				// message was received unencrypted.
+				listener.showWarning("The message was received unencrypted.");
+				return plainTextMessage.cleanText;
+			case PLAINTEXT:
+				// Simply display the message to the user. If
+				// REQUIRE_ENCRYPTION
+				// is set, warn him that the message was received
+				// unencrypted.
+				if (PolicyUtils.getRequireEncryption(policy)) {
+					listener
+							.showWarning("The message was received unencrypted.");
+				}
+				return msgText;
+			}
+		} else {
+			logger.info("Received plaintext message with the whitespace tag.");
+			switch (this.getMessageState()) {
+			case ENCRYPTED:
+			case FINISHED:
+				// Remove the whitespace tag and display the message to the
+				// user, but warn him that the message was received
+				// unencrypted.
+				listener.showWarning("The message was received unencrypted.");
+			case PLAINTEXT:
+				// Remove the whitespace tag and display the message to the
+				// user. If REQUIRE_ENCRYPTION is set, warn him that the
+				// message
+				// was received unencrypted.
+				if (PolicyUtils.getRequireEncryption(policy)) {
+					listener
+							.showWarning("The message was received unencrypted.");
+				}
+			}
+
+			getAuthenticationInfo().handleReceivingMessage(msgText, policy);
+		}
+
+		return msgText;
+	}
+
+	private void handleAuthMessage(String msgText, int policy)
+			throws NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException, IOException, InvalidKeyException,
+			NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, SignatureException, OtrException {
+		this.getAuthenticationInfo().handleReceivingMessage(msgText, policy);
+
+		if (this.getAuthenticationInfo().isSecure)
+			this.goSecure();
 	}
 
 	public String handleSendingMessage(String msgText)

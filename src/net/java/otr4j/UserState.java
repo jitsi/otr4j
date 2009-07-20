@@ -16,9 +16,15 @@ import net.java.otr4j.context.*;
 /**
  * 
  * @author George Politis
- *
+ * 
  */
 public final class UserState {
+	public UserState(OTR4jListener listener) {
+		this.listener = listener;
+	}
+
+	private OTR4jListener listener;
+
 	private static Logger logger = Logger
 			.getLogger(ConnContext.class.getName());
 
@@ -40,18 +46,18 @@ public final class UserState {
 			}
 		}
 
-		ConnContext context = new ConnContext(user, account, protocol);
+		ConnContext context = new ConnContext(user, account, protocol, listener);
 		contextPool.add(context);
 
 		return context;
 	}
 
-	public String handleReceivingMessage(OTR4jListener listener, String user,
-			String account, String protocol, String msgText) throws Exception {
+	public String handleReceivingMessage(String user, String account,
+			String protocol, String msgText) throws Exception {
 
 		ConnContext ctx = this.getConnContext(user, account, protocol);
 		try {
-			return ctx.handleReceivingMessage(msgText, listener);
+			return ctx.handleReceivingMessage(msgText);
 		} catch (Exception e) {
 			logger
 					.log(
@@ -62,9 +68,9 @@ public final class UserState {
 		}
 	}
 
-	public String handleSendingMessage(OTR4jListener listener, String user,
-			String account, String protocol, String msgText) {
-		
+	public String handleSendingMessage(String user, String account,
+			String protocol, String msgText) {
+
 		ConnContext ctx = this.getConnContext(user, account, protocol);
 		try {
 			return ctx.handleSendingMessage(msgText);

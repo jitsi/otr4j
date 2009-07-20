@@ -18,22 +18,27 @@ import net.java.otr4j.message.MessageType;
 import net.java.otr4j.message.encoded.*;
 import net.java.otr4j.message.encoded.signature.RevealSignatureMessage;
 import net.java.otr4j.message.encoded.signature.SignatureMessage;
+import net.java.otr4j.message.unencoded.query.PlainTextMessage;
+import net.java.otr4j.message.unencoded.query.QueryMessage;
 
 public class AuthenticationInfo {
 
 	private static Logger logger = Logger.getLogger(AuthenticationInfo.class
 			.getName());
 
-	public AuthenticationInfo(String account, String user, String protocol) {
+	public AuthenticationInfo(String account, String user, String protocol,
+			OTR4jListener listener) {
 		this.account = account;
 		this.user = user;
 		this.protocol = protocol;
+		this.listener = listener;
 		this.reset();
 	}
 
 	private String account;
 	private String user;
 	private String protocol;
+	private OTR4jListener listener;
 
 	private AuthenticationState authenticationState;
 	private byte[] r;
@@ -488,8 +493,8 @@ public class AuthenticationInfo {
 		return localDHPublicKeyBytes;
 	}
 
-	public void handleReceivingMessage(String msgText, OTR4jListener listener,
-			int policy) throws NoSuchAlgorithmException,
+	public void handleReceivingMessage(String msgText, int policy)
+			throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, IOException, InvalidKeyException,
 			NoSuchPaddingException, IllegalBlockSizeException,
@@ -498,6 +503,48 @@ public class AuthenticationInfo {
 		Boolean allowV2 = PolicyUtils.getAllowV2(policy);
 
 		switch (MessageHeader.getMessageType(msgText)) {
+		case MessageType.PLAINTEXT:
+			PlainTextMessage plainTextMessage = new PlainTextMessage(msgText);
+			if (PolicyUtils.getWhiteSpaceStartsAKE(policy)) {
+				logger.info("WHITESPACE_START_AKE is set");
+
+				if (plainTextMessage.versions.contains(2)
+						&& PolicyUtils.getAllowV2(policy)) {
+					logger.info("V2 tag found, starting v2 AKE.");
+					this.reset();
+					this.setAuthAwaitingDHKey();
+
+					logger.info("Sending D-H Commit.");
+					listener.injectMessage(this.getDHCommitMessage()
+							.toUnsafeString());
+				} else if (plainTextMessage.versions.contains(1)
+						&& PolicyUtils.getAllowV1(policy)) {
+					throw new UnsupportedOperationException();
+				}
+			}
+			break;
+		case MessageType.QUERY:
+			logger.info(account + " received a query message from " + user
+					+ " throught " + protocol + ".");
+
+			QueryMessage queryMessage = new QueryMessage(msgText);
+			if (queryMessage.versions.contains(2)
+					&& PolicyUtils.getAllowV2(policy)) {
+				logger
+						.info("Query message with V2 support found, starting V2 AKE.");
+				this.reset();
+
+				this.setAuthAwaitingDHKey();
+
+				logger.info("Sending D-H Commit.");
+				listener.injectMessage(this.getDHCommitMessage()
+						.toUnsafeString());
+			} else if (queryMessage.versions.contains(1)
+					&& PolicyUtils.getAllowV1(policy)) {
+				throw new UnsupportedOperationException();
+			}
+			logger.info("User needs to know nothing about Query messages.");
+			break;
 		case MessageType.DH_COMMIT:
 			logger.info(account + " received a D-H commit message from " + user
 					+ " throught " + protocol + ".");
