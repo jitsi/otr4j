@@ -2,7 +2,6 @@ package net.java.otr4j.message.encoded;
 
 import java.io.*;
 import java.security.*;
-import java.util.*;
 import java.util.logging.*;
 import javax.crypto.*;
 import javax.crypto.interfaces.*;
@@ -81,10 +80,6 @@ public class MysteriousT extends EncodedMessageBase {
 		decryptedMessage = new String(CryptoUtils.aesDecrypt(key, ctr,
 				this.encryptedMsg));
 		return decryptedMessage;
-	}
-
-	public List<TLV> getTLVs() {
-		return null;
 	}
 
 	public byte[] hash(byte[] key) throws IOException, InvalidKeyException,
