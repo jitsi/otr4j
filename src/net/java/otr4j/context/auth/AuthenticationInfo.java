@@ -30,7 +30,6 @@ public class AuthenticationInfo {
 	private byte[] r;
 
 	private DHPublicKey remoteDHPublicKey;
-	private int remoteDHPPublicKeyID;
 	private byte[] remoteDHPublicKeyEncrypted;
 	private byte[] remoteDHPublicKeyHash;
 
@@ -128,9 +127,6 @@ public class AuthenticationInfo {
 		this.setLocalLongTermKeyPair(localLongTerm);
 
 		// Compute X.
-
-		// Go secure, this must be done after X has been calculated.
-		this.setRemoteDHPublicKeyID(remoteX.getDhKeyID());
 	}
 
 	public SignatureMessage getSignatureMessage() throws InvalidKeyException,
@@ -167,8 +163,6 @@ public class AuthenticationInfo {
 		if (!remoteM.verify(this.getM1p(), remoteX.getLongTermPublicKey(),
 				remoteX.getSignature()))
 			throw new OtrException("Signature verification failed.");
-
-		this.setRemoteDHPublicKeyID(remoteX.getDhKeyID());
 	}
 
 	public void reset() {
@@ -177,7 +171,6 @@ public class AuthenticationInfo {
 		r = null;
 
 		remoteDHPublicKey = null;
-		remoteDHPPublicKeyID = -1;
 		remoteDHPublicKeyEncrypted = null;
 		remoteDHPublicKeyHash = null;
 
@@ -203,7 +196,7 @@ public class AuthenticationInfo {
 		return authenticationState;
 	}
 
-	public byte[] getR() {
+	private byte[] getR() {
 		if (r == null) {
 			logger.info("Picking random key r.");
 			r = Utils.getRandomBytes(CryptoConstants.AES_KEY_BYTE_LENGTH);
@@ -211,7 +204,7 @@ public class AuthenticationInfo {
 		return r;
 	}
 
-	public void setRemoteDHPublicKey(DHPublicKey dhPublicKey) {
+	private void setRemoteDHPublicKey(DHPublicKey dhPublicKey) {
 		// Verifies that Alice's gy is a legal value (2 <= gy <= modulus-2)
 		if (dhPublicKey.getY().compareTo(CryptoConstants.MODULUS_MINUS_TWO) > 0) {
 			throw new IllegalArgumentException(
@@ -225,7 +218,7 @@ public class AuthenticationInfo {
 		this.remoteDHPublicKey = dhPublicKey;
 	}
 
-	public void setRemoteDHPublicKey(byte[] revealedKey)
+	private void setRemoteDHPublicKey(byte[] revealedKey)
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException, IOException,
@@ -256,21 +249,21 @@ public class AuthenticationInfo {
 		return remoteDHPublicKey;
 	}
 
-	public void setRemoteDHPublicKeyEncrypted(byte[] remoteDHPublicKeyEncrypted) {
+	private void setRemoteDHPublicKeyEncrypted(byte[] remoteDHPublicKeyEncrypted) {
 		logger.info("Storing encrypted remote public key.");
 		this.remoteDHPublicKeyEncrypted = remoteDHPublicKeyEncrypted;
 	}
 
-	public byte[] getRemoteDHPublicKeyEncrypted() {
+	private byte[] getRemoteDHPublicKeyEncrypted() {
 		return remoteDHPublicKeyEncrypted;
 	}
 
-	public void setRemoteDHPublicKeyHash(byte[] remoteDHPublicKeyHash) {
+	private void setRemoteDHPublicKeyHash(byte[] remoteDHPublicKeyHash) {
 		logger.info("Storing encrypted remote public key hash.");
 		this.remoteDHPublicKeyHash = remoteDHPublicKeyHash;
 	}
 
-	public byte[] getRemoteDHPublicKeyHash() {
+	private byte[] getRemoteDHPublicKeyHash() {
 		return remoteDHPublicKeyHash;
 	}
 
@@ -299,7 +292,7 @@ public class AuthenticationInfo {
 		return localDHPublicKeyHash;
 	}
 
-	public byte[] getLocalDHPublicKeyEncrypted() throws InvalidKeyException,
+	private byte[] getLocalDHPublicKeyEncrypted() throws InvalidKeyException,
 			NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException,
 			BadPaddingException, NoSuchProviderException,
@@ -323,7 +316,7 @@ public class AuthenticationInfo {
 		return s;
 	}
 
-	public byte[] getC() throws NoSuchAlgorithmException, IOException {
+	private byte[] getC() throws NoSuchAlgorithmException, IOException {
 		if (c != null)
 			return c;
 
@@ -336,7 +329,7 @@ public class AuthenticationInfo {
 
 	}
 
-	public byte[] getM1() throws NoSuchAlgorithmException, IOException,
+	private byte[] getM1() throws NoSuchAlgorithmException, IOException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException {
 		if (m1 != null)
@@ -351,7 +344,7 @@ public class AuthenticationInfo {
 		return m1;
 	}
 
-	public byte[] getM2() throws NoSuchAlgorithmException, IOException,
+	private byte[] getM2() throws NoSuchAlgorithmException, IOException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException {
 		if (m2 != null)
@@ -366,7 +359,7 @@ public class AuthenticationInfo {
 		return m2;
 	}
 
-	public byte[] getCp() throws NoSuchAlgorithmException, IOException,
+	private byte[] getCp() throws NoSuchAlgorithmException, IOException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException {
 		if (cp != null)
@@ -382,7 +375,7 @@ public class AuthenticationInfo {
 		return cp;
 	}
 
-	public byte[] getM1p() throws NoSuchAlgorithmException, IOException,
+	private byte[] getM1p() throws NoSuchAlgorithmException, IOException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException {
 		if (m1p != null)
@@ -397,7 +390,7 @@ public class AuthenticationInfo {
 		return m1p;
 	}
 
-	public byte[] getM2p() throws NoSuchAlgorithmException, IOException,
+	private byte[] getM2p() throws NoSuchAlgorithmException, IOException,
 			InvalidKeyException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException {
 		if (m2p != null)
@@ -416,7 +409,7 @@ public class AuthenticationInfo {
 
 	private Boolean pSet;
 
-	public MysteriousX getLocalMysteriousX(Boolean pSet)
+	private MysteriousX getLocalMysteriousX(Boolean pSet)
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			SignatureException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException, IOException,
@@ -446,20 +439,12 @@ public class AuthenticationInfo {
 		return this.mysteriousX;
 	}
 
-	public void setLocalLongTermKeyPair(KeyPair localLongTermKeyPair) {
+	private void setLocalLongTermKeyPair(KeyPair localLongTermKeyPair) {
 		this.localLongTermKeyPair = localLongTermKeyPair;
 	}
 
-	public KeyPair getLocalLongTermKeyPair() {
+	private KeyPair getLocalLongTermKeyPair() {
 		return localLongTermKeyPair;
-	}
-
-	public void setRemoteDHPublicKeyID(int remoteDHPPublicKeyID) {
-		this.remoteDHPPublicKeyID = remoteDHPPublicKeyID;
-	}
-
-	public int getRemoteDHPPublicKeyID() {
-		return remoteDHPPublicKeyID;
 	}
 
 	private static byte[] h2(byte b, BigInteger s)
@@ -478,7 +463,7 @@ public class AuthenticationInfo {
 		return CryptoUtils.sha256Hash(sdata);
 	}
 
-	public byte[] getLocalDHPublicKeyBytes() throws NoSuchAlgorithmException,
+	private byte[] getLocalDHPublicKeyBytes() throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, IOException {
 		if (localDHPublicKeyBytes == null) {
