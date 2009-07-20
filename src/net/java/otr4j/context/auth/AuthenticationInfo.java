@@ -14,6 +14,8 @@ import javax.crypto.interfaces.*;
 import net.java.otr4j.*;
 import net.java.otr4j.crypto.*;
 import net.java.otr4j.message.encoded.*;
+import net.java.otr4j.message.encoded.signature.RevealSignatureMessage;
+import net.java.otr4j.message.encoded.signature.SignatureMessage;
 
 public class AuthenticationInfo {
 
@@ -65,9 +67,75 @@ public class AuthenticationInfo {
 	}
 
 	public void setAuthAwaitingRevealSig(DHCommitMessage dhCommitMessage) {
-		this.setRemoteDHPublicKeyEncrypted(dhCommitMessage.getDhPublicKeyEncrypted());
+		this.setRemoteDHPublicKeyEncrypted(dhCommitMessage
+				.getDhPublicKeyEncrypted());
 		this.setRemoteDHPublicKeyHash(dhCommitMessage.getDhPublicKeyHash());
 		this.setAuthenticationState(AuthenticationState.AWAITING_REVEALSIG);
+	}
+
+	public RevealSignatureMessage getRevealSignatureMessage()
+			throws InvalidKeyException, NoSuchAlgorithmException,
+			SignatureException, InvalidAlgorithmParameterException,
+			NoSuchProviderException, InvalidKeySpecException,
+			NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
+		MysteriousX x = this.getLocalMysteriousX(false);
+		return new RevealSignatureMessage(2, this.getR(), x.hash, x.encrypted);
+	}
+
+	public void setAuthAwaitingSig(DHKeyMessage dhKeyMessage,
+			KeyPair localLongTermKeypair) {
+		this.setLocalLongTermKeyPair(localLongTermKeypair);
+		this.setRemoteDHPublicKey(dhKeyMessage.getDhPublicKey());
+		this.setAuthenticationState(AuthenticationState.AWAITING_SIG);
+	}
+
+	public void goSecure(RevealSignatureMessage revealSigMessage,
+			KeyPair localLongTerm) throws InvalidKeyException,
+			NoSuchAlgorithmException, NoSuchPaddingException,
+			InvalidAlgorithmParameterException, IllegalBlockSizeException,
+			BadPaddingException, InvalidKeySpecException, IOException,
+			NoSuchProviderException, OtrException, SignatureException {
+		this.setRemoteDHPublicKey(revealSigMessage.getRevealedKey());
+
+		// Verify received Data.
+		if (!revealSigMessage.verify(this.getM2()))
+			throw new OtrException(
+					"Signature MACs are not equal, ignoring message.");
+
+		// Decrypt X.
+		byte[] remoteXDecrypted = revealSigMessage.decrypt(this.getC());
+		MysteriousX remoteX = new MysteriousX();
+		remoteX.readObject(remoteXDecrypted);
+
+		// Compute signature.
+		MysteriousM remoteM = new MysteriousM(this.getRemoteDHPublicKey(),
+				(DHPublicKey) this.getLocalDHKeyPair().getPublic(), remoteX
+						.getLongTermPublicKey(), remoteX.getDhKeyID());
+
+		// Verify signature.
+		if (!remoteM.verify(this.getM1(), remoteX.getLongTermPublicKey(),
+				remoteX.getSignature()))
+			throw new OtrException("Signature verification failed.");
+
+		logger.info("Signature verification succeeded.");
+
+		// Compute our own signature.
+		this.setLocalLongTermKeyPair(localLongTerm);
+
+		// Compute X.
+
+		// Go secure, this must be done after X has been calculated.
+		this.setRemoteDHPublicKeyID(remoteX.getDhKeyID());
+	}
+
+	public SignatureMessage getSignatureMessage() throws InvalidKeyException,
+			NoSuchAlgorithmException, SignatureException,
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException, NoSuchPaddingException,
+			IllegalBlockSizeException, BadPaddingException, IOException {
+		MysteriousX x = this.getLocalMysteriousX(true);
+		return new SignatureMessage(2, x.hash, x.encrypted);
 	}
 
 	public void reset() {

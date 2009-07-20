@@ -300,46 +300,10 @@ public final class StateMachine {
 		AuthenticationInfo auth = ctx.getAuthenticationInfo();
 		switch (auth.getAuthenticationState()) {
 		case AWAITING_REVEALSIG:
-			auth.setRemoteDHPublicKey(msg.getRevealedKey());
-
-			// Verify received Data.
-			if (!msg.verify(auth.getM2()))
-				throw new OtrException(
-						"Signature MACs are not equal, ignoring message.");
-
-			// Decrypt X.
-			byte[] remoteXDecrypted = msg.decrypt(auth.getC());
-			MysteriousX remoteX = new MysteriousX();
-			remoteX.readObject(remoteXDecrypted);
-
-			// Compute signature.
-			MysteriousM remoteM = new MysteriousM(auth.getRemoteDHPublicKey(),
-					(DHPublicKey) auth.getLocalDHKeyPair().getPublic(), remoteX
-							.getLongTermPublicKey(), remoteX.getDhKeyID());
-
-			// Verify signature.
-			if (!remoteM.verify(auth.getM1(), remoteX.getLongTermPublicKey(),
-					remoteX.getSignature()))
-				throw new OtrException("Signature verification failed.");
-
-			logger.info("Signature verification succeeded.");
-
 			// Compute our own signature.
-			auth
-					.setLocalLongTermKeyPair(listener.getKeyPair(account,
-							protocol));
-
-			// Compute X.
-			MysteriousX x = auth.getLocalMysteriousX(true);
-			SignatureMessage msgSig = new SignatureMessage(2, x.hash,
-					x.encrypted);
-
-			// Go secure, this must be done after X has been calculated.
-			auth.setRemoteDHPublicKeyID(remoteX.getDhKeyID());
+			auth.goSecure(msg, listener.getKeyPair(account, protocol));
+			listener.injectMessage(auth.getSignatureMessage().toUnsafeString());
 			ctx.goSecure();
-
-			String msgText = msgSig.toUnsafeString();
-			listener.injectMessage(msgText);
 			break;
 		default:
 			break;
@@ -460,10 +424,6 @@ public final class StateMachine {
 		}
 	}
 
-	private enum ReceivingDHCommitMessageActions {
-		RETRANSMIT_OLD_DH_KEY, SEND_NEW_DH_KEY, RETRANSMIT_DH_COMMIT,
-	}
-
 	private static void receivingDHCommitMessage(ConnContext ctx,
 			OTR4jListener listener, DHCommitMessage msg) throws Exception {
 
@@ -472,13 +432,13 @@ public final class StateMachine {
 			return;
 		}
 
-		// Set SEND_DH_KEY as default action.
-		ReceivingDHCommitMessageActions action = ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY;
-
 		AuthenticationInfo auth = ctx.getAuthenticationInfo();
 		switch (auth.getAuthenticationState()) {
 		case NONE:
-			action = ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY;
+			auth.reset();
+			auth.setAuthAwaitingRevealSig(msg);
+			logger.info("Sending D-H key.");
+			listener.injectMessage(auth.getDHKeyMessage().toUnsafeString());
 			break;
 
 		case AWAITING_DHKEY:
@@ -487,40 +447,33 @@ public final class StateMachine {
 			BigInteger theirHash = new BigInteger(1, msg.getDhPublicKeyHash());
 
 			if (theirHash.compareTo(ourHash) == -1) {
-				action = ReceivingDHCommitMessageActions.RETRANSMIT_DH_COMMIT;
+				logger
+						.info("Ignore the incoming D-H Commit message, but resend your D-H Commit message.");
+				DHCommitMessage dhCommit = auth.getDHCommitMessage();
+
+				logger.info("Sending D-H Commit.");
+				listener.injectMessage(dhCommit.toUnsafeString());
 			} else {
-				action = ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY;
+				auth.reset();
+				auth.setAuthAwaitingRevealSig(msg);
+				logger.info("Sending D-H key.");
+				listener.injectMessage(auth.getDHKeyMessage().toUnsafeString());
 			}
 			break;
 
 		case AWAITING_REVEALSIG:
-			action = ReceivingDHCommitMessageActions.RETRANSMIT_OLD_DH_KEY;
+			auth.setAuthAwaitingRevealSig(msg);
+			logger.info("Sending D-H key.");
+			listener.injectMessage(auth.getDHKeyMessage().toUnsafeString());
 			break;
 		case AWAITING_SIG:
-			action = ReceivingDHCommitMessageActions.SEND_NEW_DH_KEY;
+			auth.reset();
+			auth.setAuthAwaitingRevealSig(msg);
+			logger.info("Sending D-H key.");
+			listener.injectMessage(auth.getDHKeyMessage().toUnsafeString());
 			break;
 		case V1_SETUP:
 			throw new UnsupportedOperationException();
-		}
-
-		switch (action) {
-		case RETRANSMIT_DH_COMMIT:
-			logger
-					.info("Ignore the incoming D-H Commit message, but resend your D-H Commit message.");
-			DHCommitMessage dhCommit = auth.getDHCommitMessage();
-
-			logger.info("Sending D-H Commit.");
-			listener.injectMessage(dhCommit.toUnsafeString());
-			break;
-		case SEND_NEW_DH_KEY:
-			auth.reset();
-		case RETRANSMIT_OLD_DH_KEY:
-			auth.setAuthAwaitingRevealSig(msg);
-			DHKeyMessage dhKey = auth.getDHKeyMessage();
-			logger.info("Sending D-H key.");
-			listener.injectMessage(dhKey.toUnsafeString());
-		default:
-			break;
 		}
 	}
 
@@ -538,12 +491,10 @@ public final class StateMachine {
 		AuthenticationInfo auth = ctx.getAuthenticationInfo();
 		switch (auth.getAuthenticationState()) {
 		case AWAITING_DHKEY:
-			auth.setRemoteDHPublicKey(msg.getDhPublicKey());
-
 			// Computes MB = MACm1(gx, gy, pubB, keyidB)
 			logger.info("Computing M");
 			KeyPair keyPair = listener.getKeyPair(account, protocol);
-			auth.setLocalLongTermKeyPair(keyPair);
+			auth.setAuthAwaitingSig(msg, keyPair);
 			replyRevealSig = true;
 			break;
 		case AWAITING_SIG:
@@ -557,13 +508,9 @@ public final class StateMachine {
 		}
 
 		if (replyRevealSig) {
-			int protocolVersion = 2;
+			RevealSignatureMessage revealSignatureMessage = auth
+					.getRevealSignatureMessage();
 
-			MysteriousX x = auth.getLocalMysteriousX(false);
-			RevealSignatureMessage revealSignatureMessage = new RevealSignatureMessage(
-					protocolVersion, auth.getR(), x.hash, x.encrypted);
-
-			auth.setAuthenticationState(AuthenticationState.AWAITING_SIG);
 			logger.info("Sending Reveal Signature.");
 			listener.injectMessage(revealSignatureMessage.toUnsafeString());
 		}
