@@ -1,20 +1,22 @@
+/*
+ * otr4j, the open source java otr library.
+ *
+ * Distributable under LGPL license.
+ * See terms of license at gnu.org.
+ */
 package net.java.otr4j.context;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
+import java.io.*;
+import java.math.*;
+import java.nio.*;
+import java.security.*;
 import java.util.Arrays;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
-import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.interfaces.*;
 
-import net.java.otr4j.crypto.CryptoConstants;
-import net.java.otr4j.crypto.CryptoUtils;
-import net.java.otr4j.message.encoded.SerializationUtils;
+import net.java.otr4j.crypto.*;
+import net.java.otr4j.message.encoded.*;
 
 /**
  * 

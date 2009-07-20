@@ -32,7 +32,7 @@ public class ConnContext {
 	private String protocol;
 	private OTR4jListener listener;
 	private int messageState;
-	private AuthContext authenticationInfo;
+	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
 	private static Logger logger = Logger
@@ -218,11 +218,11 @@ public class ConnContext {
 		return sessionKeys;
 	}
 
-	private AuthContext getAuthenticationInfo() {
-		if (authenticationInfo == null)
-			authenticationInfo = new AuthContext(getAccount(),
+	private AuthContext getAuthContext() {
+		if (authContext == null)
+			authContext = new AuthContext(getAccount(),
 					getUser(), getProtocol(), getListener());
-		return authenticationInfo;
+		return authContext;
 	}
 
 	private Vector<byte[]> getOldMacKeys() {
@@ -402,7 +402,7 @@ public class ConnContext {
 				}
 			}
 
-			getAuthenticationInfo().handleReceivingMessage(msgText, policy);
+			getAuthContext().handleReceivingMessage(msgText, policy);
 		}
 
 		return msgText;
@@ -415,24 +415,24 @@ public class ConnContext {
 			NoSuchPaddingException, IllegalBlockSizeException,
 			BadPaddingException, SignatureException, OtrException {
 
-		AuthContext auth = this.getAuthenticationInfo();
+		AuthContext auth = this.getAuthContext();
 		auth.handleReceivingMessage(msgText, policy);
 
 		if (auth.getIsSecure()) {
 			logger.info("Setting most recent session keys from auth.");
 			for (int i = 0; i < this.getSessionKeys()[0].length; i++) {
 				SessionKeys current = getSessionKeysByIndex(0, i);
-				current.setLocalPair(this.getAuthenticationInfo()
+				current.setLocalPair(this.getAuthContext()
 						.getLocalDHKeyPair(), 1);
-				current.setRemoteDHPublicKey(this.getAuthenticationInfo()
+				current.setRemoteDHPublicKey(this.getAuthContext()
 						.getRemoteDHPublicKey(), 1);
-				current.setS(this.getAuthenticationInfo().getS());
+				current.setS(this.getAuthContext().getS());
 			}
 
 			KeyPair nextDH = CryptoUtils.generateDHKeyPair();
 			for (int i = 0; i < this.getSessionKeys()[1].length; i++) {
 				SessionKeys current = getSessionKeysByIndex(1, i);
-				current.setRemoteDHPublicKey(getAuthenticationInfo()
+				current.setRemoteDHPublicKey(getAuthContext()
 						.getRemoteDHPublicKey(), 1);
 				current.setLocalPair(nextDH, 2);
 			}

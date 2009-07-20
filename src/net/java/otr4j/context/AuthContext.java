@@ -1,44 +1,28 @@
+/*
+ * otr4j, the open source java otr library.
+ *
+ * Distributable under LGPL license.
+ * See terms of license at gnu.org.
+ */
 package net.java.otr4j.context;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.spec.InvalidKeySpecException;
+import java.io.*;
+import java.math.*;
+import java.nio.*;
+import java.security.*;
+import java.security.spec.*;
 import java.util.Arrays;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.*;
+import javax.crypto.interfaces.*;
 
-import net.java.otr4j.OTR4jListener;
-import net.java.otr4j.OtrException;
-import net.java.otr4j.PolicyUtils;
-import net.java.otr4j.Utils;
-import net.java.otr4j.crypto.CryptoConstants;
-import net.java.otr4j.crypto.CryptoUtils;
-import net.java.otr4j.message.MessageHeader;
-import net.java.otr4j.message.MessageType;
-import net.java.otr4j.message.encoded.DHCommitMessage;
-import net.java.otr4j.message.encoded.DHKeyMessage;
-import net.java.otr4j.message.encoded.DeserializationUtils;
-import net.java.otr4j.message.encoded.EncodedMessageUtils;
-import net.java.otr4j.message.encoded.MysteriousM;
-import net.java.otr4j.message.encoded.MysteriousX;
-import net.java.otr4j.message.encoded.SerializationUtils;
-import net.java.otr4j.message.encoded.signature.RevealSignatureMessage;
-import net.java.otr4j.message.encoded.signature.SignatureMessage;
-import net.java.otr4j.message.unencoded.query.PlainTextMessage;
-import net.java.otr4j.message.unencoded.query.QueryMessage;
+import net.java.otr4j.*;
+import net.java.otr4j.crypto.*;
+import net.java.otr4j.message.*;
+import net.java.otr4j.message.encoded.*;
+import net.java.otr4j.message.encoded.signature.*;
+import net.java.otr4j.message.unencoded.query.*;
 
 /**
  * 
