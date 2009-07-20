@@ -50,6 +50,10 @@ public class AuthenticationInfo {
 
 	private KeyPair localLongTermKeyPair;
 
+	public void setAuthAwaitingDHKey() {
+		this.setAuthenticationState(AuthenticationState.AWAITING_DHKEY);
+	}
+
 	public DHCommitMessage getDHCommitMessage() throws InvalidKeyException,
 			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException,
@@ -191,7 +195,7 @@ public class AuthenticationInfo {
 		localLongTermKeyPair = null;
 	}
 
-	public void setAuthenticationState(AuthenticationState authenticationState) {
+	private void setAuthenticationState(AuthenticationState authenticationState) {
 		this.authenticationState = authenticationState;
 	}
 

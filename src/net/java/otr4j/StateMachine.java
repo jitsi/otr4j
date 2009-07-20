@@ -100,13 +100,15 @@ public final class StateMachine {
 			ConnContext ctx = userState.getConnContext(user, account, protocol);
 			int policy = listener.getPolicy(ctx);
 
-			if (!PolicyUtils.getAllowV1(policy)
-					&& !PolicyUtils.getAllowV2(policy)) {
+			Boolean allowV1 = PolicyUtils.getAllowV1(policy);
+			Boolean allowV2 = PolicyUtils.getAllowV2(policy);
+			if (!allowV1 && !allowV2) {
 				logger
 						.info("Policy does not allow neither V1 not V2, ignoring message.");
 				return msgText;
 			}
 
+			AuthenticationInfo auth = ctx.getAuthenticationInfo();
 			switch (MessageHeader.getMessageType(msgText)) {
 			case MessageType.DATA:
 				logger.info(account + " received a data message from " + user
@@ -119,41 +121,163 @@ public final class StateMachine {
 			case MessageType.DH_COMMIT:
 				logger.info(account + " received a D-H commit message from "
 						+ user + " throught " + protocol + ".");
+
+				if (!allowV2) {
+					logger.info("ALLOW_V2 is not set, ignore this message.");
+					return null;
+				}
+
 				DHCommitMessage dhCommit = new DHCommitMessage();
 				in = new ByteArrayInputStream(EncodedMessageUtils
 						.decodeMessage(msgText));
 				dhCommit.readObject(in);
-				receivingDHCommitMessage(ctx, listener, dhCommit);
+
+				switch (auth.getAuthenticationState()) {
+				case NONE:
+					auth.reset();
+					auth.setAuthAwaitingRevealSig(dhCommit);
+					logger.info("Sending D-H key.");
+					listener.injectMessage(auth.getDHKeyMessage()
+							.toUnsafeString());
+					break;
+
+				case AWAITING_DHKEY:
+					BigInteger ourHash = new BigInteger(1, auth
+							.getLocalDHPublicKeyHash());
+					BigInteger theirHash = new BigInteger(1, dhCommit
+							.getDhPublicKeyHash());
+
+					if (theirHash.compareTo(ourHash) == -1) {
+						logger
+								.info("Ignore the incoming D-H Commit message, but resend your D-H Commit message.");
+
+						logger.info("Sending D-H Commit.");
+						listener.injectMessage(auth.getDHCommitMessage()
+								.toUnsafeString());
+					} else {
+						auth.reset();
+						auth.setAuthAwaitingRevealSig(dhCommit);
+						logger.info("Sending D-H key.");
+						listener.injectMessage(auth.getDHKeyMessage()
+								.toUnsafeString());
+					}
+					break;
+
+				case AWAITING_REVEALSIG:
+					auth.setAuthAwaitingRevealSig(dhCommit);
+					logger.info("Sending D-H key.");
+					listener.injectMessage(auth.getDHKeyMessage()
+							.toUnsafeString());
+					break;
+				case AWAITING_SIG:
+					auth.reset();
+					auth.setAuthAwaitingRevealSig(dhCommit);
+					logger.info("Sending D-H key.");
+					listener.injectMessage(auth.getDHKeyMessage()
+							.toUnsafeString());
+					break;
+				case V1_SETUP:
+					throw new UnsupportedOperationException();
+				}
 				return null;
 			case MessageType.DH_KEY:
 				logger.info(account + " received a D-H key message from "
 						+ user + " throught " + protocol + ".");
+
+				if (!allowV2) {
+					logger.info("If ALLOW_V2 is not set, ignore this message.");
+					return null;
+				}
+
 				DHKeyMessage dhKey = new DHKeyMessage();
 				in = new ByteArrayInputStream(EncodedMessageUtils
 						.decodeMessage(msgText));
 				dhKey.readObject(in);
-				receivingDHKeyMessage(ctx, listener, dhKey, account, protocol);
+
+				Boolean replyRevealSig = false;
+
+				switch (auth.getAuthenticationState()) {
+				case AWAITING_DHKEY:
+					// Computes MB = MACm1(gx, gy, pubB, keyidB)
+					logger.info("Computing M");
+					KeyPair keyPair = listener.getKeyPair(account, protocol);
+					auth.setAuthAwaitingSig(dhKey, keyPair);
+					replyRevealSig = true;
+					break;
+				case AWAITING_SIG:
+					if (dhKey.getDhPublicKey().getY().equals(
+							auth.getRemoteDHPublicKey().getY())) {
+						replyRevealSig = true;
+					}
+					break;
+				default:
+					break;
+				}
+
+				if (replyRevealSig) {
+					RevealSignatureMessage revealSignatureMessage = auth
+							.getRevealSignatureMessage();
+
+					logger.info("Sending Reveal Signature.");
+					listener.injectMessage(revealSignatureMessage
+							.toUnsafeString());
+				}
 				return null;
 			case MessageType.REVEALSIG:
 				logger.info(account
 						+ " received a reveal signature message from " + user
 						+ " throught " + protocol + ".");
+
+				if (!allowV2) {
+					logger
+							.info("Policy does not allow OTRv2, ignoring message.");
+					return null;
+				}
+
 				RevealSignatureMessage revealSigMessage = new RevealSignatureMessage();
 				in = new ByteArrayInputStream(EncodedMessageUtils
 						.decodeMessage(msgText));
 				revealSigMessage.readObject(in);
-				receivingRevealSignatureMessage(ctx, listener,
-						revealSigMessage, account, protocol);
+
+				switch (auth.getAuthenticationState()) {
+				case AWAITING_REVEALSIG:
+					// Compute our own signature.
+					auth.goSecure(revealSigMessage, listener.getKeyPair(
+							account, protocol));
+					listener.injectMessage(auth.getSignatureMessage()
+							.toUnsafeString());
+
+					// Go secure resets auth.
+					ctx.goSecure();
+					break;
+				default:
+					break;
+				}
 				return null;
 			case MessageType.SIGNATURE:
 				logger.info(account + " received a signature message from "
 						+ user + " throught " + protocol + ".");
+				if (!allowV2) {
+					logger
+							.info("Policy does not allow OTRv2, ignoring message.");
+					return null;
+				}
+
 				SignatureMessage sigMessage = new SignatureMessage();
 				in = new ByteArrayInputStream(EncodedMessageUtils
 						.decodeMessage(msgText));
 				sigMessage.readObject(in);
-				receivingSignatureMessage(ctx, listener, sigMessage);
-				return null;
+
+				switch (auth.getAuthenticationState()) {
+				case AWAITING_SIG:
+					auth.goSecure(sigMessage);
+					ctx.goSecure();
+					break;
+				default:
+					logger
+							.info("We were not expecting a signature, ignoring message.");
+					return null;
+				}
 			case MessageType.ERROR:
 				logger.info(account + " received an error message from " + user
 						+ " throught " + protocol + ".");
@@ -244,51 +368,6 @@ public final class StateMachine {
 		return null;
 	}
 
-	private static void receivingSignatureMessage(ConnContext ctx,
-			OTR4jListener listener, SignatureMessage msg) throws Exception {
-
-		int policy = listener.getPolicy(ctx);
-		if (!PolicyUtils.getAllowV2(policy)) {
-			logger.info("Policy does not allow OTRv2, ignoring message.");
-			return;
-		}
-
-		AuthenticationInfo auth = ctx.getAuthenticationInfo();
-		switch (auth.getAuthenticationState()) {
-		case AWAITING_SIG:
-			auth.goSecure(msg);
-			ctx.goSecure();
-			break;
-		default:
-			logger.info("We were not expecting a signature, ignoring message.");
-			break;
-		}
-
-	}
-
-	private static void receivingRevealSignatureMessage(ConnContext ctx,
-			OTR4jListener listener, RevealSignatureMessage msg, String account,
-			String protocol) throws Exception {
-
-		int policy = listener.getPolicy(ctx);
-		if (!PolicyUtils.getAllowV2(policy)) {
-			logger.info("Policy does not allow OTRv2, ignoring message.");
-			return;
-		}
-
-		AuthenticationInfo auth = ctx.getAuthenticationInfo();
-		switch (auth.getAuthenticationState()) {
-		case AWAITING_REVEALSIG:
-			// Compute our own signature.
-			auth.goSecure(msg, listener.getKeyPair(account, protocol));
-			listener.injectMessage(auth.getSignatureMessage().toUnsafeString());
-			ctx.goSecure();
-			break;
-		default:
-			break;
-		}
-	}
-
 	private static String receivingPlainTextMessage(ConnContext ctx,
 			OTR4jListener listener, PlainTextMessage msg) throws Exception {
 		Vector<Integer> versions = msg.versions;
@@ -340,15 +419,11 @@ public final class StateMachine {
 					logger.info("V2 tag found, starting v2 AKE.");
 					AuthenticationInfo auth = ctx.getAuthenticationInfo();
 					auth.reset();
-
-					DHCommitMessage dhCommitMessage = new DHCommitMessage(2,
-							auth.getLocalDHPublicKeyHash(), auth
-									.getLocalDHPublicKeyEncrypted());
-					auth
-							.setAuthenticationState(AuthenticationState.AWAITING_DHKEY);
+					auth.setAuthAwaitingDHKey();
 
 					logger.info("Sending D-H Commit.");
-					listener.injectMessage(dhCommitMessage.toUnsafeString());
+					listener.injectMessage(auth.getDHCommitMessage()
+							.toUnsafeString());
 				} else if (versions.contains(1)
 						&& PolicyUtils.getAllowV1(policy)) {
 					throw new UnsupportedOperationException();
@@ -370,13 +445,10 @@ public final class StateMachine {
 			AuthenticationInfo auth = ctx.getAuthenticationInfo();
 			auth.reset();
 
-			DHCommitMessage dhCommitMessage = new DHCommitMessage(2, auth
-					.getLocalDHPublicKeyHash(), auth
-					.getLocalDHPublicKeyEncrypted());
-			auth.setAuthenticationState(AuthenticationState.AWAITING_DHKEY);
+			auth.setAuthAwaitingDHKey();
 
 			logger.info("Sending D-H Commit.");
-			listener.injectMessage(dhCommitMessage.toUnsafeString());
+			listener.injectMessage(auth.getDHCommitMessage().toUnsafeString());
 		} else if (versions.contains(1) && PolicyUtils.getAllowV1(policy)) {
 			throw new UnsupportedOperationException();
 		}
@@ -401,98 +473,5 @@ public final class StateMachine {
 			logger.info("Sending Query");
 			listener.injectMessage(queryMessage.toString());
 		}
-	}
-
-	private static void receivingDHCommitMessage(ConnContext ctx,
-			OTR4jListener listener, DHCommitMessage msg) throws Exception {
-
-		if (!PolicyUtils.getAllowV2(listener.getPolicy(ctx))) {
-			logger.info("ALLOW_V2 is not set, ignore this message.");
-			return;
-		}
-
-		AuthenticationInfo auth = ctx.getAuthenticationInfo();
-		switch (auth.getAuthenticationState()) {
-		case NONE:
-			auth.reset();
-			auth.setAuthAwaitingRevealSig(msg);
-			logger.info("Sending D-H key.");
-			listener.injectMessage(auth.getDHKeyMessage().toUnsafeString());
-			break;
-
-		case AWAITING_DHKEY:
-			BigInteger ourHash = new BigInteger(1, auth
-					.getLocalDHPublicKeyHash());
-			BigInteger theirHash = new BigInteger(1, msg.getDhPublicKeyHash());
-
-			if (theirHash.compareTo(ourHash) == -1) {
-				logger
-						.info("Ignore the incoming D-H Commit message, but resend your D-H Commit message.");
-				DHCommitMessage dhCommit = auth.getDHCommitMessage();
-
-				logger.info("Sending D-H Commit.");
-				listener.injectMessage(dhCommit.toUnsafeString());
-			} else {
-				auth.reset();
-				auth.setAuthAwaitingRevealSig(msg);
-				logger.info("Sending D-H key.");
-				listener.injectMessage(auth.getDHKeyMessage().toUnsafeString());
-			}
-			break;
-
-		case AWAITING_REVEALSIG:
-			auth.setAuthAwaitingRevealSig(msg);
-			logger.info("Sending D-H key.");
-			listener.injectMessage(auth.getDHKeyMessage().toUnsafeString());
-			break;
-		case AWAITING_SIG:
-			auth.reset();
-			auth.setAuthAwaitingRevealSig(msg);
-			logger.info("Sending D-H key.");
-			listener.injectMessage(auth.getDHKeyMessage().toUnsafeString());
-			break;
-		case V1_SETUP:
-			throw new UnsupportedOperationException();
-		}
-	}
-
-	private static void receivingDHKeyMessage(ConnContext ctx,
-			OTR4jListener listener, DHKeyMessage msg, String account,
-			String protocol) throws Exception {
-
-		if (!PolicyUtils.getAllowV2(listener.getPolicy(ctx))) {
-			logger.info("If ALLOW_V2 is not set, ignore this message.");
-			return;
-		}
-
-		Boolean replyRevealSig = false;
-
-		AuthenticationInfo auth = ctx.getAuthenticationInfo();
-		switch (auth.getAuthenticationState()) {
-		case AWAITING_DHKEY:
-			// Computes MB = MACm1(gx, gy, pubB, keyidB)
-			logger.info("Computing M");
-			KeyPair keyPair = listener.getKeyPair(account, protocol);
-			auth.setAuthAwaitingSig(msg, keyPair);
-			replyRevealSig = true;
-			break;
-		case AWAITING_SIG:
-			if (msg.getDhPublicKey().getY().equals(
-					auth.getRemoteDHPublicKey().getY())) {
-				replyRevealSig = true;
-			}
-			break;
-		default:
-			break;
-		}
-
-		if (replyRevealSig) {
-			RevealSignatureMessage revealSignatureMessage = auth
-					.getRevealSignatureMessage();
-
-			logger.info("Sending Reveal Signature.");
-			listener.injectMessage(revealSignatureMessage.toUnsafeString());
-		}
-
 	}
 }
