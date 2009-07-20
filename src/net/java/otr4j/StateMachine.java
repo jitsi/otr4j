@@ -482,10 +482,9 @@ public final class StateMachine {
 			break;
 
 		case AWAITING_DHKEY:
-			BigInteger ourHash = new BigInteger(auth.getLocalDHPublicKeyHash())
-					.abs();
-			BigInteger theirHash = new BigInteger(msg.getDhPublicKeyHash())
-					.abs();
+			BigInteger ourHash = new BigInteger(1, auth
+					.getLocalDHPublicKeyHash());
+			BigInteger theirHash = new BigInteger(1, msg.getDhPublicKeyHash());
 
 			if (theirHash.compareTo(ourHash) == -1) {
 				action = ReceivingDHCommitMessageActions.RETRANSMIT_DH_COMMIT;
