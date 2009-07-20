@@ -22,7 +22,6 @@ import net.java.otr4j.crypto.*;
 import net.java.otr4j.message.*;
 import net.java.otr4j.message.encoded.*;
 import net.java.otr4j.message.encoded.signature.*;
-import net.java.otr4j.message.unencoded.query.*;
 
 /**
  * 
@@ -74,8 +73,8 @@ class AuthContext {
 	private KeyPair localLongTermKeyPair;
 	private Boolean isSecure = false;
 
-	private static Logger logger = Logger.getLogger(AuthContext.class
-			.getName());
+	private static Logger logger = Logger
+			.getLogger(AuthContext.class.getName());
 
 	private DHCommitMessage getDHCommitMessage() throws InvalidKeyException,
 			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
@@ -234,9 +233,9 @@ class AuthContext {
 		return localDHPublicKeyEncrypted;
 	}
 
-	BigInteger getS() throws InvalidKeyException,
-			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException {
+	BigInteger getS() throws InvalidKeyException, NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException {
 		if (s == null) {
 			s = CryptoUtils.generateSecret(this.getLocalDHKeyPair()
 					.getPrivate(), this.getRemoteDHPublicKey());
@@ -414,12 +413,6 @@ class AuthContext {
 		Boolean allowV2 = PolicyUtils.getAllowV2(policy);
 
 		switch (MessageHeader.getMessageType(msgText)) {
-		case MessageType.PLAINTEXT:
-			handlePlainTextMessage(msgText, policy);
-			break;
-		case MessageType.QUERY:
-			handleQueryMessage(msgText, policy);
-			break;
 		case MessageType.DH_COMMIT:
 			handleDHCommitMessage(msgText, allowV2);
 			break;
@@ -704,8 +697,7 @@ class AuthContext {
 				this.setRemoteDHPublicKeyEncrypted(dhCommit
 						.getDhPublicKeyEncrypted());
 				this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-				this
-						.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
+				this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
 				listener.injectMessage(this.getDHKeyMessage().toUnsafeString());
 				logger
 						.info("Forgot our old gx value that we sent (encrypted) earlier, and pretended we're in AUTHSTATE_NONE -> Sent D-H key.");
@@ -739,53 +731,15 @@ class AuthContext {
 		}
 	}
 
-	private void handleQueryMessage(String msgText, int policy)
-			throws IOException, InvalidKeyException, NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException {
-		logger.info(account + " received a query message from " + user
-				+ " throught " + protocol + ".");
-
-		QueryMessage queryMessage = new QueryMessage(msgText);
-		if (queryMessage.versions.contains(2) && PolicyUtils.getAllowV2(policy)) {
-			logger
-					.info("Query message with V2 support found, starting V2 AKE.");
-			this.reset();
-
-			this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
-
-			logger.info("Sending D-H Commit.");
-			listener.injectMessage(this.getDHCommitMessage().toUnsafeString());
-		} else if (queryMessage.versions.contains(1)
-				&& PolicyUtils.getAllowV1(policy)) {
-			throw new UnsupportedOperationException();
-		}
-		logger.info("User needs to know nothing about Query messages.");
-	}
-
-	private void handlePlainTextMessage(String msgText, int policy)
-			throws IOException, InvalidKeyException, NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException {
-		PlainTextMessage plainTextMessage = new PlainTextMessage(msgText);
-		if (PolicyUtils.getWhiteSpaceStartsAKE(policy)) {
-			logger.info("WHITESPACE_START_AKE is set");
-
-			if (plainTextMessage.versions.contains(2)
-					&& PolicyUtils.getAllowV2(policy)) {
-				logger.info("V2 tag found, starting v2 AKE.");
-				this.reset();
-				this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
-
-				logger.info("Sending D-H Commit.");
-				listener.injectMessage(this.getDHCommitMessage()
-						.toUnsafeString());
-			} else if (plainTextMessage.versions.contains(1)
-					&& PolicyUtils.getAllowV1(policy)) {
-				throw new UnsupportedOperationException();
-			}
-		}
+	public void startV2Auth() throws InvalidKeyException,
+			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
+			NoSuchProviderException, InvalidKeySpecException,
+			NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
+		logger.info("Starting Authenticated Key Exchange");
+		this.reset();
+		this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
+		logger.info("Sending D-H Commit.");
+		listener.injectMessage(this.getDHCommitMessage().toUnsafeString());
 	}
 }

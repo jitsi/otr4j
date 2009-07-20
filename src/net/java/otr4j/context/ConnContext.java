@@ -220,8 +220,8 @@ public class ConnContext {
 
 	private AuthContext getAuthContext() {
 		if (authContext == null)
-			authContext = new AuthContext(getAccount(),
-					getUser(), getProtocol(), getListener());
+			authContext = new AuthContext(getAccount(), getUser(),
+					getProtocol(), getListener());
 		return authContext;
 	}
 
@@ -252,6 +252,8 @@ public class ConnContext {
 			throw new UnsupportedOperationException(
 					"Received V1 key exchange which is not supported.");
 		case MessageType.QUERY:
+			handleQueryMessage(msgText, policy);
+			return null;
 		case MessageType.DH_COMMIT:
 		case MessageType.DH_KEY:
 		case MessageType.REVEALSIG:
@@ -262,6 +264,24 @@ public class ConnContext {
 		case MessageType.UKNOWN:
 			throw new UnsupportedOperationException(
 					"Received an uknown message type.");
+		}
+	}
+
+	private void handleQueryMessage(String msgText, int policy)
+			throws IOException, InvalidKeyException, NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException, NoSuchPaddingException,
+			IllegalBlockSizeException, BadPaddingException {
+		logger.info(account + " received a query message from " + user
+				+ " throught " + protocol + ".");
+
+		QueryMessage queryMessage = new QueryMessage(msgText);
+		if (queryMessage.versions.contains(2) && PolicyUtils.getAllowV2(policy)) {
+			logger.info("Query message with V2 support found.");
+			getAuthContext().startV2Auth();
+		} else if (queryMessage.versions.contains(1)
+				&& PolicyUtils.getAllowV1(policy)) {
+			throw new UnsupportedOperationException();
 		}
 	}
 
@@ -402,7 +422,18 @@ public class ConnContext {
 				}
 			}
 
-			getAuthContext().handleReceivingMessage(msgText, policy);
+			if (PolicyUtils.getWhiteSpaceStartsAKE(policy)) {
+				logger.info("WHITESPACE_START_AKE is set");
+
+				if (plainTextMessage.versions.contains(2)
+						&& PolicyUtils.getAllowV2(policy)) {
+					logger.info("V2 tag found.");
+					getAuthContext().startV2Auth();
+				} else if (plainTextMessage.versions.contains(1)
+						&& PolicyUtils.getAllowV1(policy)) {
+					throw new UnsupportedOperationException();
+				}
+			}
 		}
 
 		return msgText;
@@ -422,8 +453,8 @@ public class ConnContext {
 			logger.info("Setting most recent session keys from auth.");
 			for (int i = 0; i < this.getSessionKeys()[0].length; i++) {
 				SessionKeys current = getSessionKeysByIndex(0, i);
-				current.setLocalPair(this.getAuthContext()
-						.getLocalDHKeyPair(), 1);
+				current.setLocalPair(this.getAuthContext().getLocalDHKeyPair(),
+						1);
 				current.setRemoteDHPublicKey(this.getAuthContext()
 						.getRemoteDHPublicKey(), 1);
 				current.setS(this.getAuthContext().getS());
