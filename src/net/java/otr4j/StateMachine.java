@@ -256,28 +256,7 @@ public final class StateMachine {
 		AuthenticationInfo auth = ctx.getAuthenticationInfo();
 		switch (auth.getAuthenticationState()) {
 		case AWAITING_SIG:
-
-			// Verify MAC.
-			if (!msg.verify(auth.getM2p()))
-				throw new OtrException(
-						"Signature MACs are not equal, ignoring message.");
-
-			// Decrypt X.
-			byte[] remoteXDecrypted = msg.decrypt(auth.getCp());
-			MysteriousX remoteX = new MysteriousX();
-			remoteX.readObject(remoteXDecrypted);
-
-			// Compute signature.
-			MysteriousM remoteM = new MysteriousM(auth.getRemoteDHPublicKey(),
-					(DHPublicKey) auth.getLocalDHKeyPair().getPublic(), remoteX
-							.getLongTermPublicKey(), remoteX.getDhKeyID());
-
-			// Verify signature.
-			if (!remoteM.verify(auth.getM1p(), remoteX.getLongTermPublicKey(),
-					remoteX.getSignature()))
-				throw new OtrException("Signature verification failed.");
-
-			auth.setRemoteDHPublicKeyID(remoteX.getDhKeyID());
+			auth.goSecure(msg);
 			ctx.goSecure();
 			break;
 		default:

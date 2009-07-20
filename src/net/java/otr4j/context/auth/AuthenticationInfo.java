@@ -138,6 +138,35 @@ public class AuthenticationInfo {
 		return new SignatureMessage(2, x.hash, x.encrypted);
 	}
 
+	public void goSecure(SignatureMessage signatureMessage)
+			throws InvalidKeyException, NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException, IOException, OtrException,
+			NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, SignatureException {
+		// Verify MAC.
+		if (!signatureMessage.verify(this.getM2p()))
+			throw new OtrException(
+					"Signature MACs are not equal, ignoring message.");
+
+		// Decrypt X.
+		byte[] remoteXDecrypted = signatureMessage.decrypt(this.getCp());
+		MysteriousX remoteX = new MysteriousX();
+		remoteX.readObject(remoteXDecrypted);
+
+		// Compute signature.
+		MysteriousM remoteM = new MysteriousM(this.getRemoteDHPublicKey(),
+				(DHPublicKey) this.getLocalDHKeyPair().getPublic(), remoteX
+						.getLongTermPublicKey(), remoteX.getDhKeyID());
+
+		// Verify signature.
+		if (!remoteM.verify(this.getM1p(), remoteX.getLongTermPublicKey(),
+				remoteX.getSignature()))
+			throw new OtrException("Signature verification failed.");
+
+		this.setRemoteDHPublicKeyID(remoteX.getDhKeyID());
+	}
+
 	public void reset() {
 		logger.info("Resetting authentication state.");
 		authenticationState = AuthenticationState.NONE;
