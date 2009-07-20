@@ -13,6 +13,8 @@ import javax.crypto.interfaces.*;
 
 import net.java.otr4j.*;
 import net.java.otr4j.crypto.*;
+import net.java.otr4j.message.MessageHeader;
+import net.java.otr4j.message.MessageType;
 import net.java.otr4j.message.encoded.*;
 import net.java.otr4j.message.encoded.signature.RevealSignatureMessage;
 import net.java.otr4j.message.encoded.signature.SignatureMessage;
@@ -22,9 +24,16 @@ public class AuthenticationInfo {
 	private static Logger logger = Logger.getLogger(AuthenticationInfo.class
 			.getName());
 
-	public AuthenticationInfo() {
+	public AuthenticationInfo(String account, String user, String protocol) {
+		this.account = account;
+		this.user = user;
+		this.protocol = protocol;
 		this.reset();
 	}
+
+	private String account;
+	private String user;
+	private String protocol;
 
 	private AuthenticationState authenticationState;
 	private byte[] r;
@@ -126,7 +135,7 @@ public class AuthenticationInfo {
 		// Compute our own signature.
 		this.setLocalLongTermKeyPair(localLongTerm);
 
-		// Compute X.
+		this.isSecure = true;
 	}
 
 	public SignatureMessage getSignatureMessage() throws InvalidKeyException,
@@ -163,7 +172,11 @@ public class AuthenticationInfo {
 		if (!remoteM.verify(this.getM1p(), remoteX.getLongTermPublicKey(),
 				remoteX.getSignature()))
 			throw new OtrException("Signature verification failed.");
+
+		this.isSecure = true;
 	}
+
+	public Boolean isSecure = false;
 
 	public void reset() {
 		logger.info("Resetting authentication state.");
@@ -473,5 +486,170 @@ public class AuthenticationInfo {
 			this.localDHPublicKeyBytes = out.toByteArray();
 		}
 		return localDHPublicKeyBytes;
+	}
+
+	public void handleReceivingMessage(String msgText, OTR4jListener listener,
+			int policy) throws NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException, IOException, InvalidKeyException,
+			NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, SignatureException, OtrException {
+		ByteArrayInputStream in = null;
+		Boolean allowV2 = PolicyUtils.getAllowV2(policy);
+
+		switch (MessageHeader.getMessageType(msgText)) {
+		case MessageType.DH_COMMIT:
+			logger.info(account + " received a D-H commit message from " + user
+					+ " throught " + protocol + ".");
+
+			if (!allowV2) {
+				logger.info("ALLOW_V2 is not set, ignore this message.");
+				return;
+			}
+
+			DHCommitMessage dhCommit = new DHCommitMessage();
+			in = new ByteArrayInputStream(EncodedMessageUtils
+					.decodeMessage(msgText));
+			dhCommit.readObject(in);
+
+			switch (this.getAuthenticationState()) {
+			case NONE:
+				this.reset();
+				this.setAuthAwaitingRevealSig(dhCommit);
+				logger.info("Sending D-H key.");
+				listener.injectMessage(this.getDHKeyMessage().toUnsafeString());
+				break;
+
+			case AWAITING_DHKEY:
+				BigInteger ourHash = new BigInteger(1, this
+						.getLocalDHPublicKeyHash());
+				BigInteger theirHash = new BigInteger(1, dhCommit
+						.getDhPublicKeyHash());
+
+				if (theirHash.compareTo(ourHash) == -1) {
+					logger
+							.info("Ignore the incoming D-H Commit message, but resend your D-H Commit message.");
+
+					logger.info("Sending D-H Commit.");
+					listener.injectMessage(this.getDHCommitMessage()
+							.toUnsafeString());
+				} else {
+					this.reset();
+					this.setAuthAwaitingRevealSig(dhCommit);
+					logger.info("Sending D-H key.");
+					listener.injectMessage(this.getDHKeyMessage()
+							.toUnsafeString());
+				}
+				break;
+
+			case AWAITING_REVEALSIG:
+				this.setAuthAwaitingRevealSig(dhCommit);
+				logger.info("Sending D-H key.");
+				listener.injectMessage(this.getDHKeyMessage().toUnsafeString());
+				break;
+			case AWAITING_SIG:
+				this.reset();
+				this.setAuthAwaitingRevealSig(dhCommit);
+				logger.info("Sending D-H key.");
+				listener.injectMessage(this.getDHKeyMessage().toUnsafeString());
+				break;
+			case V1_SETUP:
+				throw new UnsupportedOperationException();
+			}
+			break;
+		case MessageType.DH_KEY:
+			logger.info(account + " received a D-H key message from " + user
+					+ " throught " + protocol + ".");
+
+			if (!allowV2) {
+				logger.info("If ALLOW_V2 is not set, ignore this message.");
+				return;
+			}
+
+			DHKeyMessage dhKey = new DHKeyMessage();
+			in = new ByteArrayInputStream(EncodedMessageUtils
+					.decodeMessage(msgText));
+			dhKey.readObject(in);
+
+			Boolean replyRevealSig = false;
+
+			switch (this.getAuthenticationState()) {
+			case AWAITING_DHKEY:
+				// Computes MB = MACm1(gx, gy, pubB, keyidB)
+				logger.info("Computing M");
+				KeyPair keyPair = listener.getKeyPair(account, protocol);
+				this.setAuthAwaitingSig(dhKey, keyPair);
+				replyRevealSig = true;
+				break;
+			case AWAITING_SIG:
+				if (dhKey.getDhPublicKey().getY().equals(
+						this.getRemoteDHPublicKey().getY())) {
+					replyRevealSig = true;
+				}
+				break;
+			default:
+				break;
+			}
+
+			if (replyRevealSig) {
+				RevealSignatureMessage revealSignatureMessage = this
+						.getRevealSignatureMessage();
+
+				logger.info("Sending Reveal Signature.");
+				listener.injectMessage(revealSignatureMessage.toUnsafeString());
+			}
+			break;
+		case MessageType.REVEALSIG:
+			logger.info(account + " received a reveal signature message from "
+					+ user + " throught " + protocol + ".");
+
+			if (!allowV2) {
+				logger.info("Policy does not allow OTRv2, ignoring message.");
+				return;
+			}
+
+			RevealSignatureMessage revealSigMessage = new RevealSignatureMessage();
+			in = new ByteArrayInputStream(EncodedMessageUtils
+					.decodeMessage(msgText));
+			revealSigMessage.readObject(in);
+
+			switch (this.getAuthenticationState()) {
+			case AWAITING_REVEALSIG:
+				// Compute our own signature.
+				this.goSecure(revealSigMessage, listener.getKeyPair(account,
+						protocol));
+				listener.injectMessage(this.getSignatureMessage()
+						.toUnsafeString());
+				break;
+			default:
+				break;
+			}
+			break;
+		case MessageType.SIGNATURE:
+			logger.info(account + " received a signature message from " + user
+					+ " throught " + protocol + ".");
+			if (!allowV2) {
+				logger.info("Policy does not allow OTRv2, ignoring message.");
+				return;
+			}
+
+			SignatureMessage sigMessage = new SignatureMessage();
+			in = new ByteArrayInputStream(EncodedMessageUtils
+					.decodeMessage(msgText));
+			sigMessage.readObject(in);
+
+			switch (this.getAuthenticationState()) {
+			case AWAITING_SIG:
+				this.goSecure(sigMessage);
+				break;
+			default:
+				logger
+						.info("We were not expecting a signature, ignoring message.");
+				return;
+			}
+			break;
+		default:
+			throw new UnsupportedOperationException();
+		}
 	}
 }

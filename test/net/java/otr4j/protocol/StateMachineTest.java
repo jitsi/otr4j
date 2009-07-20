@@ -1,7 +1,6 @@
 package net.java.otr4j.protocol;
 
 import net.java.otr4j.Policy;
-import net.java.otr4j.StateMachine;
 import net.java.otr4j.UserState;
 import net.java.otr4j.Utils;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
@@ -34,35 +33,34 @@ public class StateMachineTest extends junit.framework.TestCase {
 
 		// Bob receives query, sends D-H commit.
 		@SuppressWarnings("unused")
-		String receivedMessage = StateMachine.receivingMessage(listener, usBob,
+		String receivedMessage = usBob.handleReceivingMessage(listener,
 				miFromAlice.user, miFromAlice.account, miFromAlice.protocol,
 				UnencodedMessageTextSample.QueryMessage_V12);
 
 		// Alice received D-H Commit, sends D-H key.
-		receivedMessage = StateMachine.receivingMessage(listener, usAlice,
-				miFromBob.user, miFromBob.account, miFromBob.protocol,
+		receivedMessage = usAlice.handleReceivingMessage(listener, miFromBob.user,
+				miFromBob.account, miFromBob.protocol,
 				listener.lastInjectedMessage);
 
 		// Bob receives D-H Key, sends reveal signature.
-		receivedMessage = StateMachine.receivingMessage(listener, usBob,
-				miFromAlice.user, miFromAlice.account, miFromAlice.protocol,
+		receivedMessage = usBob.handleReceivingMessage(listener, miFromAlice.user,
+				miFromAlice.account, miFromAlice.protocol,
 				listener.lastInjectedMessage);
 
 		// Alice receives Reveal Signature, sends signature and goes secure.
-		receivedMessage = StateMachine.receivingMessage(listener, usAlice,
-				miFromBob.user, miFromBob.account, miFromBob.protocol,
+		receivedMessage = usAlice.handleReceivingMessage(listener, miFromBob.user,
+				miFromBob.account, miFromBob.protocol,
 				listener.lastInjectedMessage);
 
 		// Bobs receives Signature, goes secure.
-		receivedMessage = StateMachine.receivingMessage(listener, usBob,
-				miFromAlice.user, miFromAlice.account, miFromAlice.protocol,
+		receivedMessage = usBob.handleReceivingMessage(listener, miFromAlice.user,
+				miFromAlice.account, miFromAlice.protocol,
 				listener.lastInjectedMessage);
 
 		// We are both secure, send encrypted message.
-		String sentMessage = StateMachine
-				.sendingMessage(
+		String sentMessage = usAlice
+				.handleSendingMessage(
 						listener,
-						usAlice,
 						miFromBob.user,
 						miFromBob.account,
 						miFromBob.protocol,
@@ -70,38 +68,33 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
-		receivedMessage = StateMachine.receivingMessage(listener, usBob,
-				miFromAlice.user, miFromAlice.account, miFromAlice.protocol,
-				sentMessage);
+		receivedMessage = usBob.handleReceivingMessage(listener, miFromAlice.user,
+				miFromAlice.account, miFromAlice.protocol, sentMessage);
 
 		// Send encrypted message.
-		sentMessage = StateMachine
-				.sendingMessage(listener, usBob, miFromAlice.user,
+		sentMessage = usBob
+				.handleSendingMessage(listener, miFromAlice.user,
 						miFromAlice.account, miFromAlice.protocol,
 						"Hey Alice, it means that our communication is encrypted and authenticated.");
 		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
-		receivedMessage = StateMachine.receivingMessage(listener, usAlice,
-				miFromBob.user, miFromBob.account, miFromBob.protocol,
-				sentMessage);
+		receivedMessage = usAlice.handleReceivingMessage(listener, miFromBob.user,
+				miFromBob.account, miFromBob.protocol, sentMessage);
 
 		// Send encrypted message.
-		sentMessage = StateMachine.sendingMessage(listener, usAlice,
-				miFromBob.user, miFromBob.account, miFromBob.protocol,
-				"Oh, is that all?");
+		sentMessage = usAlice.handleSendingMessage(listener, miFromBob.user,
+				miFromBob.account, miFromBob.protocol, "Oh, is that all?");
 		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
-		receivedMessage = StateMachine.receivingMessage(listener, usBob,
-				miFromAlice.user, miFromAlice.account, miFromAlice.protocol,
-				sentMessage);
+		receivedMessage = usBob.handleReceivingMessage(listener, miFromAlice.user,
+				miFromAlice.account, miFromAlice.protocol, sentMessage);
 
 		// Send encrypted message.
-		sentMessage = StateMachine
-				.sendingMessage(
+		sentMessage = usBob
+				.handleSendingMessage(
 						listener,
-						usBob,
 						miFromAlice.user,
 						miFromAlice.account,
 						miFromAlice.protocol,
@@ -109,20 +102,17 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
-		receivedMessage = StateMachine.receivingMessage(listener, usAlice,
-				miFromBob.user, miFromBob.account, miFromBob.protocol,
-				sentMessage);
+		receivedMessage = usAlice.handleReceivingMessage(listener, miFromBob.user,
+				miFromBob.account, miFromBob.protocol, sentMessage);
 
 		// Send encrypted message.
-		sentMessage = StateMachine.sendingMessage(listener, usAlice,
-				miFromBob.user, miFromBob.account, miFromBob.protocol,
-				"Oh really?!");
+		sentMessage = usAlice.handleSendingMessage(listener, miFromBob.user,
+				miFromBob.account, miFromBob.protocol, "Oh really?!");
 		assertFalse(Utils.IsNullOrEmpty(sentMessage));
 
 		// Receive encrypted message.
-		receivedMessage = StateMachine.receivingMessage(listener, usBob,
-				miFromAlice.user, miFromAlice.account, miFromAlice.protocol,
-				sentMessage);
+		receivedMessage = usBob.handleReceivingMessage(listener, miFromAlice.user,
+				miFromAlice.account, miFromAlice.protocol, sentMessage);
 
 	}
 
