@@ -48,6 +48,28 @@ public class AuthenticationInfo {
 
 	private KeyPair localLongTermKeyPair;
 
+	public DHCommitMessage getDHCommitMessage() throws InvalidKeyException,
+			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
+			NoSuchProviderException, InvalidKeySpecException,
+			NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
+		return new DHCommitMessage(2, this.getLocalDHPublicKeyHash(), this
+				.getLocalDHPublicKeyEncrypted());
+	}
+
+	public DHKeyMessage getDHKeyMessage() throws NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException {
+		return new DHKeyMessage(2, (DHPublicKey) this.getLocalDHKeyPair()
+				.getPublic());
+	}
+
+	public void setAuthAwaitingRevealSig(DHCommitMessage dhCommitMessage) {
+		this.setRemoteDHPublicKeyEncrypted(dhCommitMessage.getDhPublicKeyEncrypted());
+		this.setRemoteDHPublicKeyHash(dhCommitMessage.getDhPublicKeyHash());
+		this.setAuthenticationState(AuthenticationState.AWAITING_REVEALSIG);
+	}
+
 	public void reset() {
 		logger.info("Resetting authentication state.");
 		authenticationState = AuthenticationState.NONE;
@@ -292,6 +314,7 @@ public class AuthenticationInfo {
 	private MysteriousX mysteriousX;
 
 	private Boolean pSet;
+
 	public MysteriousX getLocalMysteriousX(Boolean pSet)
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			SignatureException, InvalidAlgorithmParameterException,

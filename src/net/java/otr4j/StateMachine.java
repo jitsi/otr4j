@@ -507,9 +507,7 @@ public final class StateMachine {
 		case RETRANSMIT_DH_COMMIT:
 			logger
 					.info("Ignore the incoming D-H Commit message, but resend your D-H Commit message.");
-			DHCommitMessage dhCommit = new DHCommitMessage(2, auth
-					.getLocalDHPublicKeyHash(), auth
-					.getLocalDHPublicKeyEncrypted());
+			DHCommitMessage dhCommit = auth.getDHCommitMessage();
 
 			logger.info("Sending D-H Commit.");
 			listener.injectMessage(dhCommit.toUnsafeString());
@@ -517,13 +515,8 @@ public final class StateMachine {
 		case SEND_NEW_DH_KEY:
 			auth.reset();
 		case RETRANSMIT_OLD_DH_KEY:
-			auth.setRemoteDHPublicKeyEncrypted(msg.getDhPublicKeyEncrypted());
-			auth.setRemoteDHPublicKeyHash(msg.getDhPublicKeyHash());
-
-			DHKeyMessage dhKey = new DHKeyMessage(2, (DHPublicKey) auth
-					.getLocalDHKeyPair().getPublic());
-			auth.setAuthenticationState(AuthenticationState.AWAITING_REVEALSIG);
-
+			auth.setAuthAwaitingRevealSig(msg);
+			DHKeyMessage dhKey = auth.getDHKeyMessage();
 			logger.info("Sending D-H key.");
 			listener.injectMessage(dhKey.toUnsafeString());
 		default:
