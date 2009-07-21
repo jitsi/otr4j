@@ -1,9 +1,18 @@
+/*
+ * otr4j, the open source java otr library.
+ *
+ * Distributable under LGPL license.
+ * See terms of license at gnu.org.
+ */
 package net.java.otr4j;
 
 import java.security.*;
 
-import net.java.otr4j.context.*;
-
+/**
+ * 
+ * @author George Politis
+ *
+ */
 public interface OTR4jListener {
 	public void injectMessage(String msg);
 

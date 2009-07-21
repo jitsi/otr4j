@@ -1,8 +1,7 @@
 package net.java.otr4j.protocol;
 
-import net.java.otr4j.Policy;
+import net.java.otr4j.PolicyConstants;
 import net.java.otr4j.UserState;
-import net.java.otr4j.Utils;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
 
 public class StateMachineTest extends junit.framework.TestCase {
@@ -25,8 +24,8 @@ public class StateMachineTest extends junit.framework.TestCase {
 
 	public void testReceivingMessage() throws Exception {
 
-		DummyOTR4jListener listener = new DummyOTR4jListener(Policy.ALLOW_V2
-				| Policy.ERROR_START_AKE);
+		DummyOTR4jListener listener = new DummyOTR4jListener(PolicyConstants.ALLOW_V2
+				| PolicyConstants.ERROR_START_AKE);
 
 		UserState usAlice = new UserState(listener);
 		UserState usBob = new UserState(listener);
@@ -65,7 +64,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 						miFromBob.account,
 						miFromBob.protocol,
 						"Hello Bob, this new IM software you installed on my PC the other day says we are talking Off-the-Record, what is that supposed to mean?");
-		assertFalse(Utils.IsNullOrEmpty(sentMessage));
+		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
 		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
@@ -76,7 +75,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 				.handleSendingMessage(miFromAlice.user, miFromAlice.account,
 						miFromAlice.protocol,
 						"Hey Alice, it means that our communication is encrypted and authenticated.");
-		assertFalse(Utils.IsNullOrEmpty(sentMessage));
+		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
 		receivedMessage = usAlice.handleReceivingMessage(miFromBob.user,
@@ -85,7 +84,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 		// Send encrypted message.
 		sentMessage = usAlice.handleSendingMessage(miFromBob.user,
 				miFromBob.account, miFromBob.protocol, "Oh, is that all?");
-		assertFalse(Utils.IsNullOrEmpty(sentMessage));
+		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
 		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
@@ -99,7 +98,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 						miFromAlice.account,
 						miFromAlice.protocol,
 						"Actually no, our communication has the properties of perfect forward secrecy and deniable authentication.");
-		assertFalse(Utils.IsNullOrEmpty(sentMessage));
+		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
 		receivedMessage = usAlice.handleReceivingMessage(miFromBob.user,
@@ -108,7 +107,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 		// Send encrypted message.
 		sentMessage = usAlice.handleSendingMessage(miFromBob.user,
 				miFromBob.account, miFromBob.protocol, "Oh really?!");
-		assertFalse(Utils.IsNullOrEmpty(sentMessage));
+		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
 		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,

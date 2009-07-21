@@ -8,10 +8,7 @@
 package net.java.otr4j;
 
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import net.java.otr4j.context.*;
+import java.util.logging.*;
 
 /**
  * 
@@ -31,8 +28,9 @@ public final class UserState {
 	private ConnContext getConnContext(String user, String account,
 			String protocol) {
 
-		if (Utils.IsNullOrEmpty(user) || Utils.IsNullOrEmpty(account)
-				|| Utils.IsNullOrEmpty(protocol)) {
+		if ((user == null || user.length() < 1)
+				|| (account == null || account.length() < 1)
+				|| (protocol == null || protocol.length() < 1)) {
 			throw new IllegalArgumentException();
 		}
 

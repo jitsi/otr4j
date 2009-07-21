@@ -4,9 +4,9 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.*;
 
+import net.java.otr4j.ConnContext;
+import net.java.otr4j.CryptoUtils;
 import net.java.otr4j.OTR4jListener;
-import net.java.otr4j.context.ConnContext;
-import net.java.otr4j.crypto.CryptoUtils;
 
 public class DummyOTR4jListener implements OTR4jListener {
 
