@@ -39,10 +39,10 @@ class AuthContext {
 
 	public AuthContext(String account, String user, String protocol,
 			OTR4jListener listener) {
-		this.account = account;
-		this.user = user;
-		this.protocol = protocol;
-		this.listener = listener;
+		this.setAccount(account);
+		this.setUser(user);
+		this.setProtocol(protocol);
+		this.setListener(listener);
 		this.reset();
 	}
 
@@ -394,8 +394,41 @@ class AuthContext {
 
 	private KeyPair getLocalLongTermKeyPair() throws NoSuchAlgorithmException {
 		if (localLongTermKeyPair == null)
-			localLongTermKeyPair = listener.getKeyPair(account, protocol);
+			localLongTermKeyPair = getListener().getKeyPair(getAccount(),
+					getProtocol());
 		return localLongTermKeyPair;
+	}
+
+	private void setListener(OTR4jListener listener) {
+		this.listener = listener;
+	}
+
+	private OTR4jListener getListener() {
+		return listener;
+	}
+
+	private void setAccount(String account) {
+		this.account = account;
+	}
+
+	private String getAccount() {
+		return account;
+	}
+
+	private void setUser(String user) {
+		this.user = user;
+	}
+
+	private String getUser() {
+		return user;
+	}
+
+	private void setProtocol(String protocol) {
+		this.protocol = protocol;
+	}
+
+	private String getProtocol() {
+		return protocol;
 	}
 
 	private byte[] h2(byte b) throws NoSuchAlgorithmException, IOException,
@@ -458,8 +491,8 @@ class AuthContext {
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, NoSuchPaddingException,
 			IllegalBlockSizeException, BadPaddingException, SignatureException {
-		logger.info(account + " received a signature message from " + user
-				+ " throught " + protocol + ".");
+		logger.info(getAccount() + " received a signature message from "
+				+ getUser() + " throught " + getProtocol() + ".");
 		if (!allowV2) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
 			return;
@@ -510,8 +543,8 @@ class AuthContext {
 			InvalidKeySpecException, NoSuchProviderException,
 			SignatureException {
 
-		logger.info(account + " received a reveal signature message from "
-				+ user + " throught " + protocol + ".");
+		logger.info(getAccount() + " received a reveal signature message from "
+				+ getUser() + " throught " + getProtocol() + ".");
 
 		if (!allowV2) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
@@ -590,7 +623,8 @@ class AuthContext {
 
 			this.setAuthenticationState(AuthContext.NONE);
 			this.setIsSecure(true);
-			listener.injectMessage(this.getSignatureMessage().writeObject());
+			getListener().injectMessage(
+					this.getSignatureMessage().writeObject());
 			break;
 		default:
 			logger.info("Ignoring message.");
@@ -605,8 +639,8 @@ class AuthContext {
 			NoSuchPaddingException, IllegalBlockSizeException,
 			BadPaddingException {
 
-		logger.info(account + " received a D-H key message from " + user
-				+ " throught " + protocol + ".");
+		logger.info(getAccount() + " received a D-H key message from "
+				+ getUser() + " throught " + getProtocol() + ".");
 
 		if (!allowV2) {
 			logger.info("If ALLOW_V2 is not set, ignore this message.");
@@ -623,8 +657,8 @@ class AuthContext {
 			// AUTHSTATE_AWAITING_SIG
 			this.setRemoteDHPublicKey(dhKey.getDhPublicKey());
 			this.setAuthenticationState(AuthContext.AWAITING_SIG);
-			listener.injectMessage(this.getRevealSignatureMessage()
-					.writeObject());
+			getListener().injectMessage(
+					this.getRevealSignatureMessage().writeObject());
 			logger.info("Sent Reveal Signature.");
 			break;
 		case AWAITING_SIG:
@@ -635,8 +669,8 @@ class AuthContext {
 				// earlier (when you entered AUTHSTATE_AWAITING_SIG):
 				// Retransmit
 				// your Reveal Signature Message.
-				listener.injectMessage(this.getRevealSignatureMessage()
-						.writeObject());
+				getListener().injectMessage(
+						this.getRevealSignatureMessage().writeObject());
 				logger.info("Resent Reveal Signature.");
 			} else {
 				// Otherwise: Ignore the message.
@@ -656,8 +690,8 @@ class AuthContext {
 			NoSuchPaddingException, IllegalBlockSizeException,
 			BadPaddingException {
 
-		logger.info(account + " received a D-H commit message from " + user
-				+ " throught " + protocol + ".");
+		logger.info(getAccount() + " received a D-H commit message from "
+				+ getUser() + " throught " + getProtocol() + ".");
 
 		if (!allowV2) {
 			logger.info("ALLOW_V2 is not set, ignore this message.");
@@ -677,7 +711,7 @@ class AuthContext {
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-			listener.injectMessage(this.getDHKeyMessage().writeObject());
+			getListener().injectMessage(this.getDHKeyMessage().writeObject());
 			logger.info("Sent D-H key.");
 			break;
 
@@ -702,7 +736,8 @@ class AuthContext {
 				// Ignore the incoming D-H Commit message, but resend your
 				// D-H
 				// Commit message.
-				listener.injectMessage(this.getDHCommitMessage().writeObject());
+				getListener().injectMessage(
+						this.getDHCommitMessage().writeObject());
 				logger
 						.info("Ignored the incoming D-H Commit message, but resent our D-H Commit message.");
 			} else {
@@ -718,7 +753,8 @@ class AuthContext {
 						.getDhPublicKeyEncrypted());
 				this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 				this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-				listener.injectMessage(this.getDHKeyMessage().writeObject());
+				getListener().injectMessage(
+						this.getDHKeyMessage().writeObject());
 				logger
 						.info("Forgot our old gx value that we sent (encrypted) earlier, and pretended we're in AUTHSTATE_NONE -> Sent D-H key.");
 			}
@@ -732,7 +768,7 @@ class AuthContext {
 			this.setRemoteDHPublicKeyEncrypted(dhCommit
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-			listener.injectMessage(this.getDHKeyMessage().writeObject());
+			getListener().injectMessage(this.getDHKeyMessage().writeObject());
 			logger.info("Sent D-H key.");
 			break;
 		case AWAITING_SIG:
@@ -743,7 +779,7 @@ class AuthContext {
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-			listener.injectMessage(this.getDHKeyMessage().writeObject());
+			getListener().injectMessage(this.getDHKeyMessage().writeObject());
 			logger.info("Sent D-H key.");
 			break;
 		case V1_SETUP:
@@ -761,6 +797,6 @@ class AuthContext {
 		this.setProtocolVersion(2);
 		this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
 		logger.info("Sending D-H Commit.");
-		listener.injectMessage(this.getDHCommitMessage().writeObject());
+		getListener().injectMessage(this.getDHCommitMessage().writeObject());
 	}
 }

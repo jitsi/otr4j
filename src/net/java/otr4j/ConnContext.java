@@ -362,6 +362,11 @@ public class ConnContext {
 			if (mostRecent.getRemoteKeyID() == senderKeyID)
 				this.rotateRemoteSessionKeys(t.nextDHPublicKey);
 
+			TLV[] tlvs = getTLVs(decryptedMsgContent);
+			
+			if (tlvs != null && tlvs.length > 0)
+				handleTLVs(tlvs);
+			
 			return decryptedMsgContent;
 		case FINISHED:
 		case PLAINTEXT:
@@ -372,6 +377,20 @@ public class ConnContext {
 			break;
 		}
 
+		return null;
+	}
+
+	private void handleTLVs(TLV[] tlvs) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private TLV[] getTLVs(String msg) {
+		byte[] mb = msg.getBytes();
+		int tlvIndex = Arrays.binarySearch(mb, (byte)0x00);
+		ByteBuffer buff = ByteBuffer.wrap(msg.getBytes());
+		byte[] tlvs = new byte[mb.length - tlvIndex];
+		buff.get(tlvs, tlvIndex, tlvs.length);
 		return null;
 	}
 

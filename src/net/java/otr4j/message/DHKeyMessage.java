@@ -37,7 +37,6 @@ public final class DHKeyMessage extends EncodedMessageBase {
 		this.setProtocolVersion(SerializationUtils.readShort(in));
 		this.setMessageType(SerializationUtils.readByte(in));
 		this.setDhPublicKey(SerializationUtils.readDHPublicKey(in));
-
 	}
 
 	public void setDhPublicKey(DHPublicKey dhPublicKey) {

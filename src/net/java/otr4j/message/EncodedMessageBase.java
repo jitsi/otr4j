@@ -12,9 +12,7 @@ import java.io.*;
  * 
  * @author George Politis
  */
-public abstract class EncodedMessageBase extends MessageBase implements
-		Serializable {
-	private static final long serialVersionUID = 1L;
+public abstract class EncodedMessageBase extends MessageBase {
 	private int protocolVersion;
 
 	public EncodedMessageBase(int messageType) {
