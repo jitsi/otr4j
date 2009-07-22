@@ -7,7 +7,7 @@ public final class QueryMessage extends QueryMessageBase {
 	public String toString() {
 		String txt = MessageConstants.BASE_HEAD + "?";
 
-		for (int version : versions) {
+		for (int version : getVersions()) {
 			txt += version;
 		}
 
@@ -17,7 +17,7 @@ public final class QueryMessage extends QueryMessageBase {
 
 	public QueryMessage(Vector<Integer> versions) {
 		super(MessageConstants.QUERY);
-		this.versions = versions;
+		this.setVersions(versions);
 	}
 
 	public QueryMessage(String msgText) {
@@ -63,7 +63,7 @@ public final class QueryMessage extends QueryMessageBase {
 				break;
 		}
 
-		this.versions = versions;
+		this.setVersions(versions);
 	}
 
 }

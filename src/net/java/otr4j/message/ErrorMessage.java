@@ -19,6 +19,9 @@ public final class ErrorMessage extends MessageBase {
 		if (!msgText.startsWith(MessageConstants.ERROR_HEAD))
 			return;
 		this.error = msgText.substring(MessageConstants.ERROR_HEAD.length());
-		
+	}
+	
+	public String toString(){
+		return MessageConstants.ERROR_HEAD + error;
 	}
 }

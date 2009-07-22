@@ -4,7 +4,7 @@ import java.util.*;
 
 public final class PlainTextMessage extends QueryMessageBase {
 
-	public String cleanText;
+	private String cleanText;
 	
 	public PlainTextMessage (String msgText) {
 		super(MessageConstants.PLAINTEXT);
@@ -28,7 +28,15 @@ public final class PlainTextMessage extends QueryMessageBase {
 			}
 		}
 		
-		this.versions = versions;
+		this.setVersions(versions);
+		this.setCleanText(cleanText);
+	}
+
+	public void setCleanText(String cleanText) {
 		this.cleanText = cleanText;
+	}
+
+	public String getCleanText() {
+		return cleanText;
 	}
 }

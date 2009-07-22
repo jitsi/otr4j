@@ -50,7 +50,7 @@ public final class UserState {
 	}
 
 	public String handleReceivingMessage(String user, String account,
-			String protocol, String msgText) throws Exception {
+			String protocol, String msgText) {
 
 		try {
 			return this.getConnContext(user, account, protocol)
@@ -61,7 +61,8 @@ public final class UserState {
 							Level.SEVERE,
 							"Handling message receiving failed, returning original message.",
 							e);
-			return msgText;
+			getListener().showError("Handling message receiving failed.");
+			return null;
 		}
 	}
 
@@ -77,7 +78,8 @@ public final class UserState {
 							Level.SEVERE,
 							"Handling message sending failed, returning original message.",
 							e);
-			return msgText;
+			getListener().showError("Handling message sending failed.");
+			return null;
 		}
 	}
 

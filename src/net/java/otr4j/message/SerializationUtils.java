@@ -176,9 +176,23 @@ public class SerializationUtils implements SerializationConstants {
 		in.read(b);
 		return byteArrayToInt(b);
 	}
+	
+	static int readTlvDataLen(InputStream in) throws IOException {
+		byte[] b = new byte[TLVDATALEN];
+		in.read(b);
+		return byteArrayToInt(b);
+	}
 
 	public static byte[] readData(InputStream in) throws IOException {
 		int len = readDataLen(in);
+
+		byte[] b = new byte[len];
+		in.read(b);
+		return b;
+	}
+	
+	public static byte[] readTlvData(InputStream in) throws IOException {
+		int len = readTlvDataLen(in);
 
 		byte[] b = new byte[len];
 		in.read(b);

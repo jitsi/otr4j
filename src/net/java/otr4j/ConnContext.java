@@ -23,6 +23,38 @@ import net.java.otr4j.message.*;
  * @author George Politis
  */
 public class ConnContext {
+
+	/**
+	 * 
+	 * @author George Politis
+	 * 
+	 */
+	class TLV {
+		public TLV(int type, byte[] value) {
+			this.setType(type);
+			this.setValue(value);
+		}
+
+		public void setType(int type) {
+			this.type = type;
+		}
+
+		public int getType() {
+			return type;
+		}
+
+		public void setValue(byte[] value) {
+			this.value = value;
+		}
+
+		public byte[] getValue() {
+			return value;
+		}
+
+		private int type;
+		private byte[] value;
+	}
+
 	private String user;
 	private String account;
 	private String protocol;
@@ -240,7 +272,7 @@ public class ConnContext {
 		case MessageConstants.DATA:
 			return handleDataMessage(msgText);
 		case MessageConstants.ERROR:
-			handleError(msgText, policy);
+			handleErrorMessage(msgText, policy);
 			return null;
 		case MessageConstants.PLAINTEXT:
 			return handlePlainTextMessage(msgText, policy);
@@ -272,16 +304,17 @@ public class ConnContext {
 				+ " throught " + protocol + ".");
 
 		QueryMessage queryMessage = new QueryMessage(msgText);
-		if (queryMessage.versions.contains(2) && PolicyUtils.getAllowV2(policy)) {
+		if (queryMessage.getVersions().contains(2)
+				&& PolicyUtils.getAllowV2(policy)) {
 			logger.info("Query message with V2 support found.");
 			getAuthContext().startV2Auth();
-		} else if (queryMessage.versions.contains(1)
+		} else if (queryMessage.getVersions().contains(1)
 				&& PolicyUtils.getAllowV1(policy)) {
 			throw new UnsupportedOperationException();
 		}
 	}
 
-	private void handleError(String msgText, int policy) {
+	private void handleErrorMessage(String msgText, int policy) {
 		logger.info(account + " received an error message from " + user
 				+ " throught " + protocol + ".");
 
@@ -299,7 +332,8 @@ public class ConnContext {
 			QueryMessage queryMessage = new QueryMessage(versions);
 
 			logger.info("Sending Query");
-			getListener().injectMessage(queryMessage.toString());
+			getListener().injectMessage(queryMessage.toString(), getAccount(),
+					getUser(), getProtocol());
 		}
 	}
 
@@ -362,35 +396,49 @@ public class ConnContext {
 			if (mostRecent.getRemoteKeyID() == senderKeyID)
 				this.rotateRemoteSessionKeys(t.nextDHPublicKey);
 
-			TLV[] tlvs = getTLVs(decryptedMsgContent);
-			
-			if (tlvs != null && tlvs.length > 0)
-				handleTLVs(tlvs);
-			
+			// Handle TLVs
+			List<TLV> tlvs = null;
+			int tlvIndex = decryptedMsgContent.indexOf((char) 0x0);
+			if (tlvIndex > -1) {
+				byte[] mb = decryptedMsgContent.getBytes();
+				decryptedMsgContent = decryptedMsgContent
+						.substring(0, tlvIndex);
+				tlvIndex++;
+				byte[] tlvsb = new byte[mb.length - tlvIndex];
+				System.arraycopy(mb, tlvIndex, tlvsb, 0, tlvsb.length);
+
+				tlvs = new Vector<TLV>();
+				ByteArrayInputStream tin = new ByteArrayInputStream(tlvsb);
+				while (tin.available() > 0) {
+					int type = SerializationUtils.readShort(tin);
+					byte[] tdata = SerializationUtils.readTlvData(tin);
+					tlvs.add(new TLV(type, tdata));
+				}
+			}
+			if (tlvs != null && tlvs.size() > 0) {
+				for (TLV tlv : tlvs) {
+					switch (tlv.getType()) {
+					case 1:
+						this.setMessageState(FINISHED);
+						return null;
+					default:
+						return decryptedMsgContent;
+					}
+				}
+			}
+
 			return decryptedMsgContent;
+
 		case FINISHED:
 		case PLAINTEXT:
 			getListener().showWarning(
-					"Unreadable encrypted message was received");
-			ErrorMessage errormsg = new ErrorMessage("Oups.");
-			getListener().injectMessage(errormsg.toString());
+					"Unreadable encrypted message was received.");
+			ErrorMessage errormsg = new ErrorMessage("You sent me an unreadable encrypted message..");
+			getListener().injectMessage(errormsg.toString(), getAccount(),
+					getUser(), getProtocol());
 			break;
 		}
 
-		return null;
-	}
-
-	private void handleTLVs(TLV[] tlvs) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private TLV[] getTLVs(String msg) {
-		byte[] mb = msg.getBytes();
-		int tlvIndex = Arrays.binarySearch(mb, (byte)0x00);
-		ByteBuffer buff = ByteBuffer.wrap(msg.getBytes());
-		byte[] tlvs = new byte[mb.length - tlvIndex];
-		buff.get(tlvs, tlvIndex, tlvs.length);
 		return null;
 	}
 
@@ -404,7 +452,7 @@ public class ConnContext {
 				+ " throught " + protocol + ".");
 
 		PlainTextMessage plainTextMessage = new PlainTextMessage(msgText);
-		Vector<Integer> versions = plainTextMessage.versions;
+		Vector<Integer> versions = plainTextMessage.getVersions();
 		if (versions.size() < 1) {
 			logger
 					.info("Received plaintext message without the whitespace tag.");
@@ -415,7 +463,7 @@ public class ConnContext {
 				// message was received unencrypted.
 				getListener().showWarning(
 						"The message was received unencrypted.");
-				return plainTextMessage.cleanText;
+				return plainTextMessage.getCleanText();
 			case PLAINTEXT:
 				// Simply display the message to the user. If
 				// REQUIRE_ENCRYPTION
@@ -425,7 +473,7 @@ public class ConnContext {
 					getListener().showWarning(
 							"The message was received unencrypted.");
 				}
-				return msgText;
+				return plainTextMessage.getCleanText();
 			}
 		} else {
 			logger.info("Received plaintext message with the whitespace tag.");
@@ -442,20 +490,19 @@ public class ConnContext {
 				// user. If REQUIRE_ENCRYPTION is set, warn him that the
 				// message
 				// was received unencrypted.
-				if (PolicyUtils.getRequireEncryption(policy)) {
+				if (PolicyUtils.getRequireEncryption(policy))
 					getListener().showWarning(
 							"The message was received unencrypted.");
-				}
 			}
 
 			if (PolicyUtils.getWhiteSpaceStartsAKE(policy)) {
 				logger.info("WHITESPACE_START_AKE is set");
 
-				if (plainTextMessage.versions.contains(2)
+				if (plainTextMessage.getVersions().contains(2)
 						&& PolicyUtils.getAllowV2(policy)) {
 					logger.info("V2 tag found.");
 					getAuthContext().startV2Auth();
-				} else if (plainTextMessage.versions.contains(1)
+				} else if (plainTextMessage.getVersions().contains(1)
 						&& PolicyUtils.getAllowV1(policy)) {
 					throw new UnsupportedOperationException();
 				}

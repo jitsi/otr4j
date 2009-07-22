@@ -24,7 +24,7 @@ public class DummyOTR4jListener implements OTR4jListener {
 	}
 
 	@Override
-	public void injectMessage(String msg) {
+	public void injectMessage(String msg, String account, String user, String protocol) {
 
 		this.lastInjectedMessage = msg;
 		String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10) + "..."

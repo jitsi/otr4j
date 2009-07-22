@@ -25,6 +25,185 @@ import net.java.otr4j.message.*;
  */
 class AuthContext {
 
+	/**
+	 * 
+	 * @author George Politis
+	 */
+	public class MysteriousX {
+
+		public MysteriousX() {
+
+		}
+
+		public MysteriousX(PublicKey ourLongTermPublicKey, int ourKeyID,
+				byte[] signature) {
+			this.setDhKeyID(ourKeyID);
+			this.setLongTermPublicKey(ourLongTermPublicKey);
+			this.setSignature(signature);
+		}
+
+		public void readObject(byte[] b) throws IOException {
+			ByteArrayInputStream bis = null;
+			try {
+				bis = new ByteArrayInputStream(b);
+				this.readObject(bis);
+			} catch (Exception e) {
+				bis.close();
+			}
+		}
+
+		public void readObject(java.io.ByteArrayInputStream stream)
+				throws IOException {
+			try {
+				this.setLongTermPublicKey(SerializationUtils
+						.readPublicKey(stream));
+			} catch (Exception e) {
+				throw new IOException(e);
+			}
+			this.setDhKeyID(SerializationUtils.readInt(stream));
+			this.setSignature(SerializationUtils.readSignature(stream, this
+					.getLongTermPublicKey()));
+		}
+
+		private PublicKey longTermPublicKey;
+		private int dhKeyID;
+		private byte[] signature;
+
+		public void writeObject(java.io.ByteArrayOutputStream stream)
+				throws IOException {
+
+			try {
+				SerializationUtils.writePublicKey(stream, this
+						.getLongTermPublicKey());
+			} catch (Exception e) {
+				throw new IOException(e);
+			}
+			SerializationUtils.writeInt(stream, this.getDhKeyID());
+			SerializationUtils.writeSignature(stream, this.getSignature(), this
+					.getLongTermPublicKey());
+		}
+
+		public byte[] toByteArray() throws IOException {
+			ByteArrayOutputStream out = null;
+			byte[] bosArray = null;
+			try {
+				out = new ByteArrayOutputStream();
+				this.writeObject(out);
+				bosArray = out.toByteArray();
+			} finally {
+				if (out != null)
+					out.close();
+			}
+
+			return bosArray;
+		}
+
+		public void setLongTermPublicKey(PublicKey longTermPublicKey) {
+			this.longTermPublicKey = longTermPublicKey;
+		}
+
+		public PublicKey getLongTermPublicKey() {
+			return longTermPublicKey;
+		}
+
+		public void setDhKeyID(int dhKeyID) {
+			this.dhKeyID = dhKeyID;
+		}
+
+		public int getDhKeyID() {
+			return dhKeyID;
+		}
+
+		public void setSignature(byte[] signature) {
+			this.signature = signature;
+		}
+
+		public byte[] getSignature() {
+			return signature;
+		}
+	}
+
+	/**
+	 * 
+	 * @author George Politis
+	 */
+	public class MysteriousM {
+
+		public MysteriousM(DHPublicKey ourDHPublicKey,
+				DHPublicKey theirDHPublicKey, PublicKey ourLongTermPublicKey,
+				int ourDHPrivateKeyID) {
+
+			this.setOurDHPublicKey(ourDHPublicKey);
+			this.setTheirDHPublicKey(theirDHPublicKey);
+			this.setOurLongTermPublicKey(ourLongTermPublicKey);
+			this.setOurDHPrivatecKeyID(ourDHPrivateKeyID);
+		}
+
+		private DHPublicKey ourDHPublicKey;
+		private DHPublicKey theirDHPublicKey;
+		private PublicKey ourLongTermPublicKey;
+		private int ourDHPrivatecKeyID;
+
+		public void writeObject(OutputStream out) throws IOException {
+			SerializationUtils.writeMpi(out, this.getOurDHPublicKey().getY());
+			SerializationUtils.writeMpi(out, this.getTheirDHPublicKey().getY());
+			try {
+				SerializationUtils.writePublicKey(out, this
+						.getOurLongTermPublicKey());
+			} catch (InvalidKeyException e) {
+				throw new IOException(e);
+			}
+			SerializationUtils.writeInt(out, this.getOurDHPrivatecKeyID());
+		}
+
+		public byte[] toByteArray() throws IOException {
+			ByteArrayOutputStream out = null;
+			byte[] bosArray = null;
+			try {
+				out = new ByteArrayOutputStream();
+				this.writeObject(out);
+				bosArray = out.toByteArray();
+			} finally {
+				if (out != null)
+					out.close();
+			}
+
+			return bosArray;
+		}
+
+		public void setOurDHPublicKey(DHPublicKey ourDHPublicKey) {
+			this.ourDHPublicKey = ourDHPublicKey;
+		}
+
+		public DHPublicKey getOurDHPublicKey() {
+			return ourDHPublicKey;
+		}
+
+		public void setTheirDHPublicKey(DHPublicKey theirDHPublicKey) {
+			this.theirDHPublicKey = theirDHPublicKey;
+		}
+
+		public DHPublicKey getTheirDHPublicKey() {
+			return theirDHPublicKey;
+		}
+
+		public void setOurLongTermPublicKey(PublicKey ourLongTermPublicKey) {
+			this.ourLongTermPublicKey = ourLongTermPublicKey;
+		}
+
+		public PublicKey getOurLongTermPublicKey() {
+			return ourLongTermPublicKey;
+		}
+
+		public void setOurDHPrivatecKeyID(int ourDHPrivatecKeyID) {
+			this.ourDHPrivatecKeyID = ourDHPrivatecKeyID;
+		}
+
+		public int getOurDHPrivatecKeyID() {
+			return ourDHPrivatecKeyID;
+		}
+	}
+
 	public static final int NONE = 0;
 	public static final int AWAITING_DHKEY = 1;
 	public static final int AWAITING_REVEALSIG = 2;
@@ -624,7 +803,8 @@ class AuthContext {
 			this.setAuthenticationState(AuthContext.NONE);
 			this.setIsSecure(true);
 			getListener().injectMessage(
-					this.getSignatureMessage().writeObject());
+					this.getSignatureMessage().writeObject(), getAccount(),
+					getUser(), getProtocol());
 			break;
 		default:
 			logger.info("Ignoring message.");
@@ -658,7 +838,8 @@ class AuthContext {
 			this.setRemoteDHPublicKey(dhKey.getDhPublicKey());
 			this.setAuthenticationState(AuthContext.AWAITING_SIG);
 			getListener().injectMessage(
-					this.getRevealSignatureMessage().writeObject());
+					this.getRevealSignatureMessage().writeObject(),
+					getAccount(), getUser(), getProtocol());
 			logger.info("Sent Reveal Signature.");
 			break;
 		case AWAITING_SIG:
@@ -670,7 +851,8 @@ class AuthContext {
 				// Retransmit
 				// your Reveal Signature Message.
 				getListener().injectMessage(
-						this.getRevealSignatureMessage().writeObject());
+						this.getRevealSignatureMessage().writeObject(),
+						getAccount(), getUser(), getProtocol());
 				logger.info("Resent Reveal Signature.");
 			} else {
 				// Otherwise: Ignore the message.
@@ -711,7 +893,8 @@ class AuthContext {
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-			getListener().injectMessage(this.getDHKeyMessage().writeObject());
+			getListener().injectMessage(this.getDHKeyMessage().writeObject(),
+					getAccount(), getUser(), getProtocol());
 			logger.info("Sent D-H key.");
 			break;
 
@@ -737,7 +920,8 @@ class AuthContext {
 				// D-H
 				// Commit message.
 				getListener().injectMessage(
-						this.getDHCommitMessage().writeObject());
+						this.getDHCommitMessage().writeObject(), getAccount(),
+						getUser(), getProtocol());
 				logger
 						.info("Ignored the incoming D-H Commit message, but resent our D-H Commit message.");
 			} else {
@@ -754,7 +938,8 @@ class AuthContext {
 				this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 				this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
 				getListener().injectMessage(
-						this.getDHKeyMessage().writeObject());
+						this.getDHKeyMessage().writeObject(), getAccount(),
+						getUser(), getProtocol());
 				logger
 						.info("Forgot our old gx value that we sent (encrypted) earlier, and pretended we're in AUTHSTATE_NONE -> Sent D-H key.");
 			}
@@ -768,7 +953,8 @@ class AuthContext {
 			this.setRemoteDHPublicKeyEncrypted(dhCommit
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-			getListener().injectMessage(this.getDHKeyMessage().writeObject());
+			getListener().injectMessage(this.getDHKeyMessage().writeObject(),
+					getAccount(), getUser(), getProtocol());
 			logger.info("Sent D-H key.");
 			break;
 		case AWAITING_SIG:
@@ -779,7 +965,8 @@ class AuthContext {
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-			getListener().injectMessage(this.getDHKeyMessage().writeObject());
+			getListener().injectMessage(this.getDHKeyMessage().writeObject(),
+					getAccount(), getUser(), getProtocol());
 			logger.info("Sent D-H key.");
 			break;
 		case V1_SETUP:
@@ -797,6 +984,7 @@ class AuthContext {
 		this.setProtocolVersion(2);
 		this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
 		logger.info("Sending D-H Commit.");
-		getListener().injectMessage(this.getDHCommitMessage().writeObject());
+		getListener().injectMessage(this.getDHCommitMessage().writeObject(),
+				getAccount(), getUser(), getProtocol());
 	}
 }

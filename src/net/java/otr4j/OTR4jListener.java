@@ -11,15 +11,16 @@ import java.security.*;
 /**
  * 
  * @author George Politis
- *
+ * 
  */
 public interface OTR4jListener {
-	public void injectMessage(String msg);
+	public void injectMessage(String msg, String account, String user,
+			String protocol);
 
 	public void showWarning(String warning);
 
 	public void showError(String error);
-	
+
 	public int getPolicy(ConnContext ctx);
 
 	public KeyPair getKeyPair(String account, String protocol)
