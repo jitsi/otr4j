@@ -6,7 +6,8 @@
  */
 package net.java.otr4j;
 
-import java.security.*;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * 

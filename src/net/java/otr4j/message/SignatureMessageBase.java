@@ -1,12 +1,18 @@
 package net.java.otr4j.message;
 
-import java.io.*;
-import java.security.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-import javax.crypto.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import net.java.otr4j.CryptoUtils;
+
 
 public abstract class SignatureMessageBase extends EncodedMessageBase {
 

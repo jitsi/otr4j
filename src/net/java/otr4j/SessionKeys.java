@@ -6,13 +6,18 @@
  */
 package net.java.otr4j;
 
-import java.io.*;
-import java.math.*;
-import java.nio.*;
-import java.security.*;
-import java.util.*;
-import java.util.logging.*;
-import javax.crypto.interfaces.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.logging.Logger;
+
+import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.message.*;
 

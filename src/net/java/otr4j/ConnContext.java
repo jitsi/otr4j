@@ -7,16 +7,36 @@
 
 package net.java.otr4j;
 
-import java.io.*;
-import java.nio.*;
-import java.security.*;
-import java.security.spec.*;
-import java.util.*;
-import java.util.logging.*;
-import javax.crypto.*;
-import javax.crypto.interfaces.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Vector;
+import java.util.logging.Logger;
 
-import net.java.otr4j.message.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.interfaces.DHPublicKey;
+
+import net.java.otr4j.message.DataMessage;
+import net.java.otr4j.message.ErrorMessage;
+import net.java.otr4j.message.MessageConstants;
+import net.java.otr4j.message.MessageUtils;
+import net.java.otr4j.message.MysteriousT;
+import net.java.otr4j.message.PlainTextMessage;
+import net.java.otr4j.message.QueryMessage;
+import net.java.otr4j.message.SerializationConstants;
+import net.java.otr4j.message.SerializationUtils;
+
 
 /**
  * 

@@ -7,8 +7,9 @@
 
 package net.java.otr4j;
 
-import java.util.*;
-import java.util.logging.*;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 

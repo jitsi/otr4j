@@ -1,6 +1,8 @@
 package net.java.otr4j.message;
 
-import java.util.*;
+import java.util.Vector;
+
+
 
 public final class QueryMessage extends QueryMessageBase {
 

@@ -6,7 +6,8 @@
  */
 package net.java.otr4j.message;
 
-import org.bouncycastle.util.encoders.*;
+import org.bouncycastle.util.encoders.Base64;
+
 
 /**
  * 

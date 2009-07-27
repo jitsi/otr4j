@@ -6,15 +6,26 @@
  */
 package net.java.otr4j.message;
 
-import java.io.*;
-import java.math.*;
-import java.security.*;
-import java.security.interfaces.*;
-import java.security.spec.*; /* import java.util.*; */
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.security.InvalidKeyException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.interfaces.DSAParams;
+import java.security.interfaces.DSAPublicKey;
+import java.security.spec.DSAPublicKeySpec;
+import java.security.spec.InvalidKeySpecException;
 
-import javax.crypto.interfaces.*; /*import org.bouncycastle.asn1.*;*/
-import org.bouncycastle.util.*;
-import net.java.otr4j.*;
+import javax.crypto.interfaces.DHPublicKey;
+
+import net.java.otr4j.CryptoConstants;
+import net.java.otr4j.CryptoUtils;
+
+import org.bouncycastle.util.BigIntegers;
 
 /**
  * 

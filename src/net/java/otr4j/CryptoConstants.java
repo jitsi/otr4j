@@ -7,7 +7,7 @@
 
 package net.java.otr4j;
 
-import java.math.*;
+import java.math.BigInteger;
 
 /**
  * 
