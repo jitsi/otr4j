@@ -25,20 +25,18 @@ import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.DSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyAgreement;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHPrivateKeySpec;
 import javax.crypto.spec.DHPublicKeySpec;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.BufferedBlockCipher;
+import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.generators.DHKeyPairGenerator;
+import org.bouncycastle.crypto.modes.SICBlockCipher;
 import org.bouncycastle.crypto.params.DHKeyGenerationParameters;
 import org.bouncycastle.crypto.params.DHParameters;
 import org.bouncycastle.crypto.params.DHPrivateKeyParameters;
@@ -46,9 +44,10 @@ import org.bouncycastle.crypto.params.DHPublicKeyParameters;
 import org.bouncycastle.crypto.params.DSAParameters;
 import org.bouncycastle.crypto.params.DSAPrivateKeyParameters;
 import org.bouncycastle.crypto.params.DSAPublicKeyParameters;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.crypto.signers.DSASigner;
 import org.bouncycastle.util.BigIntegers;
-
 
 /**
  * 
@@ -172,40 +171,48 @@ public class CryptoUtils implements CryptoConstants {
 	}
 
 	public static byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b)
-			throws NoSuchAlgorithmException, NoSuchPaddingException,
-			InvalidKeyException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException {
-		// Create cipher KeySpec based on r.
-		SecretKeySpec keyspec = new SecretKeySpec(key, "AES");
+			throws OtrException {
+
+		AESFastEngine aesDec = new AESFastEngine();
+		SICBlockCipher sicAesDec = new SICBlockCipher(aesDec);
+		BufferedBlockCipher bufSicAesDec = new BufferedBlockCipher(sicAesDec);
+
 		// Create initial counter value 0.
 		if (ctr == null)
 			ctr = ZERO_CTR;
-		IvParameterSpec spec = new IvParameterSpec(ctr);
+		bufSicAesDec.init(false, new ParametersWithIV(new KeyParameter(key),
+				ctr));
+		byte[] aesOutLwDec = new byte[b.length];
+		int done = bufSicAesDec.processBytes(b, 0, b.length, aesOutLwDec, 0);
+		try {
+			bufSicAesDec.doFinal(aesOutLwDec, done);
+		} catch (Exception e) {
+			throw new OtrException(e);
+		}
 
-		// Initialize cipher.
-		Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
-		cipher.init(Cipher.DECRYPT_MODE, keyspec, spec);
-
-		return cipher.doFinal(b);
+		return aesOutLwDec;
 	}
 
 	public static byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b)
-			throws NoSuchAlgorithmException, NoSuchPaddingException,
-			InvalidKeyException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException {
+			throws OtrException {
 
-		// Create cipher KeySpec based on r.
-		SecretKeySpec keyspec = new SecretKeySpec(key, "AES");
+		AESFastEngine aesEnc = new AESFastEngine();
+		SICBlockCipher sicAesEnc = new SICBlockCipher(aesEnc);
+		BufferedBlockCipher bufSicAesEnc = new BufferedBlockCipher(sicAesEnc);
+
 		// Create initial counter value 0.
 		if (ctr == null)
 			ctr = ZERO_CTR;
-		IvParameterSpec spec = new IvParameterSpec(ctr);
-
-		// Initialize cipher.
-		Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
-		cipher.init(Cipher.ENCRYPT_MODE, keyspec, spec);
-
-		return cipher.doFinal(b);
+		bufSicAesEnc.init(true,
+				new ParametersWithIV(new KeyParameter(key), ctr));
+		byte[] aesOutLwEnc = new byte[b.length];
+		int done = bufSicAesEnc.processBytes(b, 0, b.length, aesOutLwEnc, 0);
+		try {
+			bufSicAesEnc.doFinal(aesOutLwEnc, done);
+		} catch (Exception e) {
+			throw new OtrException(e);
+		}
+		return aesOutLwEnc;
 	}
 
 	public static BigInteger generateSecret(PrivateKey privKey, PublicKey pubKey)

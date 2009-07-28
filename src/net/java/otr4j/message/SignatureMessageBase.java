@@ -12,6 +12,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 import net.java.otr4j.CryptoUtils;
+import net.java.otr4j.OtrException;
 
 
 public abstract class SignatureMessageBase extends EncodedMessageBase {
@@ -54,7 +55,7 @@ public abstract class SignatureMessageBase extends EncodedMessageBase {
 	public byte[] decrypt(byte[] key) throws InvalidKeyException,
 			NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException,
-			BadPaddingException {
+			BadPaddingException, OtrException {
 		return CryptoUtils.aesDecrypt(key, null, this.xEncrypted);
 	}
 

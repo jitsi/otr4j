@@ -37,8 +37,6 @@ import net.java.otr4j.message.RevealSignatureMessage;
 import net.java.otr4j.message.SerializationUtils;
 import net.java.otr4j.message.SignatureMessage;
 
-
-
 /**
  * 
  * @author George Politis
@@ -290,7 +288,7 @@ class AuthContext {
 			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException,
 			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, IOException {
+			BadPaddingException, IOException, OtrException {
 		return new DHCommitMessage(this.getProtocolVersion(), this
 				.getLocalDHPublicKeyHash(), this.getLocalDHPublicKeyEncrypted());
 	}
@@ -303,11 +301,10 @@ class AuthContext {
 	}
 
 	private RevealSignatureMessage getRevealSignatureMessage()
-			throws InvalidKeyException, NoSuchAlgorithmException,
-			SignatureException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException,
-			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, IOException {
+			throws NoSuchAlgorithmException,
+			InvalidAlgorithmParameterException, NoSuchProviderException,
+			InvalidKeySpecException, InvalidKeyException, IOException,
+			SignatureException, OtrException {
 
 		MysteriousM m = new MysteriousM((DHPublicKey) this.getLocalDHKeyPair()
 				.getPublic(), this.getRemoteDHPublicKey(), this
@@ -335,11 +332,12 @@ class AuthContext {
 				.getR(), xEncryptedHash, xEncrypted);
 	}
 
-	private SignatureMessage getSignatureMessage() throws InvalidKeyException,
-			NoSuchAlgorithmException, SignatureException,
+	private SignatureMessage getSignatureMessage()
+			throws NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+			InvalidKeySpecException, InvalidKeyException, IOException,
+			SignatureException, OtrException, NoSuchPaddingException,
+			IllegalBlockSizeException, BadPaddingException {
 
 		MysteriousM m = new MysteriousM((DHPublicKey) this.getLocalDHKeyPair()
 				.getPublic(), this.getRemoteDHPublicKey(), this
@@ -480,7 +478,7 @@ class AuthContext {
 			NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException,
 			BadPaddingException, NoSuchProviderException,
-			InvalidKeySpecException, IOException {
+			InvalidKeySpecException, IOException, OtrException {
 		if (localDHPublicKeyEncrypted == null) {
 			localDHPublicKeyEncrypted = CryptoUtils.aesEncrypt(getR(), null,
 					getLocalDHPublicKeyBytes());
@@ -664,7 +662,7 @@ class AuthContext {
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, IOException, InvalidKeyException,
 			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, SignatureException {
+			BadPaddingException, SignatureException, OtrException {
 		Boolean allowV2 = PolicyUtils.getAllowV2(policy);
 
 		switch (MessageUtils.getMessageType(msgText)) {
@@ -689,7 +687,7 @@ class AuthContext {
 			throws IOException, InvalidKeyException, NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException, SignatureException {
+			IllegalBlockSizeException, BadPaddingException, SignatureException, OtrException {
 		logger.info(getAccount() + " received a signature message from "
 				+ getUser() + " throught " + getProtocol() + ".");
 		if (!allowV2) {
@@ -740,7 +738,7 @@ class AuthContext {
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
 			InvalidKeySpecException, NoSuchProviderException,
-			SignatureException {
+			SignatureException, OtrException {
 
 		logger.info(getAccount() + " received a reveal signature message from "
 				+ getUser() + " throught " + getProtocol() + ".");
@@ -837,7 +835,7 @@ class AuthContext {
 			SignatureException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException,
 			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException {
+			BadPaddingException, OtrException {
 
 		logger.info(getAccount() + " received a D-H key message from "
 				+ getUser() + " throught " + getProtocol() + ".");
@@ -890,7 +888,7 @@ class AuthContext {
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, InvalidKeyException,
 			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException {
+			BadPaddingException, OtrException {
 
 		logger.info(getAccount() + " received a D-H commit message from "
 				+ getUser() + " throught " + getProtocol() + ".");
@@ -998,7 +996,7 @@ class AuthContext {
 			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException,
 			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, IOException {
+			BadPaddingException, IOException, OtrException {
 		logger.info("Starting Authenticated Key Exchange");
 		this.reset();
 		this.setProtocolVersion(2);

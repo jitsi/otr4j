@@ -319,7 +319,7 @@ public class ConnContext {
 			throws IOException, InvalidKeyException, NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException {
+			IllegalBlockSizeException, BadPaddingException, OtrException {
 		logger.info(account + " received a query message from " + user
 				+ " throught " + protocol + ".");
 
@@ -361,7 +361,7 @@ public class ConnContext {
 			InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
-			NoSuchProviderException, InvalidKeySpecException {
+			NoSuchProviderException, InvalidKeySpecException, OtrException {
 		logger.info(account + " received a data message from " + user + ".");
 		DataMessage data = new DataMessage();
 		ByteArrayInputStream in = new ByteArrayInputStream(MessageUtils
@@ -467,7 +467,7 @@ public class ConnContext {
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, IOException, InvalidKeyException,
 			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, SignatureException {
+			BadPaddingException, SignatureException, OtrException {
 		logger.info(account + " received a plaintext message from " + user
 				+ " throught " + protocol + ".");
 
@@ -537,7 +537,7 @@ public class ConnContext {
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, IOException, InvalidKeyException,
 			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, SignatureException {
+			BadPaddingException, SignatureException, OtrException {
 
 		AuthContext auth = this.getAuthContext();
 		auth.handleReceivingMessage(msgText, policy);
@@ -570,7 +570,7 @@ public class ConnContext {
 	public String handleSendingMessage(String msgText)
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+			IllegalBlockSizeException, BadPaddingException, IOException, OtrException {
 		switch (this.getMessageState()) {
 		case PLAINTEXT:
 			return msgText;
