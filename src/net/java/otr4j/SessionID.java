@@ -51,7 +51,7 @@ public final class SessionID {
 	public boolean equals(Object obj) {
 		if (obj == this)
 			return true;
-		if (!(obj instanceof SessionID))
+		if (obj == null || obj.getClass() != this.getClass())
 			return false;
 
 		SessionID sessionID = (SessionID) obj;
