@@ -37,7 +37,6 @@ import net.java.otr4j.message.QueryMessage;
 import net.java.otr4j.message.SerializationConstants;
 import net.java.otr4j.message.SerializationUtils;
 
-
 /**
  * 
  * @author George Politis
@@ -75,9 +74,7 @@ public class ConnContext {
 		private byte[] value;
 	}
 
-	private String user;
-	private String account;
-	private String protocol;
+	private SessionID sessionID;
 	private OTR4jListener listener;
 	private int messageState;
 	private AuthContext authContext;
@@ -90,11 +87,9 @@ public class ConnContext {
 	private static final int ENCRYPTED = 1;
 	private static final int FINISHED = 2;
 
-	public ConnContext(String user, String account, String protocol,
-			OTR4jListener listener) {
-		this.setUser(user);
-		this.setAccount(account);
-		this.setProtocol(protocol);
+	public ConnContext(SessionID sessionID, OTR4jListener listener) {
+
+		this.setSessionID(sessionID);
 		this.setListener(listener);
 		this.setMessageState(PLAINTEXT);
 	}
@@ -228,28 +223,12 @@ public class ConnContext {
 		return messageState;
 	}
 
-	private void setUser(String user) {
-		this.user = user;
+	private void setSessionID(SessionID sessionID) {
+		this.sessionID = sessionID;
 	}
 
-	public String getUser() {
-		return user;
-	}
-
-	private void setAccount(String account) {
-		this.account = account;
-	}
-
-	public String getAccount() {
-		return account;
-	}
-
-	private void setProtocol(String protocol) {
-		this.protocol = protocol;
-	}
-
-	public String getProtocol() {
-		return protocol;
+	public SessionID getSessionID() {
+		return sessionID;
 	}
 
 	private void setListener(OTR4jListener listener) {
@@ -268,8 +247,7 @@ public class ConnContext {
 
 	private AuthContext getAuthContext() {
 		if (authContext == null)
-			authContext = new AuthContext(getAccount(), getUser(),
-					getProtocol(), getListener());
+			authContext = new AuthContext(getSessionID(), getListener());
 		return authContext;
 	}
 
@@ -320,8 +298,10 @@ public class ConnContext {
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, NoSuchPaddingException,
 			IllegalBlockSizeException, BadPaddingException, OtrException {
-		logger.info(account + " received a query message from " + user
-				+ " throught " + protocol + ".");
+		logger.info(getSessionID().getAccountID()
+				+ " received a query message from "
+				+ getSessionID().getUserID() + " throught "
+				+ getSessionID().getProtocolName() + ".");
 
 		QueryMessage queryMessage = new QueryMessage(msgText);
 		if (queryMessage.getVersions().contains(2)
@@ -335,8 +315,10 @@ public class ConnContext {
 	}
 
 	private void handleErrorMessage(String msgText, int policy) {
-		logger.info(account + " received an error message from " + user
-				+ " throught " + protocol + ".");
+		logger.info(getSessionID().getAccountID()
+				+ " received an error message from "
+				+ getSessionID().getUserID() + " throught "
+				+ getSessionID().getUserID() + ".");
 
 		ErrorMessage errorMessage = new ErrorMessage(msgText);
 		getListener().showError(errorMessage.error);
@@ -352,8 +334,8 @@ public class ConnContext {
 			QueryMessage queryMessage = new QueryMessage(versions);
 
 			logger.info("Sending Query");
-			getListener().injectMessage(queryMessage.toString(), getAccount(),
-					getUser(), getProtocol());
+			getListener()
+					.injectMessage(getSessionID(), queryMessage.toString());
 		}
 	}
 
@@ -362,7 +344,9 @@ public class ConnContext {
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException,
 			NoSuchProviderException, InvalidKeySpecException, OtrException {
-		logger.info(account + " received a data message from " + user + ".");
+		logger.info(getSessionID().getAccountID()
+				+ " received a data message from " + getSessionID().getUserID()
+				+ ".");
 		DataMessage data = new DataMessage();
 		ByteArrayInputStream in = new ByteArrayInputStream(MessageUtils
 				.decodeMessage(msgText));
@@ -453,9 +437,9 @@ public class ConnContext {
 		case PLAINTEXT:
 			getListener().showWarning(
 					"Unreadable encrypted message was received.");
-			ErrorMessage errormsg = new ErrorMessage("You sent me an unreadable encrypted message..");
-			getListener().injectMessage(errormsg.toString(), getAccount(),
-					getUser(), getProtocol());
+			ErrorMessage errormsg = new ErrorMessage(
+					"You sent me an unreadable encrypted message..");
+			getListener().injectMessage(getSessionID(), errormsg.toString());
 			break;
 		}
 
@@ -468,8 +452,10 @@ public class ConnContext {
 			InvalidKeySpecException, IOException, InvalidKeyException,
 			NoSuchPaddingException, IllegalBlockSizeException,
 			BadPaddingException, SignatureException, OtrException {
-		logger.info(account + " received a plaintext message from " + user
-				+ " throught " + protocol + ".");
+		logger.info(getSessionID().getAccountID()
+				+ " received a plaintext message from "
+				+ getSessionID().getUserID() + " throught "
+				+ getSessionID().getProtocolName() + ".");
 
 		PlainTextMessage plainTextMessage = new PlainTextMessage(msgText);
 		Vector<Integer> versions = plainTextMessage.getVersions();
@@ -570,13 +556,16 @@ public class ConnContext {
 	public String handleSendingMessage(String msgText)
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException, IOException, OtrException {
+			IllegalBlockSizeException, BadPaddingException, IOException,
+			OtrException {
 		switch (this.getMessageState()) {
 		case PLAINTEXT:
 			return msgText;
 		case ENCRYPTED:
-			logger.info(account + " sends an encrypted message to " + user
-					+ " throught " + protocol + ".");
+			logger.info(getSessionID().getAccountID()
+					+ " sends an encrypted message to "
+					+ getSessionID().getUserID() + " throught "
+					+ getSessionID().getProtocolName() + ".");
 
 			// Get encryption keys.
 			SessionKeys encryptionKeys = this.getEncryptionSessionKeys();
@@ -621,5 +610,4 @@ public class ConnContext {
 			return msgText;
 		}
 	}
-
 }

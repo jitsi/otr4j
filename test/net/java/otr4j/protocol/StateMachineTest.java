@@ -1,117 +1,96 @@
 package net.java.otr4j.protocol;
 
 import net.java.otr4j.PolicyConstants;
+import net.java.otr4j.SessionID;
 import net.java.otr4j.UserState;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
 
 public class StateMachineTest extends junit.framework.TestCase {
-	class MessageInfo {
-		public MessageInfo(String user, String account, String protocol) {
-			this.user = user;
-			this.account = account;
-			this.protocol = protocol;
-		}
 
-		public String account;
-		public String user;
-		public String protocol;
-	}
-
-	private MessageInfo miFromBob = new MessageInfo("Bob", "Alice@Wonderland",
-			"Scytale");
-	private MessageInfo miFromAlice = new MessageInfo("Alice",
+	private SessionID aliceSessionID = new SessionID("Alice@Wonderland",
 			"Bob@Wonderland", "Scytale");
+	private SessionID bobSessionID = new SessionID("Bob@Wonderland",
+			"Alice@Wonderland", "Scytale");
 
 	public void testReceivingMessage() throws Exception {
 
-		DummyOTR4jListener listener = new DummyOTR4jListener(PolicyConstants.ALLOW_V2
-				| PolicyConstants.ERROR_START_AKE);
+		DummyOTR4jListener listener = new DummyOTR4jListener(
+				PolicyConstants.ALLOW_V2 | PolicyConstants.ERROR_START_AKE);
 
 		UserState usAlice = new UserState(listener);
 		UserState usBob = new UserState(listener);
 
 		// Bob receives query, sends D-H commit.
 		@SuppressWarnings("unused")
-		String receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
-				miFromAlice.account, miFromAlice.protocol,
+		String receivedMessage = usBob.handleReceivingMessage(bobSessionID,
 				UnencodedMessageTextSample.QueryMessage_V12);
 
 		// Alice received D-H Commit, sends D-H key.
-		receivedMessage = usAlice.handleReceivingMessage(miFromBob.user,
-				miFromBob.account, miFromBob.protocol,
+		receivedMessage = usAlice.handleReceivingMessage(aliceSessionID,
 				listener.lastInjectedMessage);
 
 		// Bob receives D-H Key, sends reveal signature.
-		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
-				miFromAlice.account, miFromAlice.protocol,
+		receivedMessage = usBob.handleReceivingMessage(bobSessionID,
 				listener.lastInjectedMessage);
 
 		// Alice receives Reveal Signature, sends signature and goes secure.
-		receivedMessage = usAlice.handleReceivingMessage(miFromBob.user,
-				miFromBob.account, miFromBob.protocol,
+		receivedMessage = usAlice.handleReceivingMessage(aliceSessionID,
 				listener.lastInjectedMessage);
 
 		// Bobs receives Signature, goes secure.
-		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
-				miFromAlice.account, miFromAlice.protocol,
+		receivedMessage = usBob.handleReceivingMessage(bobSessionID,
 				listener.lastInjectedMessage);
 
 		// We are both secure, send encrypted message.
 		String sentMessage = usAlice
 				.handleSendingMessage(
-
-						miFromBob.user,
-						miFromBob.account,
-						miFromBob.protocol,
+						aliceSessionID,
 						"Hello Bob, this new IM software you installed on my PC the other day says we are talking Off-the-Record, what is that supposed to mean?");
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
-				miFromAlice.account, miFromAlice.protocol, sentMessage);
+		receivedMessage = usBob.handleReceivingMessage(bobSessionID,
+				sentMessage);
 
 		// Send encrypted message.
 		sentMessage = usBob
-				.handleSendingMessage(miFromAlice.user, miFromAlice.account,
-						miFromAlice.protocol,
+				.handleSendingMessage(bobSessionID,
 						"Hey Alice, it means that our communication is encrypted and authenticated.");
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usAlice.handleReceivingMessage(miFromBob.user,
-				miFromBob.account, miFromBob.protocol, sentMessage);
+		receivedMessage = usAlice.handleReceivingMessage(aliceSessionID,
+				sentMessage);
 
 		// Send encrypted message.
-		sentMessage = usAlice.handleSendingMessage(miFromBob.user,
-				miFromBob.account, miFromBob.protocol, "Oh, is that all?");
+		sentMessage = usAlice.handleSendingMessage(aliceSessionID,
+				"Oh, is that all?");
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
-				miFromAlice.account, miFromAlice.protocol, sentMessage);
+		receivedMessage = usBob.handleReceivingMessage(bobSessionID,
+				sentMessage);
 
 		// Send encrypted message.
 		sentMessage = usBob
 				.handleSendingMessage(
 
-						miFromAlice.user,
-						miFromAlice.account,
-						miFromAlice.protocol,
+						bobSessionID,
 						"Actually no, our communication has the properties of perfect forward secrecy and deniable authentication.");
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usAlice.handleReceivingMessage(miFromBob.user,
-				miFromBob.account, miFromBob.protocol, sentMessage);
+		receivedMessage = usAlice.handleReceivingMessage(aliceSessionID,
+				sentMessage);
 
 		// Send encrypted message.
-		sentMessage = usAlice.handleSendingMessage(miFromBob.user,
-				miFromBob.account, miFromBob.protocol, "Oh really?!");
+		sentMessage = usAlice.handleSendingMessage(aliceSessionID,
+				"Oh really?!");
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usBob.handleReceivingMessage(miFromAlice.user,
-				miFromAlice.account, miFromAlice.protocol, sentMessage);
+		receivedMessage = usBob.handleReceivingMessage(bobSessionID,
+				sentMessage);
 
 	}
 

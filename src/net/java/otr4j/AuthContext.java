@@ -234,18 +234,13 @@ class AuthContext {
 	public static final byte M1p_START = (byte) 0x04;
 	public static final byte M2p_START = (byte) 0x05;
 
-	public AuthContext(String account, String user, String protocol,
-			OTR4jListener listener) {
-		this.setAccount(account);
-		this.setUser(user);
-		this.setProtocol(protocol);
+	public AuthContext(SessionID sessionID, OTR4jListener listener) {
+		this.setSessionID(sessionID);
 		this.setListener(listener);
 		this.reset();
 	}
 
-	private String account;
-	private String user;
-	private String protocol;
+	private SessionID sessionID;
 	private OTR4jListener listener;
 
 	private int authenticationState;
@@ -591,8 +586,8 @@ class AuthContext {
 
 	private KeyPair getLocalLongTermKeyPair() throws NoSuchAlgorithmException {
 		if (localLongTermKeyPair == null)
-			localLongTermKeyPair = getListener().getKeyPair(getAccount(),
-					getProtocol());
+			localLongTermKeyPair = getListener().getKeyPair(
+					getSessionID().getAccountID(), getSessionID().getProtocolName());
 		return localLongTermKeyPair;
 	}
 
@@ -602,30 +597,6 @@ class AuthContext {
 
 	private OTR4jListener getListener() {
 		return listener;
-	}
-
-	private void setAccount(String account) {
-		this.account = account;
-	}
-
-	private String getAccount() {
-		return account;
-	}
-
-	private void setUser(String user) {
-		this.user = user;
-	}
-
-	private String getUser() {
-		return user;
-	}
-
-	private void setProtocol(String protocol) {
-		this.protocol = protocol;
-	}
-
-	private String getProtocol() {
-		return protocol;
 	}
 
 	private byte[] h2(byte b) throws NoSuchAlgorithmException, IOException,
@@ -687,9 +658,11 @@ class AuthContext {
 			throws IOException, InvalidKeyException, NoSuchAlgorithmException,
 			InvalidAlgorithmParameterException, NoSuchProviderException,
 			InvalidKeySpecException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException, SignatureException, OtrException {
-		logger.info(getAccount() + " received a signature message from "
-				+ getUser() + " throught " + getProtocol() + ".");
+			IllegalBlockSizeException, BadPaddingException, SignatureException,
+			OtrException {
+		logger.info(getSessionID().getAccountID()
+				+ " received a signature message from " + getSessionID().getUserID()
+				+ " throught " + getSessionID().getProtocolName() + ".");
 		if (!allowV2) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
 			return;
@@ -740,8 +713,10 @@ class AuthContext {
 			InvalidKeySpecException, NoSuchProviderException,
 			SignatureException, OtrException {
 
-		logger.info(getAccount() + " received a reveal signature message from "
-				+ getUser() + " throught " + getProtocol() + ".");
+		logger.info(getSessionID().getAccountID()
+				+ " received a reveal signature message from "
+				+ getSessionID().getUserID() + " throught "
+				+ getSessionID().getProtocolName() + ".");
 
 		if (!allowV2) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
@@ -820,9 +795,8 @@ class AuthContext {
 
 			this.setAuthenticationState(AuthContext.NONE);
 			this.setIsSecure(true);
-			getListener().injectMessage(
-					this.getSignatureMessage().writeObject(), getAccount(),
-					getUser(), getProtocol());
+			getListener().injectMessage(getSessionID(),
+					this.getSignatureMessage().writeObject());
 			break;
 		default:
 			logger.info("Ignoring message.");
@@ -837,8 +811,9 @@ class AuthContext {
 			NoSuchPaddingException, IllegalBlockSizeException,
 			BadPaddingException, OtrException {
 
-		logger.info(getAccount() + " received a D-H key message from "
-				+ getUser() + " throught " + getProtocol() + ".");
+		logger.info(getSessionID().getAccountID()
+				+ " received a D-H key message from " + getSessionID().getUserID()
+				+ " throught " + getSessionID().getProtocolName() + ".");
 
 		if (!allowV2) {
 			logger.info("If ALLOW_V2 is not set, ignore this message.");
@@ -855,9 +830,8 @@ class AuthContext {
 			// AUTHSTATE_AWAITING_SIG
 			this.setRemoteDHPublicKey(dhKey.getDhPublicKey());
 			this.setAuthenticationState(AuthContext.AWAITING_SIG);
-			getListener().injectMessage(
-					this.getRevealSignatureMessage().writeObject(),
-					getAccount(), getUser(), getProtocol());
+			getListener().injectMessage(getSessionID(),
+					this.getRevealSignatureMessage().writeObject());
 			logger.info("Sent Reveal Signature.");
 			break;
 		case AWAITING_SIG:
@@ -868,9 +842,8 @@ class AuthContext {
 				// earlier (when you entered AUTHSTATE_AWAITING_SIG):
 				// Retransmit
 				// your Reveal Signature Message.
-				getListener().injectMessage(
-						this.getRevealSignatureMessage().writeObject(),
-						getAccount(), getUser(), getProtocol());
+				getListener().injectMessage(getSessionID(),
+						this.getRevealSignatureMessage().writeObject());
 				logger.info("Resent Reveal Signature.");
 			} else {
 				// Otherwise: Ignore the message.
@@ -890,8 +863,10 @@ class AuthContext {
 			NoSuchPaddingException, IllegalBlockSizeException,
 			BadPaddingException, OtrException {
 
-		logger.info(getAccount() + " received a D-H commit message from "
-				+ getUser() + " throught " + getProtocol() + ".");
+		logger.info(getSessionID().getAccountID()
+				+ " received a D-H commit message from "
+				+ getSessionID().getUserID() + " throught "
+				+ getSessionID().getProtocolName() + ".");
 
 		if (!allowV2) {
 			logger.info("ALLOW_V2 is not set, ignore this message.");
@@ -911,8 +886,8 @@ class AuthContext {
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-			getListener().injectMessage(this.getDHKeyMessage().writeObject(),
-					getAccount(), getUser(), getProtocol());
+			getListener().injectMessage(getSessionID(),
+					this.getDHKeyMessage().writeObject());
 			logger.info("Sent D-H key.");
 			break;
 
@@ -937,9 +912,8 @@ class AuthContext {
 				// Ignore the incoming D-H Commit message, but resend your
 				// D-H
 				// Commit message.
-				getListener().injectMessage(
-						this.getDHCommitMessage().writeObject(), getAccount(),
-						getUser(), getProtocol());
+				getListener().injectMessage(getSessionID(),
+						this.getDHCommitMessage().writeObject());
 				logger
 						.info("Ignored the incoming D-H Commit message, but resent our D-H Commit message.");
 			} else {
@@ -955,9 +929,8 @@ class AuthContext {
 						.getDhPublicKeyEncrypted());
 				this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 				this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-				getListener().injectMessage(
-						this.getDHKeyMessage().writeObject(), getAccount(),
-						getUser(), getProtocol());
+				getListener().injectMessage(getSessionID(),
+						this.getDHKeyMessage().writeObject());
 				logger
 						.info("Forgot our old gx value that we sent (encrypted) earlier, and pretended we're in AUTHSTATE_NONE -> Sent D-H key.");
 			}
@@ -971,8 +944,8 @@ class AuthContext {
 			this.setRemoteDHPublicKeyEncrypted(dhCommit
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-			getListener().injectMessage(this.getDHKeyMessage().writeObject(),
-					getAccount(), getUser(), getProtocol());
+			getListener().injectMessage(getSessionID(),
+					this.getDHKeyMessage().writeObject());
 			logger.info("Sent D-H key.");
 			break;
 		case AWAITING_SIG:
@@ -983,8 +956,8 @@ class AuthContext {
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-			getListener().injectMessage(this.getDHKeyMessage().writeObject(),
-					getAccount(), getUser(), getProtocol());
+			getListener().injectMessage(getSessionID(),
+					this.getDHKeyMessage().writeObject());
 			logger.info("Sent D-H key.");
 			break;
 		case V1_SETUP:
@@ -1002,7 +975,15 @@ class AuthContext {
 		this.setProtocolVersion(2);
 		this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
 		logger.info("Sending D-H Commit.");
-		getListener().injectMessage(this.getDHCommitMessage().writeObject(),
-				getAccount(), getUser(), getProtocol());
+		getListener().injectMessage(getSessionID(),
+				this.getDHCommitMessage().writeObject());
+	}
+
+	private void setSessionID(SessionID sessionID) {
+		this.sessionID = sessionID;
+	}
+
+	private SessionID getSessionID() {
+		return sessionID;
 	}
 }

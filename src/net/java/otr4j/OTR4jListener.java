@@ -15,8 +15,7 @@ import java.security.NoSuchAlgorithmException;
  * 
  */
 public interface OTR4jListener {
-	public void injectMessage(String msg, String account, String user,
-			String protocol);
+	public void injectMessage(SessionID sessionID, String msg);
 
 	public void showWarning(String warning);
 

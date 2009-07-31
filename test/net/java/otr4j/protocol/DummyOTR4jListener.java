@@ -7,6 +7,7 @@ import java.util.logging.*;
 import net.java.otr4j.ConnContext;
 import net.java.otr4j.CryptoUtils;
 import net.java.otr4j.OTR4jListener;
+import net.java.otr4j.SessionID;
 
 public class DummyOTR4jListener implements OTR4jListener {
 
@@ -14,7 +15,8 @@ public class DummyOTR4jListener implements OTR4jListener {
 		this.policy = policy;
 	}
 
-	private static Logger logger = Logger.getLogger(DummyOTR4jListener.class.getName());
+	private static Logger logger = Logger.getLogger(DummyOTR4jListener.class
+			.getName());
 	private int policy;
 	public String lastInjectedMessage;
 
@@ -24,7 +26,7 @@ public class DummyOTR4jListener implements OTR4jListener {
 	}
 
 	@Override
-	public void injectMessage(String msg, String account, String user, String protocol) {
+	public void injectMessage(SessionID sessionID, String msg) {
 
 		this.lastInjectedMessage = msg;
 		String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10) + "..."

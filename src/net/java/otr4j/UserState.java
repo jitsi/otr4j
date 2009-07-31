@@ -26,36 +26,28 @@ public final class UserState {
 	private static Logger logger = Logger
 			.getLogger(ConnContext.class.getName());
 
-	private ConnContext getConnContext(String user, String account,
-			String protocol) {
+	private ConnContext getConnContext(SessionID sessionID) {
 
-		if ((user == null || user.length() < 1)
-				|| (account == null || account.length() < 1)
-				|| (protocol == null || protocol.length() < 1)) {
+		if (sessionID == null)
 			throw new IllegalArgumentException();
-		}
 
 		for (ConnContext connContext : getContextPool()) {
-			if (connContext.getAccount().equals(account)
-					&& connContext.getUser().equals(user)
-					&& connContext.getProtocol().equals(protocol)) {
+			if (connContext.getSessionID().equals(sessionID)) {
 				return connContext;
 			}
 		}
 
-		ConnContext context = new ConnContext(user, account, protocol,
-				getListener());
+		ConnContext context = new ConnContext(sessionID, getListener());
 		getContextPool().add(context);
 
 		return context;
 	}
 
-	public String handleReceivingMessage(String user, String account,
-			String protocol, String msgText) {
+	public String handleReceivingMessage(SessionID sessionID, String msgText) {
 
 		try {
-			return this.getConnContext(user, account, protocol)
-					.handleReceivingMessage(msgText);
+			return this.getConnContext(sessionID).handleReceivingMessage(
+					msgText);
 		} catch (Exception e) {
 			logger
 					.log(
@@ -67,12 +59,10 @@ public final class UserState {
 		}
 	}
 
-	public String handleSendingMessage(String user, String account,
-			String protocol, String msgText) {
+	public String handleSendingMessage(SessionID sessionID, String msgText) {
 
 		try {
-			return this.getConnContext(user, account, protocol)
-					.handleSendingMessage(msgText);
+			return this.getConnContext(sessionID).handleSendingMessage(msgText);
 		} catch (Exception e) {
 			logger
 					.log(
