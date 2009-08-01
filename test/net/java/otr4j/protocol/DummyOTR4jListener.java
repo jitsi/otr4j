@@ -4,7 +4,7 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.*;
 
-import net.java.otr4j.ConnContext;
+import net.java.otr4j.Session;
 import net.java.otr4j.CryptoUtils;
 import net.java.otr4j.OTR4jListener;
 import net.java.otr4j.SessionID;
@@ -21,7 +21,7 @@ public class DummyOTR4jListener implements OTR4jListener {
 	public String lastInjectedMessage;
 
 	@Override
-	public int getPolicy(ConnContext ctx) {
+	public int getPolicy(Session ctx) {
 		return this.policy;
 	}
 

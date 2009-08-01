@@ -41,7 +41,7 @@ import net.java.otr4j.message.SerializationUtils;
  * 
  * @author George Politis
  */
-public class ConnContext {
+public class Session {
 
 	/**
 	 * 
@@ -81,13 +81,13 @@ public class ConnContext {
 	private SessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
 	private static Logger logger = Logger
-			.getLogger(ConnContext.class.getName());
+			.getLogger(Session.class.getName());
 
 	private static final int PLAINTEXT = 0;
 	private static final int ENCRYPTED = 1;
 	private static final int FINISHED = 2;
 
-	public ConnContext(SessionID sessionID, OTR4jListener listener) {
+	public Session(SessionID sessionID, OTR4jListener listener) {
 
 		this.setSessionID(sessionID);
 		this.setListener(listener);

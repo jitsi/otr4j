@@ -21,7 +21,7 @@ public interface OTR4jListener {
 
 	public void showError(String error);
 
-	public int getPolicy(ConnContext ctx);
+	public int getPolicy(Session ctx);
 
 	public KeyPair getKeyPair(String account, String protocol)
 			throws NoSuchAlgorithmException;

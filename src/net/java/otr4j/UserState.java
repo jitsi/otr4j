@@ -22,24 +22,24 @@ public final class UserState {
 	}
 
 	private OTR4jListener listener;
-	private Map<SessionID, ConnContext> contextPool;
+	private Map<SessionID, Session> contextPool;
 	private static Logger logger = Logger
-			.getLogger(ConnContext.class.getName());
+			.getLogger(Session.class.getName());
 
-	private ConnContext getConnContext(SessionID sessionID) {
+	private Session getConnContext(SessionID sessionID) {
 
 		if (sessionID == null)
 			throw new IllegalArgumentException();
 
 		if (!contextPool.containsKey(sessionID))
 			contextPool.put(sessionID,
-					new ConnContext(sessionID, getListener()));
+					new Session(sessionID, getListener()));
 
 		return contextPool.get(sessionID);
 	}
 
 	public SessionStatus getSessionStatus(SessionID sessionID) {
-		ConnContext context = getConnContext(sessionID);
+		Session context = getConnContext(sessionID);
 		SessionStatus status = new SessionStatus(context.getMessageState());
 		return status;
 	}
