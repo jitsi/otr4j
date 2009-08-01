@@ -4,7 +4,7 @@
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
-package net.java.otr4j;
+package net.java.otr4j.session;
 
 
 import java.io.ByteArrayOutputStream;
@@ -19,6 +19,8 @@ import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
 
+import net.java.otr4j.CryptoConstants;
+import net.java.otr4j.CryptoUtils;
 import net.java.otr4j.message.*;
 
 /**

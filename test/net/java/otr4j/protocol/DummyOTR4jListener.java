@@ -4,10 +4,10 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.*;
 
-import net.java.otr4j.Session;
 import net.java.otr4j.CryptoUtils;
 import net.java.otr4j.OTR4jListener;
-import net.java.otr4j.SessionID;
+import net.java.otr4j.session.Session;
+import net.java.otr4j.session.SessionID;
 
 public class DummyOTR4jListener implements OTR4jListener {
 

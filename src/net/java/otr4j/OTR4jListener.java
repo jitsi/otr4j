@@ -9,6 +9,9 @@ package net.java.otr4j;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 
+import net.java.otr4j.session.Session;
+import net.java.otr4j.session.SessionID;
+
 /**
  * 
  * @author George Politis

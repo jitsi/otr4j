@@ -1,9 +1,9 @@
 package net.java.otr4j.protocol;
 
 import net.java.otr4j.PolicyConstants;
-import net.java.otr4j.SessionID;
 import net.java.otr4j.UserState;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
+import net.java.otr4j.session.SessionID;
 
 public class StateMachineTest extends junit.framework.TestCase {
 

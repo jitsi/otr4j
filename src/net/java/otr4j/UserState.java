@@ -12,6 +12,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.java.otr4j.session.Session;
+import net.java.otr4j.session.SessionID;
+import net.java.otr4j.session.SessionStatus;
+
 /**
  * 
  * @author George Politis

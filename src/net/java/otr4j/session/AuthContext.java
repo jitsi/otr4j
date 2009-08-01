@@ -4,7 +4,7 @@
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
-package net.java.otr4j;
+package net.java.otr4j.session;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,6 +29,11 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPublicKey;
 
+import net.java.otr4j.CryptoConstants;
+import net.java.otr4j.CryptoUtils;
+import net.java.otr4j.OTR4jListener;
+import net.java.otr4j.OtrException;
+import net.java.otr4j.PolicyUtils;
 import net.java.otr4j.message.DHCommitMessage;
 import net.java.otr4j.message.DHKeyMessage;
 import net.java.otr4j.message.MessageConstants;
