@@ -7,6 +7,7 @@
 
 package net.java.otr4j;
 
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,24 +23,22 @@ public final class UserState {
 	}
 
 	private OTR4jListener listener;
-	private Map<SessionID, Session> contextPool;
-	private static Logger logger = Logger
-			.getLogger(Session.class.getName());
+	private Map<SessionID, Session> sessions = new Hashtable<SessionID, Session>();
+	private static Logger logger = Logger.getLogger(Session.class.getName());
 
-	private Session getConnContext(SessionID sessionID) {
+	private Session getSession(SessionID sessionID) {
 
 		if (sessionID == null)
 			throw new IllegalArgumentException();
 
-		if (!contextPool.containsKey(sessionID))
-			contextPool.put(sessionID,
-					new Session(sessionID, getListener()));
+		if (!sessions.containsKey(sessionID))
+			sessions.put(sessionID, new Session(sessionID, getListener()));
 
-		return contextPool.get(sessionID);
+		return sessions.get(sessionID);
 	}
 
 	public SessionStatus getSessionStatus(SessionID sessionID) {
-		Session context = getConnContext(sessionID);
+		Session context = getSession(sessionID);
 		SessionStatus status = new SessionStatus(context.getMessageState());
 		return status;
 	}
@@ -47,7 +46,7 @@ public final class UserState {
 	public String handleReceivingMessage(SessionID sessionID, String msgText) {
 
 		try {
-			return this.getConnContext(sessionID).handleReceivingMessage(
+			return this.getSession(sessionID).handleReceivingMessage(
 					msgText);
 		} catch (Exception e) {
 			logger
@@ -63,7 +62,7 @@ public final class UserState {
 	public String handleSendingMessage(SessionID sessionID, String msgText) {
 
 		try {
-			return this.getConnContext(sessionID).handleSendingMessage(msgText);
+			return this.getSession(sessionID).handleSendingMessage(msgText);
 		} catch (Exception e) {
 			logger
 					.log(
