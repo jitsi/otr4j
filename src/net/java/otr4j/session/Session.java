@@ -45,7 +45,7 @@ import net.java.otr4j.message.SerializationUtils;
  * 
  * @author George Politis
  */
-public class Session {
+public class Session implements SessionStatus {
 
 	/**
 	 * 
@@ -84,12 +84,7 @@ public class Session {
 	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
-	private static Logger logger = Logger
-			.getLogger(Session.class.getName());
-
-	private static final int PLAINTEXT = 0;
-	private static final int ENCRYPTED = 1;
-	private static final int FINISHED = 2;
+	private static Logger logger = Logger.getLogger(Session.class.getName());
 
 	public Session(SessionID sessionID, OTR4jListener listener) {
 

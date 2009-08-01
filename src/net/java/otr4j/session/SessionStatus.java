@@ -10,19 +10,8 @@ package net.java.otr4j.session;
  * 
  * @author George Politis
  */
-public class SessionStatus {
-
-	public SessionStatus(int messageState) {
-		this.setMessageState(messageState);
-	}
-
-	private int messageState;
-
-	private void setMessageState(int messageState) {
-		this.messageState = messageState;
-	}
-
-	public int getMessageState() {
-		return messageState;
-	}
+public interface SessionStatus {
+	public static final int PLAINTEXT = 0;
+	public static final int ENCRYPTED = 1;
+	public static final int FINISHED = 2;
 }

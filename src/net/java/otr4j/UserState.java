@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 
 import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionID;
-import net.java.otr4j.session.SessionStatus;
 
 /**
  * 
@@ -41,10 +40,9 @@ public final class UserState {
 		return sessions.get(sessionID);
 	}
 
-	public SessionStatus getSessionStatus(SessionID sessionID) {
+	public int getSessionStatus(SessionID sessionID) {
 		Session context = getSession(sessionID);
-		SessionStatus status = new SessionStatus(context.getMessageState());
-		return status;
+		return context.getMessageState();
 	}
 
 	public String handleReceivingMessage(SessionID sessionID, String msgText) {
