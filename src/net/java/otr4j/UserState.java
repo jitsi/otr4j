@@ -7,7 +7,7 @@
 
 package net.java.otr4j;
 
-import java.util.Vector;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,7 +22,7 @@ public final class UserState {
 	}
 
 	private OTR4jListener listener;
-	private Vector<ConnContext> contextPool;
+	private Map<SessionID, ConnContext> contextPool;
 	private static Logger logger = Logger
 			.getLogger(ConnContext.class.getName());
 
@@ -31,16 +31,17 @@ public final class UserState {
 		if (sessionID == null)
 			throw new IllegalArgumentException();
 
-		for (ConnContext connContext : getContextPool()) {
-			if (connContext.getSessionID().equals(sessionID)) {
-				return connContext;
-			}
-		}
+		if (!contextPool.containsKey(sessionID))
+			contextPool.put(sessionID,
+					new ConnContext(sessionID, getListener()));
 
-		ConnContext context = new ConnContext(sessionID, getListener());
-		getContextPool().add(context);
+		return contextPool.get(sessionID);
+	}
 
-		return context;
+	public SessionStatus getSessionStatus(SessionID sessionID) {
+		ConnContext context = getConnContext(sessionID);
+		SessionStatus status = new SessionStatus(context.getMessageState());
+		return status;
 	}
 
 	public String handleReceivingMessage(SessionID sessionID, String msgText) {
@@ -78,13 +79,7 @@ public final class UserState {
 		this.listener = listener;
 	}
 
-	private OTR4jListener getListener() {
+	public OTR4jListener getListener() {
 		return listener;
-	}
-
-	private Vector<ConnContext> getContextPool() {
-		if (contextPool == null)
-			contextPool = new Vector<ConnContext>();
-		return contextPool;
 	}
 }

@@ -219,7 +219,7 @@ public class ConnContext {
 		this.messageState = messageState;
 	}
 
-	private int getMessageState() {
+	public int getMessageState() {
 		return messageState;
 	}
 
