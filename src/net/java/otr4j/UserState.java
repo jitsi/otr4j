@@ -20,7 +20,7 @@ import net.java.otr4j.session.SessionID;
  * @author George Politis
  * 
  */
-public final class UserState {
+public class UserState implements OtrEngine<SessionID> {
 	public UserState(OTR4jListener listener) {
 		this.setListener(listener);
 	}
@@ -41,15 +41,14 @@ public final class UserState {
 	}
 
 	public int getSessionStatus(SessionID sessionID) {
-		Session context = getSession(sessionID);
-		return context.getMessageState();
+		Session session = getSession(sessionID);
+		return session.getMessageState();
 	}
 
 	public String handleReceivingMessage(SessionID sessionID, String msgText) {
 
 		try {
-			return this.getSession(sessionID).handleReceivingMessage(
-					msgText);
+			return this.getSession(sessionID).handleReceivingMessage(msgText);
 		} catch (Exception e) {
 			logger
 					.log(
@@ -76,11 +75,26 @@ public final class UserState {
 		}
 	}
 
+	@Override
+	public void endSession(SessionID sessionID) {
+		// TODO Implement..
+	}
+
+	@Override
+	public void startSession(SessionID sessionID) {
+		// TODO Implement..
+	}
+
 	private void setListener(OTR4jListener listener) {
 		this.listener = listener;
 	}
 
 	public OTR4jListener getListener() {
 		return listener;
+	}
+
+	@Override
+	public void refreshSession(SessionID sessionID) {
+		// TODO Implement..
 	}
 }
