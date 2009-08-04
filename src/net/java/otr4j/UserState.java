@@ -7,10 +7,20 @@
 
 package net.java.otr4j;
 
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionID;
@@ -42,7 +52,7 @@ public class UserState implements OtrEngine<SessionID> {
 
 	public int getSessionStatus(SessionID sessionID) {
 		Session session = getSession(sessionID);
-		return session.getMessageState();
+		return session.getSessionStatus();
 	}
 
 	public String handleReceivingMessage(SessionID sessionID, String msgText) {
@@ -55,7 +65,7 @@ public class UserState implements OtrEngine<SessionID> {
 							Level.SEVERE,
 							"Handling message receiving failed, returning original message.",
 							e);
-			getListener().showError("Handling message receiving failed.");
+			getListener().showError(sessionID, "Handling message receiving failed.");
 			return null;
 		}
 	}
@@ -63,38 +73,129 @@ public class UserState implements OtrEngine<SessionID> {
 	public String handleSendingMessage(SessionID sessionID, String msgText) {
 
 		try {
-			return this.getSession(sessionID).handleSendingMessage(msgText);
+			return this.getSession(sessionID).handleSendingMessage(msgText,
+					null);
 		} catch (Exception e) {
 			logger
 					.log(
 							Level.SEVERE,
 							"Handling message sending failed, returning original message.",
 							e);
-			getListener().showError("Handling message sending failed.");
+			getListener().showError(sessionID, "Handling message sending failed.");
 			return null;
 		}
 	}
 
 	@Override
 	public void endSession(SessionID sessionID) {
-		// TODO Implement..
+		try {
+			this.getSession(sessionID).endSession();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidAlgorithmParameterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (OtrException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public void startSession(SessionID sessionID) {
-		// TODO Implement..
+		try {
+			this.getSession(sessionID).startSession();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidAlgorithmParameterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchProviderException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (OtrException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private void setListener(OTR4jListener listener) {
 		this.listener = listener;
 	}
 
-	public OTR4jListener getListener() {
+	private OTR4jListener getListener() {
 		return listener;
 	}
 
 	@Override
 	public void refreshSession(SessionID sessionID) {
-		// TODO Implement..
+		try {
+			this.getSession(sessionID).refreshSession();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidAlgorithmParameterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchProviderException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (OtrException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

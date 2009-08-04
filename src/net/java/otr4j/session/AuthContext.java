@@ -591,8 +591,8 @@ class AuthContext {
 
 	private KeyPair getLocalLongTermKeyPair() throws NoSuchAlgorithmException {
 		if (localLongTermKeyPair == null)
-			localLongTermKeyPair = getListener().getKeyPair(
-					getSessionID().getAccountID(), getSessionID().getProtocolName());
+			localLongTermKeyPair = getListener()
+					.getKeyPair(this.getSessionID());
 		return localLongTermKeyPair;
 	}
 
@@ -666,8 +666,9 @@ class AuthContext {
 			IllegalBlockSizeException, BadPaddingException, SignatureException,
 			OtrException {
 		logger.info(getSessionID().getAccountID()
-				+ " received a signature message from " + getSessionID().getUserID()
-				+ " throught " + getSessionID().getProtocolName() + ".");
+				+ " received a signature message from "
+				+ getSessionID().getUserID() + " throught "
+				+ getSessionID().getProtocolName() + ".");
 		if (!allowV2) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
 			return;
@@ -817,8 +818,9 @@ class AuthContext {
 			BadPaddingException, OtrException {
 
 		logger.info(getSessionID().getAccountID()
-				+ " received a D-H key message from " + getSessionID().getUserID()
-				+ " throught " + getSessionID().getProtocolName() + ".");
+				+ " received a D-H key message from "
+				+ getSessionID().getUserID() + " throught "
+				+ getSessionID().getProtocolName() + ".");
 
 		if (!allowV2) {
 			logger.info("If ALLOW_V2 is not set, ignore this message.");

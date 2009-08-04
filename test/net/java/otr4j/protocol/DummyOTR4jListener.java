@@ -6,7 +6,6 @@ import java.util.logging.*;
 
 import net.java.otr4j.CryptoUtils;
 import net.java.otr4j.OTR4jListener;
-import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionID;
 
 public class DummyOTR4jListener implements OTR4jListener {
@@ -21,7 +20,7 @@ public class DummyOTR4jListener implements OTR4jListener {
 	public String lastInjectedMessage;
 
 	@Override
-	public int getPolicy(Session ctx) {
+	public int getPolicy(SessionID ctx) {
 		return this.policy;
 	}
 
@@ -35,20 +34,23 @@ public class DummyOTR4jListener implements OTR4jListener {
 	}
 
 	@Override
-	public void showError(String error) {
+	public void showError(SessionID sessionID, String error) {
 		logger.severe("IM shows error to user: " + error);
 	}
 
 	@Override
-	public void showWarning(String warning) {
+	public void showWarning(SessionID sessionID, String warning) {
 		logger.warning("IM shows warning to user: " + warning);
 	}
 
 	@Override
-	public KeyPair getKeyPair(String account, String protocol)
-			throws NoSuchAlgorithmException {
+	public KeyPair getKeyPair(SessionID sessionID) {
 		logger.info("IM generates a DSA key pair.");
-		return CryptoUtils.generateDsaKeyPair();
+		try {
+			return CryptoUtils.generateDsaKeyPair();
+		} catch (NoSuchAlgorithmException e) {
+			return null;
+		}
 	}
 
 }

@@ -54,9 +54,23 @@ public class SerializationUtils implements SerializationConstants {
 		out.write(intToByteArray(n, INT));
 	}
 
+	public static void writeTlvData(OutputStream out, byte[] b)
+			throws IOException {
+		if (b == null || b.length < 0) {
+			out.write(intToByteArray(0, TLVDATALEN));
+		} else {
+			out.write(intToByteArray(b.length, TLVDATALEN));
+			out.write(b);
+		}
+	}
+
 	public static void writeData(OutputStream out, byte[] b) throws IOException {
-		out.write(intToByteArray(b.length, DATALEN));
-		out.write(b);
+		if (b == null || b.length < 0) {
+			out.write(intToByteArray(0, DATALEN));
+		} else {
+			out.write(intToByteArray(b.length, DATALEN));
+			out.write(b);
+		}
 	}
 
 	public static byte[] toByteArray(byte[] b) throws IOException {
@@ -187,7 +201,7 @@ public class SerializationUtils implements SerializationConstants {
 		in.read(b);
 		return byteArrayToInt(b);
 	}
-	
+
 	static int readTlvDataLen(InputStream in) throws IOException {
 		byte[] b = new byte[TLVDATALEN];
 		in.read(b);
@@ -201,7 +215,7 @@ public class SerializationUtils implements SerializationConstants {
 		in.read(b);
 		return b;
 	}
-	
+
 	public static byte[] readTlvData(InputStream in) throws IOException {
 		int len = readTlvDataLen(in);
 

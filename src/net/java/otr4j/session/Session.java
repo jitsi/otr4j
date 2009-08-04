@@ -8,6 +8,7 @@
 package net.java.otr4j.session;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
@@ -80,7 +81,7 @@ public class Session implements SessionStatus {
 
 	private SessionID sessionID;
 	private OTR4jListener listener;
-	private int messageState;
+	private int sessionStatus;
 	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
@@ -90,7 +91,7 @@ public class Session implements SessionStatus {
 
 		this.setSessionID(sessionID);
 		this.setListener(listener);
-		this.setMessageState(PLAINTEXT);
+		this.setSessionStatus(PLAINTEXT);
 	}
 
 	private SessionKeys getEncryptionSessionKeys() {
@@ -214,12 +215,12 @@ public class Session implements SessionStatus {
 		return buff.array();
 	}
 
-	private void setMessageState(int messageState) {
-		this.messageState = messageState;
+	private void setSessionStatus(int sessionStatus) {
+		this.sessionStatus = sessionStatus;
 	}
 
-	public int getMessageState() {
-		return messageState;
+	public int getSessionStatus() {
+		return sessionStatus;
 	}
 
 	private void setSessionID(SessionID sessionID) {
@@ -258,7 +259,7 @@ public class Session implements SessionStatus {
 
 	public String handleReceivingMessage(String msgText) throws Exception {
 
-		int policy = getListener().getPolicy(this);
+		int policy = getListener().getPolicy(this.getSessionID());
 		if (!PolicyUtils.getAllowV1(policy) && !PolicyUtils.getAllowV2(policy)) {
 			logger
 					.info("Policy does not allow neither V1 not V2, ignoring message.");
@@ -320,7 +321,7 @@ public class Session implements SessionStatus {
 				+ getSessionID().getUserID() + ".");
 
 		ErrorMessage errorMessage = new ErrorMessage(msgText);
-		getListener().showError(errorMessage.error);
+		getListener().showError(this.getSessionID(), errorMessage.error);
 		if (PolicyUtils.getErrorStartsAKE(policy)) {
 			logger.info("Error message starts AKE.");
 			Vector<Integer> versions = new Vector<Integer>();
@@ -350,7 +351,7 @@ public class Session implements SessionStatus {
 		ByteArrayInputStream in = new ByteArrayInputStream(MessageUtils
 				.decodeMessage(msgText));
 		data.readObject(in);
-		switch (this.getMessageState()) {
+		switch (this.getSessionStatus()) {
 		case ENCRYPTED:
 			logger
 					.info("Message state is ENCRYPTED. Trying to decrypt message.");
@@ -422,7 +423,7 @@ public class Session implements SessionStatus {
 				for (TLV tlv : tlvs) {
 					switch (tlv.getType()) {
 					case 1:
-						this.setMessageState(FINISHED);
+						this.setSessionStatus(FINISHED);
 						return null;
 					default:
 						return decryptedMsgContent;
@@ -434,7 +435,7 @@ public class Session implements SessionStatus {
 
 		case FINISHED:
 		case PLAINTEXT:
-			getListener().showWarning(
+			getListener().showWarning(this.getSessionID(),
 					"Unreadable encrypted message was received.");
 			ErrorMessage errormsg = new ErrorMessage(
 					"You sent me an unreadable encrypted message..");
@@ -461,12 +462,12 @@ public class Session implements SessionStatus {
 		if (versions.size() < 1) {
 			logger
 					.info("Received plaintext message without the whitespace tag.");
-			switch (this.getMessageState()) {
+			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
 			case FINISHED:
 				// Display the message to the user, but warn him that the
 				// message was received unencrypted.
-				getListener().showWarning(
+				getListener().showWarning(this.getSessionID(),
 						"The message was received unencrypted.");
 				return plainTextMessage.getCleanText();
 			case PLAINTEXT:
@@ -475,20 +476,20 @@ public class Session implements SessionStatus {
 				// is set, warn him that the message was received
 				// unencrypted.
 				if (PolicyUtils.getRequireEncryption(policy)) {
-					getListener().showWarning(
+					getListener().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 				}
 				return plainTextMessage.getCleanText();
 			}
 		} else {
 			logger.info("Received plaintext message with the whitespace tag.");
-			switch (this.getMessageState()) {
+			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
 			case FINISHED:
 				// Remove the whitespace tag and display the message to the
 				// user, but warn him that the message was received
 				// unencrypted.
-				getListener().showWarning(
+				getListener().showWarning(this.getSessionID(),
 						"The message was received unencrypted.");
 			case PLAINTEXT:
 				// Remove the whitespace tag and display the message to the
@@ -496,7 +497,7 @@ public class Session implements SessionStatus {
 				// message
 				// was received unencrypted.
 				if (PolicyUtils.getRequireEncryption(policy))
-					getListener().showWarning(
+					getListener().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 			}
 
@@ -547,17 +548,17 @@ public class Session implements SessionStatus {
 			}
 
 			auth.reset();
-			this.setMessageState(ENCRYPTED);
+			this.setSessionStatus(ENCRYPTED);
 			logger.info("Gone Secure.");
 		}
 	}
 
-	public String handleSendingMessage(String msgText)
+	public String handleSendingMessage(String msgText, List<TLV> tlvs)
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException, IOException,
 			OtrException {
-		switch (this.getMessageState()) {
+		switch (this.getSessionStatus()) {
 		case PLAINTEXT:
 			return msgText;
 		case ENCRYPTED:
@@ -575,12 +576,27 @@ public class Session implements SessionStatus {
 			encryptionKeys.incrementSendingCtr();
 			byte[] ctr = encryptionKeys.getSendingCtr();
 
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			if (msgText != null && msgText.length() > 0)
+				out.write(msgText.getBytes());
+
+			// Append tlvs
+			if (tlvs != null && tlvs.size() > 0) {
+				out.write((byte) 0x00);
+
+				for (TLV tlv : tlvs) {
+					SerializationUtils.writeShort(out, tlv.type);
+					SerializationUtils.writeTlvData(out, tlv.value);
+				}
+			}
+
+			byte[] data = out.toByteArray();
 			// Encrypt message.
 			logger
 					.info("Encrypting message with keyids (localKeyID, remoteKeyID) = ("
 							+ senderKeyID + ", " + receipientKeyID + ")");
 			byte[] encryptedMsg = CryptoUtils.aesEncrypt(encryptionKeys
-					.getSendingAESKey(), ctr, msgText.getBytes());
+					.getSendingAESKey(), ctr, data);
 
 			// Get most recent keys to get the next D-H public key.
 			SessionKeys mostRecentKeys = this.getMostRecentSessionKeys();
@@ -608,5 +624,44 @@ public class Session implements SessionStatus {
 		default:
 			return msgText;
 		}
+	}
+
+	public void startSession() throws InvalidKeyException,
+			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
+			NoSuchProviderException, InvalidKeySpecException,
+			NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, IOException, OtrException {
+		if (this.getSessionStatus() == SessionStatus.ENCRYPTED)
+			return;
+
+		int policy = getListener().getPolicy(this.getSessionID());
+		if (!PolicyUtils.getAllowV2(policy))
+			throw new UnsupportedOperationException();
+
+		this.getAuthContext().startV2Auth();
+	}
+
+	public void endSession() throws InvalidKeyException,
+			NoSuchAlgorithmException, NoSuchPaddingException,
+			InvalidAlgorithmParameterException, IllegalBlockSizeException,
+			BadPaddingException, IOException, OtrException {
+		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
+			return;
+
+		Vector<TLV> tlvs = new Vector<TLV>();
+		tlvs.add(new TLV(1, null));
+
+		String msg = this.handleSendingMessage(null, tlvs);
+		getListener().injectMessage(getSessionID(), msg);
+		this.setSessionStatus(FINISHED);
+	}
+
+	public void refreshSession() throws InvalidKeyException,
+			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
+			NoSuchProviderException, InvalidKeySpecException,
+			NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, IOException, OtrException {
+		this.endSession();
+		this.startSession();
 	}
 }
