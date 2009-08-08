@@ -12,21 +12,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PublicKey;
-import java.security.SignatureException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.logging.Logger;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.CryptoConstants;
@@ -170,12 +161,9 @@ class AuthContext {
 		public void writeObject(OutputStream out) throws IOException {
 			SerializationUtils.writeMpi(out, this.getOurDHPublicKey().getY());
 			SerializationUtils.writeMpi(out, this.getTheirDHPublicKey().getY());
-			try {
-				SerializationUtils.writePublicKey(out, this
-						.getOurLongTermPublicKey());
-			} catch (InvalidKeyException e) {
-				throw new IOException(e);
-			}
+			SerializationUtils.writePublicKey(out, this
+					.getOurLongTermPublicKey());
+
 			SerializationUtils.writeInt(out, this.getOurDHPrivatecKeyID());
 		}
 
@@ -239,7 +227,8 @@ class AuthContext {
 	public static final byte M1p_START = (byte) 0x04;
 	public static final byte M2p_START = (byte) 0x05;
 
-	public AuthContext(SessionID sessionID, OtrEngineListener<SessionID> listener) {
+	public AuthContext(SessionID sessionID,
+			OtrEngineListener<SessionID> listener) {
 		this.setSessionID(sessionID);
 		this.setListener(listener);
 		this.reset();
@@ -284,67 +273,64 @@ class AuthContext {
 	private static Logger logger = Logger
 			.getLogger(AuthContext.class.getName());
 
-	private DHCommitMessage getDHCommitMessage() throws InvalidKeyException,
-			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException,
-			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, IOException, OtrException {
+	private DHCommitMessage getDHCommitMessage() throws OtrException {
 		return new DHCommitMessage(this.getProtocolVersion(), this
 				.getLocalDHPublicKeyHash(), this.getLocalDHPublicKeyEncrypted());
 	}
 
-	private DHKeyMessage getDHKeyMessage() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException {
+	private DHKeyMessage getDHKeyMessage() throws OtrException {
 		return new DHKeyMessage(this.getProtocolVersion(), (DHPublicKey) this
 				.getLocalDHKeyPair().getPublic());
 	}
 
 	private RevealSignatureMessage getRevealSignatureMessage()
-			throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, InvalidKeyException, IOException,
-			SignatureException, OtrException {
+			throws OtrException {
 
-		MysteriousM m = new MysteriousM((DHPublicKey) this.getLocalDHKeyPair()
-				.getPublic(), this.getRemoteDHPublicKey(), this
-				.getLocalLongTermKeyPair().getPublic(), this
-				.getLocalDHKeyPairID());
+		try {
+			MysteriousM m = new MysteriousM((DHPublicKey) this
+					.getLocalDHKeyPair().getPublic(), this
+					.getRemoteDHPublicKey(), this.getLocalLongTermKeyPair()
+					.getPublic(), this.getLocalDHKeyPairID());
 
-		byte[] mhash = CryptoUtils.sha256Hmac(m.toByteArray(), this.getM1());
-		byte[] signature = CryptoUtils.sign(mhash, this
-				.getLocalLongTermKeyPair().getPrivate());
+			byte[] mhash = CryptoUtils
+					.sha256Hmac(m.toByteArray(), this.getM1());
+			byte[] signature = CryptoUtils.sign(mhash, this
+					.getLocalLongTermKeyPair().getPrivate());
 
-		MysteriousX mysteriousX = new MysteriousX(this
-				.getLocalLongTermKeyPair().getPublic(), this
-				.getLocalDHKeyPairID(), signature);
+			MysteriousX mysteriousX = new MysteriousX(this
+					.getLocalLongTermKeyPair().getPublic(), this
+					.getLocalDHKeyPairID(), signature);
 
-		byte[] xEncrypted = CryptoUtils.aesEncrypt(this.getC(), null,
-				mysteriousX.toByteArray());
+			byte[] xEncrypted = CryptoUtils.aesEncrypt(this.getC(), null,
+					mysteriousX.toByteArray());
 
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		SerializationUtils.writeData(out, xEncrypted);
-		byte[] tmp = out.toByteArray();
-		out.close();
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			SerializationUtils.writeData(out, xEncrypted);
+			byte[] tmp = out.toByteArray();
+			out.close();
 
-		byte[] xEncryptedHash = CryptoUtils.sha256Hmac160(tmp, this.getM2());
-		return new RevealSignatureMessage(this.getProtocolVersion(), this
-				.getR(), xEncryptedHash, xEncrypted);
+			byte[] xEncryptedHash = CryptoUtils
+					.sha256Hmac160(tmp, this.getM2());
+			return new RevealSignatureMessage(this.getProtocolVersion(), this
+					.getR(), xEncryptedHash, xEncrypted);
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 	}
 
-	private SignatureMessage getSignatureMessage()
-			throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, InvalidKeyException, IOException,
-			SignatureException, OtrException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException {
+	private SignatureMessage getSignatureMessage() throws OtrException {
 
 		MysteriousM m = new MysteriousM((DHPublicKey) this.getLocalDHKeyPair()
 				.getPublic(), this.getRemoteDHPublicKey(), this
 				.getLocalLongTermKeyPair().getPublic(), this
 				.getLocalDHKeyPairID());
 
-		byte[] mhash = CryptoUtils.sha256Hmac(m.toByteArray(), this.getM1p());
+		byte[] mhash;
+		try {
+			mhash = CryptoUtils.sha256Hmac(m.toByteArray(), this.getM1p());
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 		byte[] signature = CryptoUtils.sign(mhash, this
 				.getLocalLongTermKeyPair().getPrivate());
 
@@ -352,17 +338,23 @@ class AuthContext {
 				.getLocalLongTermKeyPair().getPublic(), this
 				.getLocalDHKeyPairID(), signature);
 
-		byte[] xEncrypted = CryptoUtils.aesEncrypt(this.getCp(), null,
-				mysteriousX.toByteArray());
+		byte[] xEncrypted;
+		try {
+			xEncrypted = CryptoUtils.aesEncrypt(this.getCp(), null, mysteriousX
+					.toByteArray());
 
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		SerializationUtils.writeData(out, xEncrypted);
-		byte[] tmp = out.toByteArray();
-		out.close();
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			SerializationUtils.writeData(out, xEncrypted);
+			byte[] tmp = out.toByteArray();
+			out.close();
 
-		byte[] xEncryptedHash = CryptoUtils.sha256Hmac160(tmp, this.getM2p());
-		return new SignatureMessage(this.getProtocolVersion(), xEncryptedHash,
-				xEncrypted);
+			byte[] xEncryptedHash = CryptoUtils.sha256Hmac160(tmp, this
+					.getM2p());
+			return new SignatureMessage(this.getProtocolVersion(),
+					xEncryptedHash, xEncrypted);
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 	}
 
 	public void reset() {
@@ -449,9 +441,7 @@ class AuthContext {
 		return remoteDHPublicKeyHash;
 	}
 
-	public KeyPair getLocalDHKeyPair() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException {
+	public KeyPair getLocalDHKeyPair() throws OtrException {
 		if (localDHKeyPair == null) {
 			localDHKeyPair = CryptoUtils.generateDHKeyPair();
 			logger.info("Generated local D-H key pair.");
@@ -463,9 +453,7 @@ class AuthContext {
 		return localDHPrivateKeyID;
 	}
 
-	private byte[] getLocalDHPublicKeyHash() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, IOException {
+	private byte[] getLocalDHPublicKeyHash() throws OtrException {
 		if (localDHPublicKeyHash == null) {
 			localDHPublicKeyHash = CryptoUtils
 					.sha256Hash(getLocalDHPublicKeyBytes());
@@ -474,11 +462,7 @@ class AuthContext {
 		return localDHPublicKeyHash;
 	}
 
-	private byte[] getLocalDHPublicKeyEncrypted() throws InvalidKeyException,
-			NoSuchAlgorithmException, NoSuchPaddingException,
-			InvalidAlgorithmParameterException, IllegalBlockSizeException,
-			BadPaddingException, NoSuchProviderException,
-			InvalidKeySpecException, IOException, OtrException {
+	private byte[] getLocalDHPublicKeyEncrypted() throws OtrException {
 		if (localDHPublicKeyEncrypted == null) {
 			localDHPublicKeyEncrypted = CryptoUtils.aesEncrypt(getR(), null,
 					getLocalDHPublicKeyBytes());
@@ -487,9 +471,7 @@ class AuthContext {
 		return localDHPublicKeyEncrypted;
 	}
 
-	public BigInteger getS() throws InvalidKeyException,
-			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException {
+	public BigInteger getS() throws OtrException {
 		if (s == null) {
 			s = CryptoUtils.generateSecret(this.getLocalDHKeyPair()
 					.getPrivate(), this.getRemoteDHPublicKey());
@@ -498,9 +480,7 @@ class AuthContext {
 		return s;
 	}
 
-	private byte[] getC() throws NoSuchAlgorithmException, IOException,
-			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException {
+	private byte[] getC() throws OtrException {
 		if (c != null)
 			return c;
 
@@ -513,9 +493,7 @@ class AuthContext {
 
 	}
 
-	private byte[] getM1() throws NoSuchAlgorithmException, IOException,
-			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException {
+	private byte[] getM1() throws OtrException {
 		if (m1 != null)
 			return m1;
 
@@ -528,9 +506,7 @@ class AuthContext {
 		return m1;
 	}
 
-	private byte[] getM2() throws NoSuchAlgorithmException, IOException,
-			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException {
+	private byte[] getM2() throws OtrException {
 		if (m2 != null)
 			return m2;
 
@@ -543,9 +519,7 @@ class AuthContext {
 		return m2;
 	}
 
-	private byte[] getCp() throws NoSuchAlgorithmException, IOException,
-			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException {
+	private byte[] getCp() throws OtrException {
 		if (cp != null)
 			return cp;
 
@@ -559,9 +533,7 @@ class AuthContext {
 		return cp;
 	}
 
-	private byte[] getM1p() throws NoSuchAlgorithmException, IOException,
-			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException {
+	private byte[] getM1p() throws OtrException {
 		if (m1p != null)
 			return m1p;
 
@@ -574,9 +546,7 @@ class AuthContext {
 		return m1p;
 	}
 
-	private byte[] getM2p() throws NoSuchAlgorithmException, IOException,
-			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException {
+	private byte[] getM2p() throws OtrException {
 		if (m2p != null)
 			return m2p;
 
@@ -589,7 +559,7 @@ class AuthContext {
 		return m2p;
 	}
 
-	private KeyPair getLocalLongTermKeyPair() throws NoSuchAlgorithmException {
+	private KeyPair getLocalLongTermKeyPair() throws OtrException {
 		if (localLongTermKeyPair == null)
 			localLongTermKeyPair = getListener()
 					.getKeyPair(this.getSessionID());
@@ -604,14 +574,17 @@ class AuthContext {
 		return listener;
 	}
 
-	private byte[] h2(byte b) throws NoSuchAlgorithmException, IOException,
-			InvalidKeyException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException {
+	private byte[] h2(byte b) throws OtrException {
 
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		SerializationUtils.writeMpi(bos, getS());
-		byte[] secbytes = bos.toByteArray();
-		bos.close();
+		byte[] secbytes;
+		try {
+			SerializationUtils.writeMpi(bos, getS());
+			secbytes = bos.toByteArray();
+			bos.close();
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 
 		int len = secbytes.length + 1;
 		ByteBuffer buff = ByteBuffer.allocate(len);
@@ -621,24 +594,22 @@ class AuthContext {
 		return CryptoUtils.sha256Hash(sdata);
 	}
 
-	private byte[] getLocalDHPublicKeyBytes() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, IOException {
+	private byte[] getLocalDHPublicKeyBytes() throws OtrException {
 		if (localDHPublicKeyBytes == null) {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			SerializationUtils.writeMpi(out, ((DHPublicKey) getLocalDHKeyPair()
-					.getPublic()).getY());
+			try {
+				SerializationUtils.writeMpi(out,
+						((DHPublicKey) getLocalDHKeyPair().getPublic()).getY());
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 			this.localDHPublicKeyBytes = out.toByteArray();
 		}
 		return localDHPublicKeyBytes;
 	}
 
 	public void handleReceivingMessage(String msgText, int policy)
-			throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, IOException, InvalidKeyException,
-			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, SignatureException, OtrException {
+			throws OtrException {
 		Boolean allowV2 = PolicyUtils.getAllowV2(policy);
 
 		switch (MessageUtils.getMessageType(msgText)) {
@@ -660,11 +631,7 @@ class AuthContext {
 	}
 
 	private void handleSignatureMessage(String msgText, Boolean allowV2)
-			throws IOException, InvalidKeyException, NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException, SignatureException,
-			OtrException {
+			throws OtrException {
 		logger.info(getSessionID().getAccountID()
 				+ " received a signature message from "
 				+ getSessionID().getUserID() + " throught "
@@ -675,7 +642,11 @@ class AuthContext {
 		}
 
 		SignatureMessage sigMessage = new SignatureMessage();
-		sigMessage.readObject(msgText);
+		try {
+			sigMessage.readObject(msgText);
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 
 		switch (this.getAuthenticationState()) {
 		case AWAITING_SIG:
@@ -688,7 +659,11 @@ class AuthContext {
 			// Decrypt X.
 			byte[] remoteXDecrypted = sigMessage.decrypt(this.getCp());
 			MysteriousX remoteX = new MysteriousX();
-			remoteX.readObject(remoteXDecrypted);
+			try {
+				remoteX.readObject(remoteXDecrypted);
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 
 			// Compute signature.
 			MysteriousM remoteM = new MysteriousM(this.getRemoteDHPublicKey(),
@@ -696,8 +671,13 @@ class AuthContext {
 							.getLongTermPublicKey(), remoteX.getDhKeyID());
 
 			// Verify signature.
-			byte[] signature = CryptoUtils.sha256Hmac(remoteM.toByteArray(),
-					this.getM1p());
+			byte[] signature;
+			try {
+				signature = CryptoUtils.sha256Hmac(remoteM.toByteArray(), this
+						.getM1p());
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 			if (!CryptoUtils.verify(signature, remoteX.getLongTermPublicKey(),
 					remoteX.getSignature())) {
 				logger.info("Signature verification failed.");
@@ -713,11 +693,7 @@ class AuthContext {
 	}
 
 	private void handleRevealSignatureMessage(String msgText, Boolean allowV2)
-			throws IOException, InvalidKeyException, NoSuchAlgorithmException,
-			NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException,
-			InvalidKeySpecException, NoSuchProviderException,
-			SignatureException, OtrException {
+			throws OtrException {
 
 		logger.info(getSessionID().getAccountID()
 				+ " received a reveal signature message from "
@@ -730,7 +706,11 @@ class AuthContext {
 		}
 
 		RevealSignatureMessage revealSigMessage = new RevealSignatureMessage();
-		revealSigMessage.readObject(msgText);
+		try {
+			revealSigMessage.readObject(msgText);
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 
 		switch (this.getAuthenticationState()) {
 		case AWAITING_REVEALSIG:
@@ -767,7 +747,12 @@ class AuthContext {
 			// modulus-2)
 			ByteArrayInputStream inmpi = new ByteArrayInputStream(
 					remoteDHPublicKeyDecrypted);
-			BigInteger remoteDHPublicKeyMpi = SerializationUtils.readMpi(inmpi);
+			BigInteger remoteDHPublicKeyMpi;
+			try {
+				remoteDHPublicKeyMpi = SerializationUtils.readMpi(inmpi);
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 
 			this.setRemoteDHPublicKey(CryptoUtils
 					.getDHPublicKey(remoteDHPublicKeyMpi));
@@ -781,7 +766,11 @@ class AuthContext {
 			// Decrypt X.
 			byte[] remoteXDecrypted = revealSigMessage.decrypt(this.getC());
 			MysteriousX remoteX = new MysteriousX();
-			remoteX.readObject(remoteXDecrypted);
+			try {
+				remoteX.readObject(remoteXDecrypted);
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 
 			// Compute signature.
 			MysteriousM remoteM = new MysteriousM(this.getRemoteDHPublicKey(),
@@ -789,8 +778,13 @@ class AuthContext {
 							.getLongTermPublicKey(), remoteX.getDhKeyID());
 
 			// Verify signature.
-			byte[] signature = CryptoUtils.sha256Hmac(remoteM.toByteArray(),
-					this.getM1());
+			byte[] signature;
+			try {
+				signature = CryptoUtils.sha256Hmac(remoteM.toByteArray(), this
+						.getM1());
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 			if (!CryptoUtils.verify(signature, remoteX.getLongTermPublicKey(),
 					remoteX.getSignature())) {
 				logger.info("Signature verification failed.");
@@ -801,8 +795,12 @@ class AuthContext {
 
 			this.setAuthenticationState(AuthContext.NONE);
 			this.setIsSecure(true);
-			getListener().injectMessage(getSessionID(),
-					this.getSignatureMessage().writeObject());
+			try {
+				getListener().injectMessage(getSessionID(),
+						this.getSignatureMessage().writeObject());
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 			break;
 		default:
 			logger.info("Ignoring message.");
@@ -811,64 +809,60 @@ class AuthContext {
 	}
 
 	private void handleDHKeyMessage(String msgText, Boolean allowV2)
-			throws IOException, NoSuchAlgorithmException, InvalidKeyException,
-			SignatureException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException,
-			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, OtrException {
+			throws OtrException {
 
-		logger.info(getSessionID().getAccountID()
-				+ " received a D-H key message from "
-				+ getSessionID().getUserID() + " throught "
-				+ getSessionID().getProtocolName() + ".");
+		try {
+			logger.info(getSessionID().getAccountID()
+					+ " received a D-H key message from "
+					+ getSessionID().getUserID() + " throught "
+					+ getSessionID().getProtocolName() + ".");
 
-		if (!allowV2) {
-			logger.info("If ALLOW_V2 is not set, ignore this message.");
-			return;
-		}
+			if (!allowV2) {
+				logger.info("If ALLOW_V2 is not set, ignore this message.");
+				return;
+			}
 
-		DHKeyMessage dhKey = new DHKeyMessage();
-		dhKey.readObject(msgText);
+			DHKeyMessage dhKey = new DHKeyMessage();
+			dhKey.readObject(msgText);
 
-		switch (this.getAuthenticationState()) {
-		case AWAITING_DHKEY:
-			// Reply with a Reveal Signature Message and transition
-			// authstate to
-			// AUTHSTATE_AWAITING_SIG
-			this.setRemoteDHPublicKey(dhKey.getDhPublicKey());
-			this.setAuthenticationState(AuthContext.AWAITING_SIG);
-			getListener().injectMessage(getSessionID(),
-					this.getRevealSignatureMessage().writeObject());
-			logger.info("Sent Reveal Signature.");
-			break;
-		case AWAITING_SIG:
-
-			if (dhKey.getDhPublicKey().getY().equals(
-					this.getRemoteDHPublicKey().getY())) {
-				// If this D-H Key message is the same the one you received
-				// earlier (when you entered AUTHSTATE_AWAITING_SIG):
-				// Retransmit
-				// your Reveal Signature Message.
+			switch (this.getAuthenticationState()) {
+			case AWAITING_DHKEY:
+				// Reply with a Reveal Signature Message and transition
+				// authstate to
+				// AUTHSTATE_AWAITING_SIG
+				this.setRemoteDHPublicKey(dhKey.getDhPublicKey());
+				this.setAuthenticationState(AuthContext.AWAITING_SIG);
 				getListener().injectMessage(getSessionID(),
 						this.getRevealSignatureMessage().writeObject());
-				logger.info("Resent Reveal Signature.");
-			} else {
-				// Otherwise: Ignore the message.
-				logger.info("Ignoring message.");
+				logger.info("Sent Reveal Signature.");
+				break;
+			case AWAITING_SIG:
+
+				if (dhKey.getDhPublicKey().getY().equals(
+						this.getRemoteDHPublicKey().getY())) {
+					// If this D-H Key message is the same the one you received
+					// earlier (when you entered AUTHSTATE_AWAITING_SIG):
+					// Retransmit
+					// your Reveal Signature Message.
+					getListener().injectMessage(getSessionID(),
+							this.getRevealSignatureMessage().writeObject());
+					logger.info("Resent Reveal Signature.");
+				} else {
+					// Otherwise: Ignore the message.
+					logger.info("Ignoring message.");
+				}
+				break;
+			default:
+				// Ignore the message
+				break;
 			}
-			break;
-		default:
-			// Ignore the message
-			break;
+		} catch (IOException e) {
+			throw new OtrException(e);
 		}
 	}
 
 	private void handleDHCommitMessage(String msgText, Boolean allowV2)
-			throws IOException, NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, InvalidKeyException,
-			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, OtrException {
+			throws OtrException {
 
 		logger.info(getSessionID().getAccountID()
 				+ " received a D-H commit message from "
@@ -881,7 +875,11 @@ class AuthContext {
 		}
 
 		DHCommitMessage dhCommit = new DHCommitMessage();
-		dhCommit.readObject(msgText);
+		try {
+			dhCommit.readObject(msgText);
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 
 		switch (this.getAuthenticationState()) {
 		case NONE:
@@ -893,8 +891,12 @@ class AuthContext {
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-			getListener().injectMessage(getSessionID(),
-					this.getDHKeyMessage().writeObject());
+			try {
+				getListener().injectMessage(getSessionID(),
+						this.getDHKeyMessage().writeObject());
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 			logger.info("Sent D-H key.");
 			break;
 
@@ -919,8 +921,12 @@ class AuthContext {
 				// Ignore the incoming D-H Commit message, but resend your
 				// D-H
 				// Commit message.
-				getListener().injectMessage(getSessionID(),
-						this.getDHCommitMessage().writeObject());
+				try {
+					getListener().injectMessage(getSessionID(),
+							this.getDHCommitMessage().writeObject());
+				} catch (IOException e) {
+					throw new OtrException(e);
+				}
 				logger
 						.info("Ignored the incoming D-H Commit message, but resent our D-H Commit message.");
 			} else {
@@ -936,8 +942,12 @@ class AuthContext {
 						.getDhPublicKeyEncrypted());
 				this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 				this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-				getListener().injectMessage(getSessionID(),
-						this.getDHKeyMessage().writeObject());
+				try {
+					getListener().injectMessage(getSessionID(),
+							this.getDHKeyMessage().writeObject());
+				} catch (IOException e) {
+					throw new OtrException(e);
+				}
 				logger
 						.info("Forgot our old gx value that we sent (encrypted) earlier, and pretended we're in AUTHSTATE_NONE -> Sent D-H key.");
 			}
@@ -951,8 +961,12 @@ class AuthContext {
 			this.setRemoteDHPublicKeyEncrypted(dhCommit
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-			getListener().injectMessage(getSessionID(),
-					this.getDHKeyMessage().writeObject());
+			try {
+				getListener().injectMessage(getSessionID(),
+						this.getDHKeyMessage().writeObject());
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 			logger.info("Sent D-H key.");
 			break;
 		case AWAITING_SIG:
@@ -963,8 +977,12 @@ class AuthContext {
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
 			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
-			getListener().injectMessage(getSessionID(),
-					this.getDHKeyMessage().writeObject());
+			try {
+				getListener().injectMessage(getSessionID(),
+						this.getDHKeyMessage().writeObject());
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 			logger.info("Sent D-H key.");
 			break;
 		case V1_SETUP:
@@ -972,18 +990,18 @@ class AuthContext {
 		}
 	}
 
-	public void startV2Auth() throws InvalidKeyException,
-			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException,
-			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, IOException, OtrException {
+	public void startV2Auth() throws OtrException {
 		logger.info("Starting Authenticated Key Exchange");
 		this.reset();
 		this.setProtocolVersion(2);
 		this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
 		logger.info("Sending D-H Commit.");
-		getListener().injectMessage(getSessionID(),
-				this.getDHCommitMessage().writeObject());
+		try {
+			getListener().injectMessage(getSessionID(),
+					this.getDHCommitMessage().writeObject());
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 	}
 
 	private void setSessionID(SessionID sessionID) {

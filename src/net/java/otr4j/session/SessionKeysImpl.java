@@ -6,14 +6,10 @@
  */
 package net.java.otr4j.session;
 
-
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
@@ -21,26 +17,20 @@ import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.CryptoConstants;
 import net.java.otr4j.CryptoUtils;
+import net.java.otr4j.OtrException;
 import net.java.otr4j.message.*;
 
 /**
  * 
  * @author George Politis
  */
-class SessionKeys {
+class SessionKeysImpl implements ISessionKeys {
 
-	public static final int Previous = 0;
-	public static final int Current = 1;
-	public static final byte HIGH_SEND_BYTE = (byte)0x01;
-	public static final byte HIGH_RECEIVE_BYTE = (byte)0x02;
-	public static final byte LOW_SEND_BYTE = (byte)0x02;
-	public static final byte LOW_RECEIVE_BYTE = (byte)0x01;
-	
 	private static Logger logger = Logger
-			.getLogger(SessionKeys.class.getName());
+			.getLogger(SessionKeysImpl.class.getName());
 	private String keyDescription;
 
-	SessionKeys(int localKeyIndex, int remoteKeyIndex) {
+	public SessionKeysImpl(int localKeyIndex, int remoteKeyIndex) {
 		if (localKeyIndex == 0)
 			keyDescription = "(Previous local, ";
 		else
@@ -53,7 +43,7 @@ class SessionKeys {
 
 	}
 
-	void setLocalPair(KeyPair keyPair, int localPairKeyID) {
+	public void setLocalPair(KeyPair keyPair, int localPairKeyID) {
 		this.localPair = keyPair;
 		this.setLocalKeyID(localPairKeyID);
 		logger.info(keyDescription + " current local key ID: "
@@ -61,7 +51,7 @@ class SessionKeys {
 		this.reset();
 	}
 
-	void setRemoteDHPublicKey(DHPublicKey pubKey, int remoteKeyID) {
+	public void setRemoteDHPublicKey(DHPublicKey pubKey, int remoteKeyID) {
 		this.setRemoteKey(pubKey);
 		this.setRemoteKeyID(remoteKeyID);
 		logger.info(keyDescription + " current remote key ID: "
@@ -72,7 +62,7 @@ class SessionKeys {
 	private byte[] sendingCtr = new byte[16];
 	private byte[] receivingCtr = new byte[16];
 
-	void incrementSendingCtr() {
+	public void incrementSendingCtr() {
 		logger.info("Incrementing counter for (localkeyID, remoteKeyID) = ("
 				+ getLocalKeyID() + "," + getRemoteKeyID() + ")");
 		// logger.debug("Counter prior increament: " +
@@ -86,15 +76,15 @@ class SessionKeys {
 		// true, 16));
 	}
 
-	byte[] getSendingCtr() {
+	public byte[] getSendingCtr() {
 		return sendingCtr;
 	}
 
-	byte[] getReceivingCtr() {
+	public byte[] getReceivingCtr() {
 		return receivingCtr;
 	}
 
-	void setReceivingCtr(byte[] ctr) {
+	public void setReceivingCtr(byte[] ctr) {
 		for (int i = 0; i < ctr.length; i++)
 			receivingCtr[i] = ctr[i];
 	}
@@ -116,24 +106,26 @@ class SessionKeys {
 
 	}
 
-	private byte[] h1(byte b) throws NoSuchAlgorithmException, IOException,
-			InvalidKeyException {
+	private byte[] h1(byte b) throws OtrException {
 
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		SerializationUtils.writeMpi(bos, getS());
-		byte[] secbytes = bos.toByteArray();
-		bos.close();
+		try {
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			SerializationUtils.writeMpi(bos, getS());
+			byte[] secbytes = bos.toByteArray();
+			bos.close();
 
-		int len = secbytes.length + 1;
-		ByteBuffer buff = ByteBuffer.allocate(len);
-		buff.put(b);
-		buff.put(secbytes);
-		byte[] result = CryptoUtils.sha1Hash(buff.array());
-		return result;
+			int len = secbytes.length + 1;
+			ByteBuffer buff = ByteBuffer.allocate(len);
+			buff.put(b);
+			buff.put(secbytes);
+			byte[] result = CryptoUtils.sha1Hash(buff.array());
+			return result;
+		} catch (Exception e) {
+			throw new OtrException(e);
+		}
 	}
 
-	byte[] getSendingAESKey() throws InvalidKeyException,
-			NoSuchAlgorithmException, IOException {
+	public byte[] getSendingAESKey() throws OtrException {
 		if (sendingAESKey != null)
 			return sendingAESKey;
 
@@ -151,8 +143,7 @@ class SessionKeys {
 		return sendingAESKey;
 	}
 
-	byte[] getReceivingAESKey() throws InvalidKeyException,
-			NoSuchAlgorithmException, IOException {
+	public byte[] getReceivingAESKey() throws OtrException {
 		if (receivingAESKey != null)
 			return receivingAESKey;
 
@@ -171,8 +162,7 @@ class SessionKeys {
 		return receivingAESKey;
 	}
 
-	byte[] getSendingMACKey() throws NoSuchAlgorithmException,
-			InvalidKeyException, IOException {
+	public byte[] getSendingMACKey() throws OtrException {
 		if (sendingMACKey != null)
 			return sendingAESKey;
 
@@ -181,8 +171,7 @@ class SessionKeys {
 		return sendingMACKey;
 	}
 
-	byte[] getReceivingMACKey() throws NoSuchAlgorithmException,
-			InvalidKeyException, IOException {
+	public byte[] getReceivingMACKey() throws OtrException {
 		if (receivingMACKey == null) {
 			receivingMACKey = CryptoUtils.sha1Hash(getReceivingAESKey());
 			logger.info("Calculated receiving AES key.");
@@ -190,8 +179,7 @@ class SessionKeys {
 		return receivingMACKey;
 	}
 
-	private BigInteger getS() throws InvalidKeyException,
-			NoSuchAlgorithmException {
+	private BigInteger getS() throws OtrException {
 		if (s == null) {
 			s = CryptoUtils.generateSecret(getLocalPair().getPrivate(),
 					getRemoteKey());
@@ -200,15 +188,15 @@ class SessionKeys {
 		return s;
 	}
 
-	void setS(BigInteger s) {
+	public void setS(BigInteger s) {
 		this.s = s;
 	}
 
-	void setIsUsedReceivingMACKey(Boolean isUsedReceivingMACKey) {
+	public void setIsUsedReceivingMACKey(Boolean isUsedReceivingMACKey) {
 		this.isUsedReceivingMACKey = isUsedReceivingMACKey;
 	}
 
-	Boolean getIsUsedReceivingMACKey() {
+	public Boolean getIsUsedReceivingMACKey() {
 		return isUsedReceivingMACKey;
 	}
 
@@ -216,7 +204,7 @@ class SessionKeys {
 		this.localKeyID = localKeyID;
 	}
 
-	int getLocalKeyID() {
+	public int getLocalKeyID() {
 		return localKeyID;
 	}
 
@@ -224,7 +212,7 @@ class SessionKeys {
 		this.remoteKeyID = remoteKeyID;
 	}
 
-	int getRemoteKeyID() {
+	public int getRemoteKeyID() {
 		return remoteKeyID;
 	}
 
@@ -232,11 +220,11 @@ class SessionKeys {
 		this.remoteKey = remoteKey;
 	}
 
-	DHPublicKey getRemoteKey() {
+	public DHPublicKey getRemoteKey() {
 		return remoteKey;
 	}
 
-	KeyPair getLocalPair() {
+	public KeyPair getLocalPair() {
 		return localPair;
 	}
 

@@ -8,22 +8,18 @@ package net.java.otr4j;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.SignatureException;
 import java.security.interfaces.DSAParams;
 import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.DSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.interfaces.DHPrivateKey;
@@ -61,9 +57,7 @@ public class CryptoUtils implements CryptoConstants {
 		return kg.genKeyPair();
 	}
 
-	public static KeyPair generateDHKeyPair() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException {
+	public static KeyPair generateDHKeyPair() throws OtrCryptoException {
 
 		// Generate a AsymmetricCipherKeyPair using BC.
 		DHParameters dhParams = new DHParameters(MODULUS, GENERATOR, null,
@@ -80,47 +74,63 @@ public class CryptoUtils implements CryptoConstants {
 		DHPrivateKeyParameters priv = (DHPrivateKeyParameters) pair
 				.getPrivate();
 
-		KeyFactory keyFac = KeyFactory.getInstance("DH");
+		try {
+			KeyFactory keyFac = KeyFactory.getInstance("DH");
 
-		DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(pub.getY(), MODULUS,
-				GENERATOR);
-		DHPublicKey pubKey = (DHPublicKey) keyFac.generatePublic(pubKeySpecs);
+			DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(pub.getY(),
+					MODULUS, GENERATOR);
+			DHPublicKey pubKey = (DHPublicKey) keyFac
+					.generatePublic(pubKeySpecs);
 
-		DHParameters dhParameters = priv.getParameters();
-		DHPrivateKeySpec privKeySpecs = new DHPrivateKeySpec(priv.getX(),
-				dhParameters.getP(), dhParameters.getG());
-		DHPrivateKey privKey = (DHPrivateKey) keyFac
-				.generatePrivate(privKeySpecs);
+			DHParameters dhParameters = priv.getParameters();
+			DHPrivateKeySpec privKeySpecs = new DHPrivateKeySpec(priv.getX(),
+					dhParameters.getP(), dhParameters.getG());
+			DHPrivateKey privKey = (DHPrivateKey) keyFac
+					.generatePrivate(privKeySpecs);
 
-		return new KeyPair(pubKey, privKey);
+			return new KeyPair(pubKey, privKey);
+		} catch (Exception e) {
+			throw new OtrCryptoException(e);
+		}
 	}
 
 	public static DHPublicKey getDHPublicKey(byte[] mpiBytes)
-			throws NoSuchAlgorithmException, InvalidKeySpecException {
+			throws OtrCryptoException {
 		return getDHPublicKey(new BigInteger(mpiBytes));
 	}
 
 	public static DHPublicKey getDHPublicKey(BigInteger mpi)
-			throws NoSuchAlgorithmException, InvalidKeySpecException {
+			throws OtrCryptoException {
 		DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(mpi, MODULUS,
 				GENERATOR);
-
-		KeyFactory keyFac = KeyFactory.getInstance("DH");
-		return (DHPublicKey) keyFac.generatePublic(pubKeySpecs);
-
+		try {
+			KeyFactory keyFac = KeyFactory.getInstance("DH");
+			return (DHPublicKey) keyFac.generatePublic(pubKeySpecs);
+		} catch (Exception e) {
+			throw new OtrCryptoException(e);
+		}
 	}
 
 	public static byte[] sha256Hmac(byte[] b, byte[] key)
-			throws InvalidKeyException, NoSuchAlgorithmException {
+			throws OtrCryptoException {
 		return CryptoUtils.sha256Hmac(b, key, 0);
 	}
 
 	public static byte[] sha256Hmac(byte[] b, byte[] key, int length)
-			throws NoSuchAlgorithmException, InvalidKeyException {
+			throws OtrCryptoException {
 
 		SecretKeySpec keyspec = new SecretKeySpec(key, "HmacSHA256");
-		javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-		mac.init(keyspec);
+		javax.crypto.Mac mac;
+		try {
+			mac = javax.crypto.Mac.getInstance("HmacSHA256");
+		} catch (NoSuchAlgorithmException e) {
+			throw new OtrCryptoException(e);
+		}
+		try {
+			mac.init(keyspec);
+		} catch (InvalidKeyException e) {
+			throw new OtrCryptoException(e);
+		}
 
 		byte[] macBytes = mac.doFinal(b);
 
@@ -135,43 +145,55 @@ public class CryptoUtils implements CryptoConstants {
 	}
 
 	public static byte[] sha1Hmac(byte[] b, byte[] key, int length)
-			throws NoSuchAlgorithmException, InvalidKeyException {
+			throws OtrCryptoException {
 
-		SecretKeySpec keyspec = new SecretKeySpec(key, "HmacSHA1");
-		javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA1");
-		mac.init(keyspec);
+		try {
+			SecretKeySpec keyspec = new SecretKeySpec(key, "HmacSHA1");
+			javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA1");
+			mac.init(keyspec);
 
-		byte[] macBytes = mac.doFinal(b);
+			byte[] macBytes = mac.doFinal(b);
 
-		if (length > 0) {
-			byte[] bytes = new byte[length];
-			ByteBuffer buff = ByteBuffer.wrap(macBytes);
-			buff.get(bytes);
-			return bytes;
-		} else {
-			return macBytes;
+			if (length > 0) {
+				byte[] bytes = new byte[length];
+				ByteBuffer buff = ByteBuffer.wrap(macBytes);
+				buff.get(bytes);
+				return bytes;
+			} else {
+				return macBytes;
+			}
+		} catch (Exception e) {
+			throw new OtrCryptoException(e);
 		}
 	}
 
 	public static byte[] sha256Hmac160(byte[] b, byte[] key)
-			throws NoSuchAlgorithmException, InvalidKeyException {
+			throws OtrCryptoException {
 		return sha256Hmac(b, key, 20);
 	}
 
-	public static byte[] sha256Hash(byte[] b) throws NoSuchAlgorithmException {
-		MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-		sha256.update(b, 0, b.length);
-		return sha256.digest();
+	public static byte[] sha256Hash(byte[] b) throws OtrCryptoException {
+		try {
+			MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+			sha256.update(b, 0, b.length);
+			return sha256.digest();
+		} catch (Exception e) {
+			throw new OtrCryptoException(e);
+		}
 	}
 
-	public static byte[] sha1Hash(byte[] b) throws NoSuchAlgorithmException {
-		MessageDigest sha256 = MessageDigest.getInstance("SHA-1");
-		sha256.update(b, 0, b.length);
-		return sha256.digest();
+	public static byte[] sha1Hash(byte[] b) throws OtrCryptoException {
+		try {
+			MessageDigest sha256 = MessageDigest.getInstance("SHA-1");
+			sha256.update(b, 0, b.length);
+			return sha256.digest();
+		} catch (Exception e) {
+			throw new OtrCryptoException(e);
+		}
 	}
 
 	public static byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b)
-			throws OtrException {
+			throws OtrCryptoException {
 
 		AESFastEngine aesDec = new AESFastEngine();
 		SICBlockCipher sicAesDec = new SICBlockCipher(aesDec);
@@ -187,14 +209,14 @@ public class CryptoUtils implements CryptoConstants {
 		try {
 			bufSicAesDec.doFinal(aesOutLwDec, done);
 		} catch (Exception e) {
-			throw new OtrException(e);
+			throw new OtrCryptoException(e);
 		}
 
 		return aesOutLwDec;
 	}
 
 	public static byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b)
-			throws OtrException {
+			throws OtrCryptoException {
 
 		AESFastEngine aesEnc = new AESFastEngine();
 		SICBlockCipher sicAesEnc = new SICBlockCipher(aesEnc);
@@ -210,24 +232,28 @@ public class CryptoUtils implements CryptoConstants {
 		try {
 			bufSicAesEnc.doFinal(aesOutLwEnc, done);
 		} catch (Exception e) {
-			throw new OtrException(e);
+			throw new OtrCryptoException(e);
 		}
 		return aesOutLwEnc;
 	}
 
 	public static BigInteger generateSecret(PrivateKey privKey, PublicKey pubKey)
-			throws NoSuchAlgorithmException, InvalidKeyException {
-		KeyAgreement ka = KeyAgreement.getInstance("DH");
-		ka.init(privKey);
-		ka.doPhase(pubKey, true);
-		byte[] sb = ka.generateSecret();
-		BigInteger s = new BigInteger(1, sb);
-		return s;
+			throws OtrCryptoException {
+		try {
+			KeyAgreement ka = KeyAgreement.getInstance("DH");
+			ka.init(privKey);
+			ka.doPhase(pubKey, true);
+			byte[] sb = ka.generateSecret();
+			BigInteger s = new BigInteger(1, sb);
+			return s;
+
+		} catch (Exception e) {
+			throw new OtrCryptoException(e);
+		}
 	}
 
 	public static byte[] sign(byte[] b, PrivateKey privatekey)
-			throws NoSuchAlgorithmException, InvalidKeyException,
-			SignatureException {
+			throws OtrCryptoException {
 
 		if (!(privatekey instanceof DSAPrivateKey))
 			throw new IllegalArgumentException();
@@ -279,8 +305,7 @@ public class CryptoUtils implements CryptoConstants {
 	}
 
 	public static Boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
-			throws NoSuchAlgorithmException, InvalidKeyException,
-			SignatureException {
+			throws OtrCryptoException {
 
 		if (!(pubKey instanceof DSAPublicKey))
 			throw new IllegalArgumentException();
@@ -296,16 +321,14 @@ public class CryptoUtils implements CryptoConstants {
 	}
 
 	private static Boolean verify(byte[] b, PublicKey pubKey, byte[] r, byte[] s)
-			throws InvalidKeyException, NoSuchAlgorithmException,
-			SignatureException {
+			throws OtrCryptoException {
 		Boolean result = verify(b, pubKey, new BigInteger(1, r),
 				new BigInteger(1, s));
 		return result;
 	}
 
 	private static Boolean verify(byte[] b, PublicKey pubKey, BigInteger r,
-			BigInteger s) throws NoSuchAlgorithmException, InvalidKeyException,
-			SignatureException {
+			BigInteger s) throws OtrCryptoException {
 
 		if (!(pubKey instanceof DSAPublicKey))
 			throw new IllegalArgumentException();

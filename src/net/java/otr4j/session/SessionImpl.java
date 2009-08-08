@@ -11,21 +11,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.logging.Logger;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.CryptoUtils;
@@ -46,7 +36,7 @@ import net.java.otr4j.message.SerializationUtils;
  * 
  * @author George Politis
  */
-public class SessionImpl implements ISession {
+public class SessionImpl implements Session {
 
 	/**
 	 * 
@@ -83,35 +73,37 @@ public class SessionImpl implements ISession {
 	private OtrEngineListener<SessionID> listener;
 	private SessionStatus sessionStatus;
 	private AuthContext authContext;
-	private SessionKeys[][] sessionKeys;
+	private ISessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
-	private static Logger logger = Logger.getLogger(SessionImpl.class.getName());
+	private static Logger logger = Logger
+			.getLogger(SessionImpl.class.getName());
 
-	public SessionImpl(SessionID sessionID, OtrEngineListener<SessionID> listener) {
+	public SessionImpl(SessionID sessionID,
+			OtrEngineListener<SessionID> listener) {
 
 		this.setSessionID(sessionID);
 		this.setListener(listener);
 		this.setSessionStatus(SessionStatus.PLAINTEXT);
 	}
 
-	private SessionKeys getEncryptionSessionKeys() {
+	private ISessionKeys getEncryptionSessionKeys() {
 		logger.info("Getting encryption keys");
-		return getSessionKeysByIndex(SessionKeys.Previous, SessionKeys.Current);
+		return getSessionKeysByIndex(ISessionKeys.Previous, ISessionKeys.Current);
 	}
 
-	private SessionKeys getMostRecentSessionKeys() {
+	private ISessionKeys getMostRecentSessionKeys() {
 		logger.info("Getting most recent keys.");
-		return getSessionKeysByIndex(SessionKeys.Current, SessionKeys.Current);
+		return getSessionKeysByIndex(ISessionKeys.Current, ISessionKeys.Current);
 	}
 
-	private SessionKeys getSessionKeysByID(int localKeyID, int remoteKeyID) {
+	private ISessionKeys getSessionKeysByID(int localKeyID, int remoteKeyID) {
 		logger
 				.info("Searching for session keys with (localKeyID, remoteKeyID) = ("
 						+ localKeyID + "," + remoteKeyID + ")");
 
 		for (int i = 0; i < getSessionKeys().length; i++) {
 			for (int j = 0; j < getSessionKeys()[i].length; j++) {
-				SessionKeys current = getSessionKeysByIndex(i, j);
+				ISessionKeys current = getSessionKeysByIndex(i, j);
 				if (current.getLocalKeyID() == localKeyID
 						&& current.getRemoteKeyID() == remoteKeyID) {
 					logger.info("Matching keys found.");
@@ -123,43 +115,43 @@ public class SessionImpl implements ISession {
 		return null;
 	}
 
-	private SessionKeys getSessionKeysByIndex(int localKeyIndex,
+	private ISessionKeys getSessionKeysByIndex(int localKeyIndex,
 			int remoteKeyIndex) {
 		if (getSessionKeys()[localKeyIndex][remoteKeyIndex] == null)
-			getSessionKeys()[localKeyIndex][remoteKeyIndex] = new SessionKeys(
+			getSessionKeys()[localKeyIndex][remoteKeyIndex] = new SessionKeysImpl(
 					localKeyIndex, remoteKeyIndex);
 
 		return getSessionKeys()[localKeyIndex][remoteKeyIndex];
 	}
 
 	private void rotateRemoteSessionKeys(DHPublicKey pubKey)
-			throws NoSuchAlgorithmException, IOException, InvalidKeyException {
+			throws OtrException {
 
 		logger.info("Rotating remote keys.");
-		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.Current,
-				SessionKeys.Previous);
+		ISessionKeys sess1 = getSessionKeysByIndex(ISessionKeys.Current,
+				ISessionKeys.Previous);
 		if (sess1.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess1.getReceivingMACKey());
 		}
 
-		SessionKeys sess2 = getSessionKeysByIndex(SessionKeys.Previous,
-				SessionKeys.Previous);
+		ISessionKeys sess2 = getSessionKeysByIndex(ISessionKeys.Previous,
+				ISessionKeys.Previous);
 		if (sess2.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess2.getReceivingMACKey());
 		}
 
-		SessionKeys sess3 = getSessionKeysByIndex(SessionKeys.Current,
-				SessionKeys.Current);
+		ISessionKeys sess3 = getSessionKeysByIndex(ISessionKeys.Current,
+				ISessionKeys.Current);
 		sess1
 				.setRemoteDHPublicKey(sess3.getRemoteKey(), sess3
 						.getRemoteKeyID());
 
-		SessionKeys sess4 = getSessionKeysByIndex(SessionKeys.Previous,
-				SessionKeys.Current);
+		ISessionKeys sess4 = getSessionKeysByIndex(ISessionKeys.Previous,
+				ISessionKeys.Current);
 		sess2
 				.setRemoteDHPublicKey(sess4.getRemoteKey(), sess4
 						.getRemoteKeyID());
@@ -168,32 +160,30 @@ public class SessionImpl implements ISession {
 		sess4.setRemoteDHPublicKey(pubKey, sess4.getRemoteKeyID() + 1);
 	}
 
-	private void rotateLocalSessionKeys() throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			IOException, InvalidKeyException, InvalidKeySpecException {
+	private void rotateLocalSessionKeys() throws OtrException {
 
 		logger.info("Rotating local keys.");
-		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.Previous,
-				SessionKeys.Current);
+		ISessionKeys sess1 = getSessionKeysByIndex(ISessionKeys.Previous,
+				ISessionKeys.Current);
 		if (sess1.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess1.getReceivingMACKey());
 		}
 
-		SessionKeys sess2 = getSessionKeysByIndex(SessionKeys.Previous,
-				SessionKeys.Previous);
+		ISessionKeys sess2 = getSessionKeysByIndex(ISessionKeys.Previous,
+				ISessionKeys.Previous);
 		if (sess2.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess2.getReceivingMACKey());
 		}
 
-		SessionKeys sess3 = getSessionKeysByIndex(SessionKeys.Current,
-				SessionKeys.Current);
+		ISessionKeys sess3 = getSessionKeysByIndex(ISessionKeys.Current,
+				ISessionKeys.Current);
 		sess1.setLocalPair(sess3.getLocalPair(), sess3.getLocalKeyID());
-		SessionKeys sess4 = getSessionKeysByIndex(SessionKeys.Current,
-				SessionKeys.Previous);
+		ISessionKeys sess4 = getSessionKeysByIndex(ISessionKeys.Current,
+				ISessionKeys.Previous);
 		sess2.setLocalPair(sess4.getLocalPair(), sess4.getLocalKeyID());
 
 		KeyPair newPair = CryptoUtils.generateDHKeyPair();
@@ -219,7 +209,9 @@ public class SessionImpl implements ISession {
 		this.sessionStatus = sessionStatus;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see net.java.otr4j.session.ISession#getSessionStatus()
 	 */
 	public SessionStatus getSessionStatus() {
@@ -230,7 +222,9 @@ public class SessionImpl implements ISession {
 		this.sessionID = sessionID;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see net.java.otr4j.session.ISession#getSessionID()
 	 */
 	public SessionID getSessionID() {
@@ -245,9 +239,9 @@ public class SessionImpl implements ISession {
 		return listener;
 	}
 
-	private SessionKeys[][] getSessionKeys() {
+	private ISessionKeys[][] getSessionKeys() {
 		if (sessionKeys == null)
-			sessionKeys = new SessionKeys[2][2];
+			sessionKeys = new ISessionKeys[2][2];
 		return sessionKeys;
 	}
 
@@ -263,10 +257,13 @@ public class SessionImpl implements ISession {
 		return oldMacKeys;
 	}
 
-	/* (non-Javadoc)
-	 * @see net.java.otr4j.session.ISession#handleReceivingMessage(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * net.java.otr4j.session.ISession#handleReceivingMessage(java.lang.String)
 	 */
-	public String handleReceivingMessage(String msgText) throws Exception {
+	public String transformReceiving(String msgText) throws OtrException {
 
 		int policy = getListener().getPolicy(this.getSessionID());
 		if (!PolicyUtils.getAllowV1(policy) && !PolicyUtils.getAllowV2(policy)) {
@@ -303,10 +300,7 @@ public class SessionImpl implements ISession {
 	}
 
 	private void handleQueryMessage(String msgText, int policy)
-			throws IOException, InvalidKeyException, NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, NoSuchPaddingException,
-			IllegalBlockSizeException, BadPaddingException, OtrException {
+			throws OtrException {
 		logger.info(getSessionID().getAccountID()
 				+ " received a query message from "
 				+ getSessionID().getUserID() + " throught "
@@ -348,18 +342,18 @@ public class SessionImpl implements ISession {
 		}
 	}
 
-	private String handleDataMessage(String msgText) throws IOException,
-			InvalidKeyException, NoSuchAlgorithmException,
-			NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException,
-			NoSuchProviderException, InvalidKeySpecException, OtrException {
+	private String handleDataMessage(String msgText) throws OtrException {
 		logger.info(getSessionID().getAccountID()
 				+ " received a data message from " + getSessionID().getUserID()
 				+ ".");
 		DataMessage data = new DataMessage();
 		ByteArrayInputStream in = new ByteArrayInputStream(MessageUtils
 				.decodeMessage(msgText));
-		data.readObject(in);
+		try {
+			data.readObject(in);
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 		switch (this.getSessionStatus()) {
 		case ENCRYPTED:
 			logger
@@ -369,7 +363,7 @@ public class SessionImpl implements ISession {
 			// Find matching session keys.
 			int senderKeyID = t.senderKeyID;
 			int receipientKeyID = t.recipientKeyID;
-			SessionKeys matchingKeys = this.getSessionKeysByID(receipientKeyID,
+			ISessionKeys matchingKeys = this.getSessionKeysByID(receipientKeyID,
 					senderKeyID);
 
 			if (matchingKeys == null) {
@@ -379,7 +373,12 @@ public class SessionImpl implements ISession {
 
 			// Verify received MAC with a locally calculated MAC.
 			logger.info("Transforming T to byte[] to calculate it's HmacSHA1.");
-			byte[] serializedT = t.toByteArray();
+			byte[] serializedT;
+			try {
+				serializedT = t.toByteArray();
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 			byte[] computedMAC = CryptoUtils.sha1Hmac(serializedT, matchingKeys
 					.getReceivingMACKey(), SerializationConstants.MAC);
 
@@ -402,7 +401,7 @@ public class SessionImpl implements ISession {
 			logger.info("Decrypted message: \"" + decryptedMsgContent + "\"");
 
 			// Rotate keys if necessary.
-			SessionKeys mostRecent = this.getMostRecentSessionKeys();
+			ISessionKeys mostRecent = this.getMostRecentSessionKeys();
 			if (mostRecent.getLocalKeyID() == receipientKeyID)
 				this.rotateLocalSessionKeys();
 
@@ -423,8 +422,15 @@ public class SessionImpl implements ISession {
 				tlvs = new Vector<TLV>();
 				ByteArrayInputStream tin = new ByteArrayInputStream(tlvsb);
 				while (tin.available() > 0) {
-					int type = SerializationUtils.readShort(tin);
-					byte[] tdata = SerializationUtils.readTlvData(tin);
+					int type;
+					byte[] tdata;
+
+					try {
+						type = SerializationUtils.readShort(tin);
+						tdata = SerializationUtils.readTlvData(tin);
+					} catch (IOException e) {
+						throw new OtrException(e);
+					}
 					tlvs.add(new TLV(type, tdata));
 				}
 			}
@@ -456,11 +462,7 @@ public class SessionImpl implements ISession {
 	}
 
 	private String handlePlainTextMessage(String msgText, int policy)
-			throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, IOException, InvalidKeyException,
-			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, SignatureException, OtrException {
+			throws OtrException {
 		logger.info(getSessionID().getAccountID()
 				+ " received a plaintext message from "
 				+ getSessionID().getUserID() + " throught "
@@ -528,11 +530,7 @@ public class SessionImpl implements ISession {
 	}
 
 	private void handleAuthMessage(String msgText, int policy)
-			throws NoSuchAlgorithmException,
-			InvalidAlgorithmParameterException, NoSuchProviderException,
-			InvalidKeySpecException, IOException, InvalidKeyException,
-			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, SignatureException, OtrException {
+			throws OtrException {
 
 		AuthContext auth = this.getAuthContext();
 		auth.handleReceivingMessage(msgText, policy);
@@ -540,7 +538,7 @@ public class SessionImpl implements ISession {
 		if (auth.getIsSecure()) {
 			logger.info("Setting most recent session keys from auth.");
 			for (int i = 0; i < this.getSessionKeys()[0].length; i++) {
-				SessionKeys current = getSessionKeysByIndex(0, i);
+				ISessionKeys current = getSessionKeysByIndex(0, i);
 				current.setLocalPair(this.getAuthContext().getLocalDHKeyPair(),
 						1);
 				current.setRemoteDHPublicKey(this.getAuthContext()
@@ -550,7 +548,7 @@ public class SessionImpl implements ISession {
 
 			KeyPair nextDH = CryptoUtils.generateDHKeyPair();
 			for (int i = 0; i < this.getSessionKeys()[1].length; i++) {
-				SessionKeys current = getSessionKeysByIndex(1, i);
+				ISessionKeys current = getSessionKeysByIndex(1, i);
 				current.setRemoteDHPublicKey(getAuthContext()
 						.getRemoteDHPublicKey(), 1);
 				current.setLocalPair(nextDH, 2);
@@ -562,14 +560,15 @@ public class SessionImpl implements ISession {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see net.java.otr4j.session.ISession#handleSendingMessage(java.lang.String, java.util.List)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * net.java.otr4j.session.ISession#handleSendingMessage(java.lang.String,
+	 * java.util.List)
 	 */
-	public String handleSendingMessage(String msgText, List<TLV> tlvs)
-			throws InvalidKeyException, NoSuchAlgorithmException,
-			NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException, IOException,
-			OtrException {
+	public String transformSending(String msgText, List<TLV> tlvs)
+			throws OtrException {
 		switch (this.getSessionStatus()) {
 		case PLAINTEXT:
 			return msgText;
@@ -580,7 +579,7 @@ public class SessionImpl implements ISession {
 					+ getSessionID().getProtocolName() + ".");
 
 			// Get encryption keys.
-			SessionKeys encryptionKeys = this.getEncryptionSessionKeys();
+			ISessionKeys encryptionKeys = this.getEncryptionSessionKeys();
 			int senderKeyID = encryptionKeys.getLocalKeyID();
 			int receipientKeyID = encryptionKeys.getRemoteKeyID();
 
@@ -590,15 +589,23 @@ public class SessionImpl implements ISession {
 
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			if (msgText != null && msgText.length() > 0)
-				out.write(msgText.getBytes());
+				try {
+					out.write(msgText.getBytes());
+				} catch (IOException e) {
+					throw new OtrException(e);
+				}
 
 			// Append tlvs
 			if (tlvs != null && tlvs.size() > 0) {
 				out.write((byte) 0x00);
 
 				for (TLV tlv : tlvs) {
-					SerializationUtils.writeShort(out, tlv.type);
-					SerializationUtils.writeTlvData(out, tlv.value);
+					try {
+						SerializationUtils.writeShort(out, tlv.type);
+						SerializationUtils.writeTlvData(out, tlv.value);
+					} catch (IOException e) {
+						throw new OtrException(e);
+					}
 				}
 			}
 
@@ -611,7 +618,7 @@ public class SessionImpl implements ISession {
 					.getSendingAESKey(), ctr, data);
 
 			// Get most recent keys to get the next D-H public key.
-			SessionKeys mostRecentKeys = this.getMostRecentSessionKeys();
+			ISessionKeys mostRecentKeys = this.getMostRecentSessionKeys();
 			DHPublicKey nextDH = (DHPublicKey) mostRecentKeys.getLocalPair()
 					.getPublic();
 
@@ -623,14 +630,23 @@ public class SessionImpl implements ISession {
 			byte[] sendingMACKey = encryptionKeys.getSendingMACKey();
 
 			logger.info("Transforming T to byte[] to calculate it's HmacSHA1.");
-			byte[] serializedT = t.toByteArray();
+			byte[] serializedT;
+			try {
+				serializedT = t.toByteArray();
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 			byte[] mac = CryptoUtils.sha1Hmac(serializedT, sendingMACKey,
 					SerializationConstants.MAC);
 
 			// Get old MAC keys to be revealed.
 			byte[] oldMacKeys = this.collectOldMacKeys();
 			DataMessage msg = new DataMessage(t, mac, oldMacKeys);
-			return msg.writeObject();
+			try {
+				return msg.writeObject();
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 		case FINISHED:
 			return msgText;
 		default:
@@ -638,14 +654,12 @@ public class SessionImpl implements ISession {
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see net.java.otr4j.session.ISession#startSession()
 	 */
-	public void startSession() throws InvalidKeyException,
-			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException,
-			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, IOException, OtrException {
+	public void startSession() throws OtrException {
 		if (this.getSessionStatus() == SessionStatus.ENCRYPTED)
 			return;
 
@@ -656,32 +670,29 @@ public class SessionImpl implements ISession {
 		this.getAuthContext().startV2Auth();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see net.java.otr4j.session.ISession#endSession()
 	 */
-	public void endSession() throws InvalidKeyException,
-			NoSuchAlgorithmException, NoSuchPaddingException,
-			InvalidAlgorithmParameterException, IllegalBlockSizeException,
-			BadPaddingException, IOException, OtrException {
+	public void endSession() throws OtrException {
 		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
 			return;
 
 		Vector<TLV> tlvs = new Vector<TLV>();
 		tlvs.add(new TLV(1, null));
 
-		String msg = this.handleSendingMessage(null, tlvs);
+		String msg = this.transformSending(null, tlvs);
 		getListener().injectMessage(getSessionID(), msg);
 		this.setSessionStatus(SessionStatus.FINISHED);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see net.java.otr4j.session.ISession#refreshSession()
 	 */
-	public void refreshSession() throws InvalidKeyException,
-			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
-			NoSuchProviderException, InvalidKeySpecException,
-			NoSuchPaddingException, IllegalBlockSizeException,
-			BadPaddingException, IOException, OtrException {
+	public void refreshSession() throws OtrException {
 		this.endSession();
 		this.startSession();
 	}

@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -24,6 +23,7 @@ import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.CryptoConstants;
 import net.java.otr4j.CryptoUtils;
+import net.java.otr4j.OtrException;
 
 import org.bouncycastle.util.BigIntegers;
 
@@ -94,7 +94,7 @@ public class SerializationUtils implements SerializationConstants {
 	}
 
 	public static void writePublicKey(OutputStream out, PublicKey pubKey)
-			throws InvalidKeyException, IOException {
+			throws IOException {
 
 		if (!(pubKey instanceof DSAPublicKey))
 			throw new UnsupportedOperationException(
@@ -132,8 +132,7 @@ public class SerializationUtils implements SerializationConstants {
 	}
 
 	public static void writePublicKeyFingerPrint(OutputStream bos,
-			PublicKey pubKey) throws InvalidKeyException, IOException,
-			NoSuchAlgorithmException {
+			PublicKey pubKey) throws IOException {
 
 		if (!(pubKey instanceof DSAPublicKey))
 			throw new UnsupportedOperationException(
@@ -151,8 +150,12 @@ public class SerializationUtils implements SerializationConstants {
 		byte[] b = out.toByteArray();
 		out.close();
 
-		byte[] fingerprint = CryptoUtils.sha1Hash(b);
-		writeData(bos, fingerprint);
+		try {
+			byte[] fingerprint = CryptoUtils.sha1Hash(b);
+			writeData(bos, fingerprint);
+		} catch (OtrException e) {
+			throw new IOException(e);
+		}
 	}
 
 	private static int byteArrayToInt(byte[] b) {
@@ -164,9 +167,7 @@ public class SerializationUtils implements SerializationConstants {
 		return value;
 	}
 
-	public static PublicKey readPublicKey(InputStream in)
-			throws NoSuchAlgorithmException, InvalidKeySpecException,
-			IOException {
+	public static PublicKey readPublicKey(InputStream in) throws IOException {
 
 		int type = readShort(in);
 		switch (type) {
@@ -176,8 +177,17 @@ public class SerializationUtils implements SerializationConstants {
 			BigInteger g = readMpi(in);
 			BigInteger y = readMpi(in);
 			DSAPublicKeySpec keySpec = new DSAPublicKeySpec(y, p, q, g);
-			KeyFactory keyFactory = KeyFactory.getInstance("DSA");
-			return keyFactory.generatePublic(keySpec);
+			KeyFactory keyFactory;
+			try {
+				keyFactory = KeyFactory.getInstance("DSA");
+			} catch (NoSuchAlgorithmException e) {
+				throw new IOException(e);
+			}
+			try {
+				return keyFactory.generatePublic(keySpec);
+			} catch (InvalidKeySpecException e) {
+				throw new IOException(e);
+			}
 		default:
 			throw new UnsupportedOperationException();
 		}

@@ -2,18 +2,10 @@ package net.java.otr4j.message;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 
 import net.java.otr4j.CryptoUtils;
 import net.java.otr4j.OtrException;
-
 
 public abstract class SignatureMessageBase extends EncodedMessageBase {
 
@@ -40,27 +32,27 @@ public abstract class SignatureMessageBase extends EncodedMessageBase {
 		return xEncrypted;
 	}
 
-	protected byte[] hash(byte[] key) throws IOException, InvalidKeyException,
-			NoSuchAlgorithmException {
+	protected byte[] hash(byte[] key) throws OtrException {
 
 		ByteArrayOutputStream out_ = new ByteArrayOutputStream();
-		SerializationUtils.writeData(out_, this.xEncrypted);
-		byte[] tmp_ = out_.toByteArray();
-		out_.close();
+		byte[] tmp_;
+		try {
+			SerializationUtils.writeData(out_, this.xEncrypted);
+			tmp_ = out_.toByteArray();
+			out_.close();
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 
 		byte[] xEncryptedMAC = CryptoUtils.sha256Hmac160(tmp_, key);
 		return xEncryptedMAC;
 	}
 
-	public byte[] decrypt(byte[] key) throws InvalidKeyException,
-			NoSuchAlgorithmException, NoSuchPaddingException,
-			InvalidAlgorithmParameterException, IllegalBlockSizeException,
-			BadPaddingException, OtrException {
+	public byte[] decrypt(byte[] key) throws OtrException {
 		return CryptoUtils.aesDecrypt(key, null, this.xEncrypted);
 	}
 
-	public Boolean verify(byte[] key) throws InvalidKeyException,
-			NoSuchAlgorithmException, IOException {
+	public Boolean verify(byte[] key) throws OtrException {
 		return Arrays.equals(this.hash(key), this.getXEncryptedMAC());
 	}
 }

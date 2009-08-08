@@ -4,7 +4,7 @@ import net.java.otr4j.session.SessionStatus;
 
 /**
  * 
- * @author george
+ * @author George Politis
  * 
  * @param <T>
  *            A class that identifies the Session.
