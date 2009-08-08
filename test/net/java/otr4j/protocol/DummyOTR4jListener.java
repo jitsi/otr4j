@@ -6,9 +6,9 @@ import java.util.logging.*;
 
 import net.java.otr4j.CryptoUtils;
 import net.java.otr4j.OtrEngineListener;
-import net.java.otr4j.session.SessionID;
+import net.java.otr4j.session.SessionIDImpl;
 
-public class DummyOTR4jListener implements OtrEngineListener<SessionID> {
+public class DummyOTR4jListener implements OtrEngineListener<SessionIDImpl> {
 
 	public DummyOTR4jListener(int policy) {
 		this.policy = policy;
@@ -20,12 +20,12 @@ public class DummyOTR4jListener implements OtrEngineListener<SessionID> {
 	public String lastInjectedMessage;
 
 	@Override
-	public int getPolicy(SessionID ctx) {
+	public int getPolicy(SessionIDImpl ctx) {
 		return this.policy;
 	}
 
 	@Override
-	public void injectMessage(SessionID sessionID, String msg) {
+	public void injectMessage(SessionIDImpl sessionID, String msg) {
 
 		this.lastInjectedMessage = msg;
 		String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10) + "..."
@@ -34,17 +34,17 @@ public class DummyOTR4jListener implements OtrEngineListener<SessionID> {
 	}
 
 	@Override
-	public void showError(SessionID sessionID, String error) {
+	public void showError(SessionIDImpl sessionID, String error) {
 		logger.severe("IM shows error to user: " + error);
 	}
 
 	@Override
-	public void showWarning(SessionID sessionID, String warning) {
+	public void showWarning(SessionIDImpl sessionID, String warning) {
 		logger.warning("IM shows warning to user: " + warning);
 	}
 
 	@Override
-	public KeyPair getKeyPair(SessionID sessionID) {
+	public KeyPair getKeyPair(SessionIDImpl sessionID) {
 		logger.info("IM generates a DSA key pair.");
 		try {
 			return CryptoUtils.generateDsaKeyPair();

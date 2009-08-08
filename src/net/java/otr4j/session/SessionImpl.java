@@ -69,17 +69,17 @@ public class SessionImpl implements Session {
 		private byte[] value;
 	}
 
-	private SessionID sessionID;
-	private OtrEngineListener<SessionID> listener;
+	private SessionIDImpl sessionID;
+	private OtrEngineListener<SessionIDImpl> listener;
 	private SessionStatus sessionStatus;
-	private AuthContext authContext;
+	private AuthContextImpl authContext;
 	private SessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
 	private static Logger logger = Logger
 			.getLogger(SessionImpl.class.getName());
 
-	public SessionImpl(SessionID sessionID,
-			OtrEngineListener<SessionID> listener) {
+	public SessionImpl(SessionIDImpl sessionID,
+			OtrEngineListener<SessionIDImpl> listener) {
 
 		this.setSessionID(sessionID);
 		this.setListener(listener);
@@ -218,7 +218,7 @@ public class SessionImpl implements Session {
 		return sessionStatus;
 	}
 
-	private void setSessionID(SessionID sessionID) {
+	private void setSessionID(SessionIDImpl sessionID) {
 		this.sessionID = sessionID;
 	}
 
@@ -227,15 +227,15 @@ public class SessionImpl implements Session {
 	 * 
 	 * @see net.java.otr4j.session.ISession#getSessionID()
 	 */
-	public SessionID getSessionID() {
+	public SessionIDImpl getSessionID() {
 		return sessionID;
 	}
 
-	private void setListener(OtrEngineListener<SessionID> listener) {
+	private void setListener(OtrEngineListener<SessionIDImpl> listener) {
 		this.listener = listener;
 	}
 
-	private OtrEngineListener<SessionID> getListener() {
+	private OtrEngineListener<SessionIDImpl> getListener() {
 		return listener;
 	}
 
@@ -245,9 +245,9 @@ public class SessionImpl implements Session {
 		return sessionKeys;
 	}
 
-	private AuthContext getAuthContext() {
+	private AuthContextImpl getAuthContext() {
 		if (authContext == null)
-			authContext = new AuthContext(getSessionID(), getListener());
+			authContext = new AuthContextImpl(getSessionID(), getListener());
 		return authContext;
 	}
 
@@ -532,7 +532,7 @@ public class SessionImpl implements Session {
 	private void handleAuthMessage(String msgText, int policy)
 			throws OtrException {
 
-		AuthContext auth = this.getAuthContext();
+		AuthContextImpl auth = this.getAuthContext();
 		auth.handleReceivingMessage(msgText, policy);
 
 		if (auth.getIsSecure()) {

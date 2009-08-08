@@ -11,11 +11,11 @@ package net.java.otr4j.session;
  * @author George Politis
  * 
  */
-public final class SessionID {
+public final class SessionIDImpl {
 
-	public static final SessionID Empty = new SessionID(null, null, null);
+	public static final SessionIDImpl Empty = new SessionIDImpl(null, null, null);
 
-	public SessionID(String accountID, String userID, String protocolName) {
+	public SessionIDImpl(String accountID, String userID, String protocolName) {
 		this.setAccountID(accountID);
 		this.setUserID(userID);
 		this.setProtocolName(protocolName);
@@ -62,7 +62,7 @@ public final class SessionID {
 		if (obj == null || obj.getClass() != this.getClass())
 			return false;
 
-		SessionID sessionID = (SessionID) obj;
+		SessionIDImpl sessionID = (SessionIDImpl) obj;
 		
 		return this.getAccountID().equals(sessionID.getAccountID())
 				&& this.getUserID().equals(sessionID.getUserID())

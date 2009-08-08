@@ -37,7 +37,7 @@ import net.java.otr4j.message.SignatureMessage;
  * 
  * @author George Politis
  */
-class AuthContext {
+class AuthContextImpl {
 
 	/**
 	 * 
@@ -227,15 +227,15 @@ class AuthContext {
 	public static final byte M1p_START = (byte) 0x04;
 	public static final byte M2p_START = (byte) 0x05;
 
-	public AuthContext(SessionID sessionID,
-			OtrEngineListener<SessionID> listener) {
+	public AuthContextImpl(SessionIDImpl sessionID,
+			OtrEngineListener<SessionIDImpl> listener) {
 		this.setSessionID(sessionID);
 		this.setListener(listener);
 		this.reset();
 	}
 
-	private SessionID sessionID;
-	private OtrEngineListener<SessionID> listener;
+	private SessionIDImpl sessionID;
+	private OtrEngineListener<SessionIDImpl> listener;
 
 	private int authenticationState;
 	private byte[] r;
@@ -271,7 +271,7 @@ class AuthContext {
 	}
 
 	private static Logger logger = Logger
-			.getLogger(AuthContext.class.getName());
+			.getLogger(AuthContextImpl.class.getName());
 
 	private DHCommitMessage getDHCommitMessage() throws OtrException {
 		return new DHCommitMessage(this.getProtocolVersion(), this
@@ -359,7 +359,7 @@ class AuthContext {
 
 	public void reset() {
 		logger.info("Resetting authentication state.");
-		authenticationState = AuthContext.NONE;
+		authenticationState = AuthContextImpl.NONE;
 		r = null;
 
 		remoteDHPublicKey = null;
@@ -566,11 +566,11 @@ class AuthContext {
 		return localLongTermKeyPair;
 	}
 
-	private void setListener(OtrEngineListener<SessionID> listener) {
+	private void setListener(OtrEngineListener<SessionIDImpl> listener) {
 		this.listener = listener;
 	}
 
-	private OtrEngineListener<SessionID> getListener() {
+	private OtrEngineListener<SessionIDImpl> getListener() {
 		return listener;
 	}
 
@@ -793,7 +793,7 @@ class AuthContext {
 
 			logger.info("Signature verification succeeded.");
 
-			this.setAuthenticationState(AuthContext.NONE);
+			this.setAuthenticationState(AuthContextImpl.NONE);
 			this.setIsSecure(true);
 			try {
 				getListener().injectMessage(getSessionID(),
@@ -831,7 +831,7 @@ class AuthContext {
 				// authstate to
 				// AUTHSTATE_AWAITING_SIG
 				this.setRemoteDHPublicKey(dhKey.getDhPublicKey());
-				this.setAuthenticationState(AuthContext.AWAITING_SIG);
+				this.setAuthenticationState(AuthContextImpl.AWAITING_SIG);
 				getListener().injectMessage(getSessionID(),
 						this.getRevealSignatureMessage().writeObject());
 				logger.info("Sent Reveal Signature.");
@@ -890,7 +890,7 @@ class AuthContext {
 			this.setRemoteDHPublicKeyEncrypted(dhCommit
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
+			this.setAuthenticationState(AuthContextImpl.AWAITING_REVEALSIG);
 			try {
 				getListener().injectMessage(getSessionID(),
 						this.getDHKeyMessage().writeObject());
@@ -941,7 +941,7 @@ class AuthContext {
 				this.setRemoteDHPublicKeyEncrypted(dhCommit
 						.getDhPublicKeyEncrypted());
 				this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-				this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
+				this.setAuthenticationState(AuthContextImpl.AWAITING_REVEALSIG);
 				try {
 					getListener().injectMessage(getSessionID(),
 							this.getDHKeyMessage().writeObject());
@@ -976,7 +976,7 @@ class AuthContext {
 			this.setRemoteDHPublicKeyEncrypted(dhCommit
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
+			this.setAuthenticationState(AuthContextImpl.AWAITING_REVEALSIG);
 			try {
 				getListener().injectMessage(getSessionID(),
 						this.getDHKeyMessage().writeObject());
@@ -994,7 +994,7 @@ class AuthContext {
 		logger.info("Starting Authenticated Key Exchange");
 		this.reset();
 		this.setProtocolVersion(2);
-		this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
+		this.setAuthenticationState(AuthContextImpl.AWAITING_DHKEY);
 		logger.info("Sending D-H Commit.");
 		try {
 			getListener().injectMessage(getSessionID(),
@@ -1004,11 +1004,11 @@ class AuthContext {
 		}
 	}
 
-	private void setSessionID(SessionID sessionID) {
+	private void setSessionID(SessionIDImpl sessionID) {
 		this.sessionID = sessionID;
 	}
 
-	private SessionID getSessionID() {
+	private SessionIDImpl getSessionID() {
 		return sessionID;
 	}
 }

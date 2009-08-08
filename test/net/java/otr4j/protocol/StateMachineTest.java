@@ -3,13 +3,13 @@ package net.java.otr4j.protocol;
 import net.java.otr4j.PolicyConstants;
 import net.java.otr4j.OtrEngineImpl;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
-import net.java.otr4j.session.SessionID;
+import net.java.otr4j.session.SessionIDImpl;
 
 public class StateMachineTest extends junit.framework.TestCase {
 
-	private SessionID aliceSessionID = new SessionID("Alice@Wonderland",
+	private SessionIDImpl aliceSessionID = new SessionIDImpl("Alice@Wonderland",
 			"Bob@Wonderland", "Scytale");
-	private SessionID bobSessionID = new SessionID("Bob@Wonderland",
+	private SessionIDImpl bobSessionID = new SessionIDImpl("Bob@Wonderland",
 			"Alice@Wonderland", "Scytale");
 
 	public void testReceivingMessage() throws Exception {
