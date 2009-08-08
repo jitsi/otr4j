@@ -8,19 +8,21 @@ package net.java.otr4j;
 
 import java.security.KeyPair;
 
+import net.java.otr4j.session.SessionID;
+
 /**
  * 
  * @author George Politis
  * 
  */
-public interface OtrEngineListener<T> {
-	public abstract void injectMessage(T sessionID, String msg);
+public interface OtrEngineListener {
+	public abstract void injectMessage(SessionID sessionID, String msg);
 
-	public abstract  void showWarning(T sessionID, String warning);
+	public abstract void showWarning(SessionID sessionID, String warning);
 
-	public abstract  void showError(T sessionID, String error);
+	public abstract void showError(SessionID sessionID, String error);
 
-	public abstract  int getPolicy(T sessionID);
+	public abstract int getPolicy(SessionID sessionID);
 
-	public abstract  KeyPair getKeyPair(T sessionID);
+	public abstract KeyPair getKeyPair(SessionID sessionID);
 }

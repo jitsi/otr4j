@@ -1,14 +1,14 @@
 package net.java.otr4j.protocol;
 
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.*;
 
-import net.java.otr4j.CryptoUtils;
 import net.java.otr4j.OtrEngineListener;
-import net.java.otr4j.session.SessionIDImpl;
+import net.java.otr4j.session.SessionID;
 
-public class DummyOTR4jListener implements OtrEngineListener<SessionIDImpl> {
+public class DummyOTR4jListener implements OtrEngineListener {
 
 	public DummyOTR4jListener(int policy) {
 		this.policy = policy;
@@ -20,12 +20,12 @@ public class DummyOTR4jListener implements OtrEngineListener<SessionIDImpl> {
 	public String lastInjectedMessage;
 
 	@Override
-	public int getPolicy(SessionIDImpl ctx) {
+	public int getPolicy(SessionID ctx) {
 		return this.policy;
 	}
 
 	@Override
-	public void injectMessage(SessionIDImpl sessionID, String msg) {
+	public void injectMessage(SessionID sessionID, String msg) {
 
 		this.lastInjectedMessage = msg;
 		String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10) + "..."
@@ -34,20 +34,22 @@ public class DummyOTR4jListener implements OtrEngineListener<SessionIDImpl> {
 	}
 
 	@Override
-	public void showError(SessionIDImpl sessionID, String error) {
+	public void showError(SessionID sessionID, String error) {
 		logger.severe("IM shows error to user: " + error);
 	}
 
 	@Override
-	public void showWarning(SessionIDImpl sessionID, String warning) {
+	public void showWarning(SessionID sessionID, String warning) {
 		logger.warning("IM shows warning to user: " + warning);
 	}
 
 	@Override
-	public KeyPair getKeyPair(SessionIDImpl sessionID) {
+	public KeyPair getKeyPair(SessionID sessionID) {
 		logger.info("IM generates a DSA key pair.");
 		try {
-			return CryptoUtils.generateDsaKeyPair();
+			KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
+			return kg.genKeyPair();
+
 		} catch (NoSuchAlgorithmException e) {
 			return null;
 		}

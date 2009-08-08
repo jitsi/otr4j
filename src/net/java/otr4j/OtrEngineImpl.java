@@ -22,11 +22,11 @@ import net.java.otr4j.session.SessionStatus;
  */
 public class OtrEngineImpl implements OtrEngine<SessionIDImpl> {
 
-	public OtrEngineImpl(OtrEngineListener<SessionIDImpl> listener) {
+	public OtrEngineImpl(OtrEngineListener listener) {
 		this.setListener(listener);
 	}
 
-	private OtrEngineListener<SessionIDImpl> listener;
+	private OtrEngineListener listener;
 	private Map<SessionIDImpl, Session> sessions;
 
 	private Session getSession(SessionIDImpl sessionID) {
@@ -65,11 +65,11 @@ public class OtrEngineImpl implements OtrEngine<SessionIDImpl> {
 		this.getSession(sessionID).startSession();
 	}
 
-	private void setListener(OtrEngineListener<SessionIDImpl> listener) {
+	private void setListener(OtrEngineListener listener) {
 		this.listener = listener;
 	}
 
-	private OtrEngineListener<SessionIDImpl> getListener() {
+	private OtrEngineListener getListener() {
 		return listener;
 	}
 

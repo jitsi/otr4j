@@ -21,8 +21,8 @@ import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.interfaces.DHPublicKey;
 
-import net.java.otr4j.CryptoConstants;
-import net.java.otr4j.CryptoUtils;
+import net.java.otr4j.OtrCryptoEngine;
+import net.java.otr4j.OtrCryptoEngineImpl;
 import net.java.otr4j.OtrException;
 
 import org.bouncycastle.util.BigIntegers;
@@ -102,7 +102,7 @@ public class SerializationUtils implements SerializationConstants {
 
 		DSAPublicKey dsaKey = (DSAPublicKey) pubKey;
 
-		writeShort(out, CryptoConstants.DSA_PUB_TYPE);
+		writeShort(out, OtrCryptoEngine.DSA_PUB_TYPE);
 
 		DSAParams dsaParams = dsaKey.getParams();
 		writeMpi(out, dsaParams.getP());
@@ -138,7 +138,7 @@ public class SerializationUtils implements SerializationConstants {
 			throw new UnsupportedOperationException(
 					"Key types other than DSA are not supported at the moment.");
 
-		writeShort(bos, CryptoConstants.DSA_PUB_TYPE);
+		writeShort(bos, OtrCryptoEngine.DSA_PUB_TYPE);
 
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DSAPublicKey dsaKey = (DSAPublicKey) pubKey;
@@ -151,7 +151,7 @@ public class SerializationUtils implements SerializationConstants {
 		out.close();
 
 		try {
-			byte[] fingerprint = CryptoUtils.sha1Hash(b);
+			byte[] fingerprint = new OtrCryptoEngineImpl().sha1Hash(b);
 			writeData(bos, fingerprint);
 		} catch (OtrException e) {
 			throw new IOException(e);
@@ -171,7 +171,7 @@ public class SerializationUtils implements SerializationConstants {
 
 		int type = readShort(in);
 		switch (type) {
-		case CryptoConstants.DSA_PUB_TYPE:
+		case OtrCryptoEngine.DSA_PUB_TYPE:
 			BigInteger p = readMpi(in);
 			BigInteger q = readMpi(in);
 			BigInteger g = readMpi(in);
@@ -276,7 +276,7 @@ public class SerializationUtils implements SerializationConstants {
 			throws IOException {
 		BigInteger gyMpi = readMpi(in);
 		try {
-			return CryptoUtils.getDHPublicKey(gyMpi);
+			return new OtrCryptoEngineImpl().getDHPublicKey(gyMpi);
 		} catch (Exception ex) {
 			throw new IOException(ex);
 		}

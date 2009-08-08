@@ -15,8 +15,8 @@ import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
 
-import net.java.otr4j.CryptoConstants;
-import net.java.otr4j.CryptoUtils;
+import net.java.otr4j.OtrCryptoEngine;
+import net.java.otr4j.OtrCryptoEngineImpl;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.message.*;
 
@@ -26,8 +26,8 @@ import net.java.otr4j.message.*;
  */
 class SessionKeysImpl implements SessionKeys {
 
-	private static Logger logger = Logger
-			.getLogger(SessionKeysImpl.class.getName());
+	private static Logger logger = Logger.getLogger(SessionKeysImpl.class
+			.getName());
 	private String keyDescription;
 
 	public SessionKeysImpl(int localKeyIndex, int remoteKeyIndex) {
@@ -118,7 +118,7 @@ class SessionKeysImpl implements SessionKeys {
 			ByteBuffer buff = ByteBuffer.allocate(len);
 			buff.put(b);
 			buff.put(secbytes);
-			byte[] result = CryptoUtils.sha1Hash(buff.array());
+			byte[] result = new OtrCryptoEngineImpl().sha1Hash(buff.array());
 			return result;
 		} catch (Exception e) {
 			throw new OtrException(e);
@@ -135,7 +135,7 @@ class SessionKeysImpl implements SessionKeys {
 
 		byte[] h1 = h1(sendbyte);
 
-		byte[] key = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
+		byte[] key = new byte[OtrCryptoEngine.AES_KEY_BYTE_LENGTH];
 		ByteBuffer buff = ByteBuffer.wrap(h1);
 		buff.get(key);
 		logger.info("Calculated sending AES key.");
@@ -153,7 +153,7 @@ class SessionKeysImpl implements SessionKeys {
 
 		byte[] h1 = h1(receivebyte);
 
-		byte[] key = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
+		byte[] key = new byte[OtrCryptoEngine.AES_KEY_BYTE_LENGTH];
 		ByteBuffer buff = ByteBuffer.wrap(h1);
 		buff.get(key);
 		logger.info("Calculated receiving AES key.");
@@ -166,14 +166,15 @@ class SessionKeysImpl implements SessionKeys {
 		if (sendingMACKey != null)
 			return sendingAESKey;
 
-		sendingMACKey = CryptoUtils.sha1Hash(getSendingAESKey());
+		sendingMACKey = new OtrCryptoEngineImpl().sha1Hash(getSendingAESKey());
 		logger.info("Calculated sending MAC key.");
 		return sendingMACKey;
 	}
 
 	public byte[] getReceivingMACKey() throws OtrException {
 		if (receivingMACKey == null) {
-			receivingMACKey = CryptoUtils.sha1Hash(getReceivingAESKey());
+			receivingMACKey = new OtrCryptoEngineImpl()
+					.sha1Hash(getReceivingAESKey());
 			logger.info("Calculated receiving AES key.");
 		}
 		return receivingMACKey;
@@ -181,8 +182,8 @@ class SessionKeysImpl implements SessionKeys {
 
 	private BigInteger getS() throws OtrException {
 		if (s == null) {
-			s = CryptoUtils.generateSecret(getLocalPair().getPrivate(),
-					getRemoteKey());
+			s = new OtrCryptoEngineImpl().generateSecret(getLocalPair()
+					.getPrivate(), getRemoteKey());
 			logger.info("Calculating shared secret S.");
 		}
 		return s;

@@ -20,11 +20,11 @@ import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
 
-import net.java.otr4j.CryptoConstants;
-import net.java.otr4j.CryptoUtils;
+import net.java.otr4j.OtrCryptoEngine;
+import net.java.otr4j.OtrCryptoEngineImpl;
 import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrException;
-import net.java.otr4j.PolicyUtils;
+import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.message.DHCommitMessage;
 import net.java.otr4j.message.DHKeyMessage;
 import net.java.otr4j.message.MessageConstants;
@@ -37,7 +37,7 @@ import net.java.otr4j.message.SignatureMessage;
  * 
  * @author George Politis
  */
-class AuthContextImpl {
+class AuthContextImpl implements AuthContext {
 
 	/**
 	 * 
@@ -215,27 +215,14 @@ class AuthContextImpl {
 		}
 	}
 
-	public static final int NONE = 0;
-	public static final int AWAITING_DHKEY = 1;
-	public static final int AWAITING_REVEALSIG = 2;
-	public static final int AWAITING_SIG = 3;
-	public static final int V1_SETUP = 4;
-
-	public static final byte C_START = (byte) 0x01;
-	public static final byte M1_START = (byte) 0x02;
-	public static final byte M2_START = (byte) 0x03;
-	public static final byte M1p_START = (byte) 0x04;
-	public static final byte M2p_START = (byte) 0x05;
-
-	public AuthContextImpl(SessionIDImpl sessionID,
-			OtrEngineListener<SessionIDImpl> listener) {
+	public AuthContextImpl(SessionID sessionID, OtrEngineListener listener) {
 		this.setSessionID(sessionID);
 		this.setListener(listener);
 		this.reset();
 	}
 
-	private SessionIDImpl sessionID;
-	private OtrEngineListener<SessionIDImpl> listener;
+	private SessionID sessionID;
+	private OtrEngineListener listener;
 
 	private int authenticationState;
 	private byte[] r;
@@ -270,8 +257,8 @@ class AuthContextImpl {
 		this.protocolVersion = protoVersion;
 	}
 
-	private static Logger logger = Logger
-			.getLogger(AuthContextImpl.class.getName());
+	private static Logger logger = Logger.getLogger(AuthContextImpl.class
+			.getName());
 
 	private DHCommitMessage getDHCommitMessage() throws OtrException {
 		return new DHCommitMessage(this.getProtocolVersion(), this
@@ -292,16 +279,17 @@ class AuthContextImpl {
 					.getRemoteDHPublicKey(), this.getLocalLongTermKeyPair()
 					.getPublic(), this.getLocalDHKeyPairID());
 
-			byte[] mhash = CryptoUtils
-					.sha256Hmac(m.toByteArray(), this.getM1());
-			byte[] signature = CryptoUtils.sign(mhash, this
+			OtrCryptoEngine otrCryptoEngine = new OtrCryptoEngineImpl();
+			byte[] mhash = otrCryptoEngine.sha256Hmac(m.toByteArray(), this
+					.getM1());
+			byte[] signature = otrCryptoEngine.sign(mhash, this
 					.getLocalLongTermKeyPair().getPrivate());
 
 			MysteriousX mysteriousX = new MysteriousX(this
 					.getLocalLongTermKeyPair().getPublic(), this
 					.getLocalDHKeyPairID(), signature);
 
-			byte[] xEncrypted = CryptoUtils.aesEncrypt(this.getC(), null,
+			byte[] xEncrypted = otrCryptoEngine.aesEncrypt(this.getC(), null,
 					mysteriousX.toByteArray());
 
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -309,8 +297,8 @@ class AuthContextImpl {
 			byte[] tmp = out.toByteArray();
 			out.close();
 
-			byte[] xEncryptedHash = CryptoUtils
-					.sha256Hmac160(tmp, this.getM2());
+			byte[] xEncryptedHash = otrCryptoEngine.sha256Hmac160(tmp, this
+					.getM2());
 			return new RevealSignatureMessage(this.getProtocolVersion(), this
 					.getR(), xEncryptedHash, xEncrypted);
 		} catch (IOException e) {
@@ -325,13 +313,14 @@ class AuthContextImpl {
 				.getLocalLongTermKeyPair().getPublic(), this
 				.getLocalDHKeyPairID());
 
+		OtrCryptoEngine otrCryptoEngine = new OtrCryptoEngineImpl();
 		byte[] mhash;
 		try {
-			mhash = CryptoUtils.sha256Hmac(m.toByteArray(), this.getM1p());
+			mhash = otrCryptoEngine.sha256Hmac(m.toByteArray(), this.getM1p());
 		} catch (IOException e) {
 			throw new OtrException(e);
 		}
-		byte[] signature = CryptoUtils.sign(mhash, this
+		byte[] signature = otrCryptoEngine.sign(mhash, this
 				.getLocalLongTermKeyPair().getPrivate());
 
 		MysteriousX mysteriousX = new MysteriousX(this
@@ -340,15 +329,15 @@ class AuthContextImpl {
 
 		byte[] xEncrypted;
 		try {
-			xEncrypted = CryptoUtils.aesEncrypt(this.getCp(), null, mysteriousX
-					.toByteArray());
+			xEncrypted = otrCryptoEngine.aesEncrypt(this.getCp(), null,
+					mysteriousX.toByteArray());
 
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			SerializationUtils.writeData(out, xEncrypted);
 			byte[] tmp = out.toByteArray();
 			out.close();
 
-			byte[] xEncryptedHash = CryptoUtils.sha256Hmac160(tmp, this
+			byte[] xEncryptedHash = otrCryptoEngine.sha256Hmac160(tmp, this
 					.getM2p());
 			return new SignatureMessage(this.getProtocolVersion(),
 					xEncryptedHash, xEncrypted);
@@ -359,7 +348,7 @@ class AuthContextImpl {
 
 	public void reset() {
 		logger.info("Resetting authentication state.");
-		authenticationState = AuthContextImpl.NONE;
+		authenticationState = AuthContext.NONE;
 		r = null;
 
 		remoteDHPublicKey = null;
@@ -399,7 +388,7 @@ class AuthContextImpl {
 	private byte[] getR() {
 		if (r == null) {
 			logger.info("Picking random key r.");
-			r = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
+			r = new byte[OtrCryptoEngine.AES_KEY_BYTE_LENGTH];
 			new Random().nextBytes(r);
 		}
 		return r;
@@ -407,10 +396,10 @@ class AuthContextImpl {
 
 	private void setRemoteDHPublicKey(DHPublicKey dhPublicKey) {
 		// Verifies that Alice's gy is a legal value (2 <= gy <= modulus-2)
-		if (dhPublicKey.getY().compareTo(CryptoConstants.MODULUS_MINUS_TWO) > 0) {
+		if (dhPublicKey.getY().compareTo(OtrCryptoEngine.MODULUS_MINUS_TWO) > 0) {
 			throw new IllegalArgumentException(
 					"Illegal D-H Public Key value, Ignoring message.");
-		} else if (dhPublicKey.getY().compareTo(CryptoConstants.BIGINTEGER_TWO) < 0) {
+		} else if (dhPublicKey.getY().compareTo(OtrCryptoEngine.BIGINTEGER_TWO) < 0) {
 			throw new IllegalArgumentException(
 					"Illegal D-H Public Key value, Ignoring message.");
 		}
@@ -443,7 +432,7 @@ class AuthContextImpl {
 
 	public KeyPair getLocalDHKeyPair() throws OtrException {
 		if (localDHKeyPair == null) {
-			localDHKeyPair = CryptoUtils.generateDHKeyPair();
+			localDHKeyPair = new OtrCryptoEngineImpl().generateDHKeyPair();
 			logger.info("Generated local D-H key pair.");
 		}
 		return localDHKeyPair;
@@ -455,7 +444,7 @@ class AuthContextImpl {
 
 	private byte[] getLocalDHPublicKeyHash() throws OtrException {
 		if (localDHPublicKeyHash == null) {
-			localDHPublicKeyHash = CryptoUtils
+			localDHPublicKeyHash = new OtrCryptoEngineImpl()
 					.sha256Hash(getLocalDHPublicKeyBytes());
 			logger.info("Hashed local D-H public key.");
 		}
@@ -464,8 +453,8 @@ class AuthContextImpl {
 
 	private byte[] getLocalDHPublicKeyEncrypted() throws OtrException {
 		if (localDHPublicKeyEncrypted == null) {
-			localDHPublicKeyEncrypted = CryptoUtils.aesEncrypt(getR(), null,
-					getLocalDHPublicKeyBytes());
+			localDHPublicKeyEncrypted = new OtrCryptoEngineImpl().aesEncrypt(
+					getR(), null, getLocalDHPublicKeyBytes());
 			logger.info("Encrypted our D-H public key.");
 		}
 		return localDHPublicKeyEncrypted;
@@ -473,8 +462,9 @@ class AuthContextImpl {
 
 	public BigInteger getS() throws OtrException {
 		if (s == null) {
-			s = CryptoUtils.generateSecret(this.getLocalDHKeyPair()
-					.getPrivate(), this.getRemoteDHPublicKey());
+			s = new OtrCryptoEngineImpl().generateSecret(this
+					.getLocalDHKeyPair().getPrivate(), this
+					.getRemoteDHPublicKey());
 			logger.info("Generated shared secret.");
 		}
 		return s;
@@ -486,7 +476,7 @@ class AuthContextImpl {
 
 		byte[] h2 = h2(C_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		this.c = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
+		this.c = new byte[OtrCryptoEngine.AES_KEY_BYTE_LENGTH];
 		buff.get(this.c);
 		logger.info("Computed c.");
 		return c;
@@ -499,7 +489,7 @@ class AuthContextImpl {
 
 		byte[] h2 = h2(M1_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		byte[] m1 = new byte[CryptoConstants.SHA256_HMAC_KEY_BYTE_LENGTH];
+		byte[] m1 = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
 		buff.get(m1);
 		logger.info("Computed m1.");
 		this.m1 = m1;
@@ -512,7 +502,7 @@ class AuthContextImpl {
 
 		byte[] h2 = h2(M2_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		byte[] m2 = new byte[CryptoConstants.SHA256_HMAC_KEY_BYTE_LENGTH];
+		byte[] m2 = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
 		buff.get(m2);
 		logger.info("Computed m2.");
 		this.m2 = m2;
@@ -525,8 +515,8 @@ class AuthContextImpl {
 
 		byte[] h2 = h2(C_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		byte[] cp = new byte[CryptoConstants.AES_KEY_BYTE_LENGTH];
-		buff.position(CryptoConstants.AES_KEY_BYTE_LENGTH);
+		byte[] cp = new byte[OtrCryptoEngine.AES_KEY_BYTE_LENGTH];
+		buff.position(OtrCryptoEngine.AES_KEY_BYTE_LENGTH);
 		buff.get(cp);
 		logger.info("Computed c'.");
 		this.cp = cp;
@@ -539,7 +529,7 @@ class AuthContextImpl {
 
 		byte[] h2 = h2(M1p_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		byte[] m1p = new byte[CryptoConstants.SHA256_HMAC_KEY_BYTE_LENGTH];
+		byte[] m1p = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
 		buff.get(m1p);
 		this.m1p = m1p;
 		logger.info("Computed m1'.");
@@ -552,7 +542,7 @@ class AuthContextImpl {
 
 		byte[] h2 = h2(M2p_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		byte[] m2p = new byte[CryptoConstants.SHA256_HMAC_KEY_BYTE_LENGTH];
+		byte[] m2p = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
 		buff.get(m2p);
 		this.m2p = m2p;
 		logger.info("Computed m2'.");
@@ -566,11 +556,11 @@ class AuthContextImpl {
 		return localLongTermKeyPair;
 	}
 
-	private void setListener(OtrEngineListener<SessionIDImpl> listener) {
+	private void setListener(OtrEngineListener listener) {
 		this.listener = listener;
 	}
 
-	private OtrEngineListener<SessionIDImpl> getListener() {
+	private OtrEngineListener getListener() {
 		return listener;
 	}
 
@@ -591,7 +581,7 @@ class AuthContextImpl {
 		buff.put(b);
 		buff.put(secbytes);
 		byte[] sdata = buff.array();
-		return CryptoUtils.sha256Hash(sdata);
+		return new OtrCryptoEngineImpl().sha256Hash(sdata);
 	}
 
 	private byte[] getLocalDHPublicKeyBytes() throws OtrException {
@@ -610,7 +600,7 @@ class AuthContextImpl {
 
 	public void handleReceivingMessage(String msgText, int policy)
 			throws OtrException {
-		Boolean allowV2 = PolicyUtils.getAllowV2(policy);
+		Boolean allowV2 = this.getAllowV2(policy);
 
 		switch (MessageUtils.getMessageType(msgText)) {
 		case MessageConstants.DH_COMMIT:
@@ -669,17 +659,17 @@ class AuthContextImpl {
 			MysteriousM remoteM = new MysteriousM(this.getRemoteDHPublicKey(),
 					(DHPublicKey) this.getLocalDHKeyPair().getPublic(), remoteX
 							.getLongTermPublicKey(), remoteX.getDhKeyID());
-
+			OtrCryptoEngine otrCryptoEngine = new OtrCryptoEngineImpl();
 			// Verify signature.
 			byte[] signature;
 			try {
-				signature = CryptoUtils.sha256Hmac(remoteM.toByteArray(), this
-						.getM1p());
+				signature = otrCryptoEngine.sha256Hmac(remoteM.toByteArray(),
+						this.getM1p());
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			if (!CryptoUtils.verify(signature, remoteX.getLongTermPublicKey(),
-					remoteX.getSignature())) {
+			if (!otrCryptoEngine.verify(signature, remoteX
+					.getLongTermPublicKey(), remoteX.getSignature())) {
 				logger.info("Signature verification failed.");
 				return;
 			}
@@ -729,13 +719,14 @@ class AuthContextImpl {
 			// send
 			// it as a Data Message.
 
+			OtrCryptoEngine otrCryptoEngine = new OtrCryptoEngineImpl();
 			// Uses r to decrypt the value of gx sent earlier
-			byte[] remoteDHPublicKeyDecrypted = CryptoUtils.aesDecrypt(
+			byte[] remoteDHPublicKeyDecrypted = otrCryptoEngine.aesDecrypt(
 					revealSigMessage.getRevealedKey(), null, this
 							.getRemoteDHPublicKeyEncrypted());
 
 			// Verifies that HASH(gx) matches the value sent earlier
-			byte[] remoteDHPublicKeyHash = CryptoUtils
+			byte[] remoteDHPublicKeyHash = otrCryptoEngine
 					.sha256Hash(remoteDHPublicKeyDecrypted);
 			if (!Arrays.equals(remoteDHPublicKeyHash, this
 					.getRemoteDHPublicKeyHash())) {
@@ -754,7 +745,7 @@ class AuthContextImpl {
 				throw new OtrException(e);
 			}
 
-			this.setRemoteDHPublicKey(CryptoUtils
+			this.setRemoteDHPublicKey(otrCryptoEngine
 					.getDHPublicKey(remoteDHPublicKeyMpi));
 
 			// Verify received Data.
@@ -780,20 +771,20 @@ class AuthContextImpl {
 			// Verify signature.
 			byte[] signature;
 			try {
-				signature = CryptoUtils.sha256Hmac(remoteM.toByteArray(), this
-						.getM1());
+				signature = otrCryptoEngine.sha256Hmac(remoteM.toByteArray(),
+						this.getM1());
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			if (!CryptoUtils.verify(signature, remoteX.getLongTermPublicKey(),
-					remoteX.getSignature())) {
+			if (!otrCryptoEngine.verify(signature, remoteX
+					.getLongTermPublicKey(), remoteX.getSignature())) {
 				logger.info("Signature verification failed.");
 				return;
 			}
 
 			logger.info("Signature verification succeeded.");
 
-			this.setAuthenticationState(AuthContextImpl.NONE);
+			this.setAuthenticationState(AuthContext.NONE);
 			this.setIsSecure(true);
 			try {
 				getListener().injectMessage(getSessionID(),
@@ -831,7 +822,7 @@ class AuthContextImpl {
 				// authstate to
 				// AUTHSTATE_AWAITING_SIG
 				this.setRemoteDHPublicKey(dhKey.getDhPublicKey());
-				this.setAuthenticationState(AuthContextImpl.AWAITING_SIG);
+				this.setAuthenticationState(AuthContext.AWAITING_SIG);
 				getListener().injectMessage(getSessionID(),
 						this.getRevealSignatureMessage().writeObject());
 				logger.info("Sent Reveal Signature.");
@@ -890,7 +881,7 @@ class AuthContextImpl {
 			this.setRemoteDHPublicKeyEncrypted(dhCommit
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-			this.setAuthenticationState(AuthContextImpl.AWAITING_REVEALSIG);
+			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
 			try {
 				getListener().injectMessage(getSessionID(),
 						this.getDHKeyMessage().writeObject());
@@ -941,7 +932,7 @@ class AuthContextImpl {
 				this.setRemoteDHPublicKeyEncrypted(dhCommit
 						.getDhPublicKeyEncrypted());
 				this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-				this.setAuthenticationState(AuthContextImpl.AWAITING_REVEALSIG);
+				this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
 				try {
 					getListener().injectMessage(getSessionID(),
 							this.getDHKeyMessage().writeObject());
@@ -976,7 +967,7 @@ class AuthContextImpl {
 			this.setRemoteDHPublicKeyEncrypted(dhCommit
 					.getDhPublicKeyEncrypted());
 			this.setRemoteDHPublicKeyHash(dhCommit.getDhPublicKeyHash());
-			this.setAuthenticationState(AuthContextImpl.AWAITING_REVEALSIG);
+			this.setAuthenticationState(AuthContext.AWAITING_REVEALSIG);
 			try {
 				getListener().injectMessage(getSessionID(),
 						this.getDHKeyMessage().writeObject());
@@ -994,7 +985,7 @@ class AuthContextImpl {
 		logger.info("Starting Authenticated Key Exchange");
 		this.reset();
 		this.setProtocolVersion(2);
-		this.setAuthenticationState(AuthContextImpl.AWAITING_DHKEY);
+		this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
 		logger.info("Sending D-H Commit.");
 		try {
 			getListener().injectMessage(getSessionID(),
@@ -1004,11 +995,15 @@ class AuthContextImpl {
 		}
 	}
 
-	private void setSessionID(SessionIDImpl sessionID) {
+	private void setSessionID(SessionID sessionID) {
 		this.sessionID = sessionID;
 	}
 
-	private SessionIDImpl getSessionID() {
+	private SessionID getSessionID() {
 		return sessionID;
+	}
+
+	private Boolean getAllowV2(int policy) {
+		return (policy & OtrPolicy.ALLOW_V2) != 0;
 	}
 }

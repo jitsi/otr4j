@@ -9,7 +9,7 @@ public interface Session {
 
 	public abstract SessionStatus getSessionStatus();
 
-	public abstract SessionIDImpl getSessionID();
+	public abstract SessionID getSessionID();
 
 	public abstract String transformReceiving(String content)
 			throws OtrException;

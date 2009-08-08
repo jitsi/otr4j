@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-import net.java.otr4j.CryptoUtils;
+import net.java.otr4j.OtrCryptoEngineImpl;
 import net.java.otr4j.OtrException;
 
 public abstract class SignatureMessageBase extends EncodedMessageBase {
@@ -44,12 +44,12 @@ public abstract class SignatureMessageBase extends EncodedMessageBase {
 			throw new OtrException(e);
 		}
 
-		byte[] xEncryptedMAC = CryptoUtils.sha256Hmac160(tmp_, key);
+		byte[] xEncryptedMAC = new OtrCryptoEngineImpl().sha256Hmac160(tmp_, key);
 		return xEncryptedMAC;
 	}
 
 	public byte[] decrypt(byte[] key) throws OtrException {
-		return CryptoUtils.aesDecrypt(key, null, this.xEncrypted);
+		return new OtrCryptoEngineImpl().aesDecrypt(key, null, this.xEncrypted);
 	}
 
 	public Boolean verify(byte[] key) throws OtrException {

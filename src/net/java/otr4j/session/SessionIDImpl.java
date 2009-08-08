@@ -11,9 +11,7 @@ package net.java.otr4j.session;
  * @author George Politis
  * 
  */
-public final class SessionIDImpl {
-
-	public static final SessionIDImpl Empty = new SessionIDImpl(null, null, null);
+public final class SessionIDImpl implements SessionID {
 
 	public SessionIDImpl(String accountID, String userID, String protocolName) {
 		this.setAccountID(accountID);
@@ -24,6 +22,7 @@ public final class SessionIDImpl {
 	private String accountID;
 	private String userID;
 	private String protocolName;
+	public static final SessionID Empty = new SessionIDImpl(null, null, null);
 
 	public void setAccountID(String accountID) {
 		this.accountID = accountID;
@@ -41,7 +40,7 @@ public final class SessionIDImpl {
 
 	public String getUserID() {
 		if (userID == null)
-			userID = "";		
+			userID = "";
 		return userID;
 	}
 
@@ -55,21 +54,19 @@ public final class SessionIDImpl {
 		return protocolName;
 	}
 
-	@Override
 	public boolean equals(Object obj) {
 		if (obj == this)
 			return true;
 		if (obj == null || obj.getClass() != this.getClass())
 			return false;
 
-		SessionIDImpl sessionID = (SessionIDImpl) obj;
-		
+		SessionID sessionID = (SessionID) obj;
+
 		return this.getAccountID().equals(sessionID.getAccountID())
 				&& this.getUserID().equals(sessionID.getUserID())
 				&& this.getProtocolName().equals(sessionID.getProtocolName());
 	}
 
-	@Override
 	public int hashCode() {
 		return this.getAccountID().hashCode() + this.getUserID().hashCode()
 				+ this.getProtocolName().hashCode();

@@ -11,7 +11,7 @@ package net.java.otr4j;
  * @author George Politis
  *
  */
-public interface PolicyConstants {
+public interface OtrPolicy {
 	
 	public static final int ALLOW_V1 = 0x01;	
 	public static final int ALLOW_V2 = 0x02;

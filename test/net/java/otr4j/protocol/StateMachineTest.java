@@ -1,6 +1,6 @@
 package net.java.otr4j.protocol;
 
-import net.java.otr4j.PolicyConstants;
+import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.OtrEngineImpl;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
 import net.java.otr4j.session.SessionIDImpl;
@@ -15,7 +15,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 	public void testReceivingMessage() throws Exception {
 
 		DummyOTR4jListener listener = new DummyOTR4jListener(
-				PolicyConstants.ALLOW_V2 | PolicyConstants.ERROR_START_AKE);
+				OtrPolicy.ALLOW_V2 | OtrPolicy.ERROR_START_AKE);
 
 		OtrEngineImpl usAlice = new OtrEngineImpl(listener);
 		OtrEngineImpl usBob = new OtrEngineImpl(listener);

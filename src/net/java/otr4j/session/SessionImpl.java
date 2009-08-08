@@ -18,10 +18,11 @@ import java.util.Vector;
 import java.util.logging.Logger;
 import javax.crypto.interfaces.DHPublicKey;
 
-import net.java.otr4j.CryptoUtils;
+import net.java.otr4j.OtrCryptoEngine;
+import net.java.otr4j.OtrCryptoEngineImpl;
 import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrException;
-import net.java.otr4j.PolicyUtils;
+import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.message.DataMessage;
 import net.java.otr4j.message.ErrorMessage;
 import net.java.otr4j.message.MessageConstants;
@@ -69,17 +70,16 @@ public class SessionImpl implements Session {
 		private byte[] value;
 	}
 
-	private SessionIDImpl sessionID;
-	private OtrEngineListener<SessionIDImpl> listener;
+	private SessionID sessionID;
+	private OtrEngineListener listener;
 	private SessionStatus sessionStatus;
-	private AuthContextImpl authContext;
+	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
 	private static Logger logger = Logger
 			.getLogger(SessionImpl.class.getName());
 
-	public SessionImpl(SessionIDImpl sessionID,
-			OtrEngineListener<SessionIDImpl> listener) {
+	public SessionImpl(SessionID sessionID, OtrEngineListener listener) {
 
 		this.setSessionID(sessionID);
 		this.setListener(listener);
@@ -186,7 +186,7 @@ public class SessionImpl implements Session {
 				SessionKeys.Previous);
 		sess2.setLocalPair(sess4.getLocalPair(), sess4.getLocalKeyID());
 
-		KeyPair newPair = CryptoUtils.generateDHKeyPair();
+		KeyPair newPair = new OtrCryptoEngineImpl().generateDHKeyPair();
 		sess3.setLocalPair(newPair, sess3.getLocalKeyID() + 1);
 		sess4.setLocalPair(newPair, sess4.getLocalKeyID() + 1);
 	}
@@ -218,7 +218,7 @@ public class SessionImpl implements Session {
 		return sessionStatus;
 	}
 
-	private void setSessionID(SessionIDImpl sessionID) {
+	private void setSessionID(SessionID sessionID) {
 		this.sessionID = sessionID;
 	}
 
@@ -227,15 +227,15 @@ public class SessionImpl implements Session {
 	 * 
 	 * @see net.java.otr4j.session.ISession#getSessionID()
 	 */
-	public SessionIDImpl getSessionID() {
+	public SessionID getSessionID() {
 		return sessionID;
 	}
 
-	private void setListener(OtrEngineListener<SessionIDImpl> listener) {
+	private void setListener(OtrEngineListener listener) {
 		this.listener = listener;
 	}
 
-	private OtrEngineListener<SessionIDImpl> getListener() {
+	private OtrEngineListener getListener() {
 		return listener;
 	}
 
@@ -245,7 +245,7 @@ public class SessionImpl implements Session {
 		return sessionKeys;
 	}
 
-	private AuthContextImpl getAuthContext() {
+	private AuthContext getAuthContext() {
 		if (authContext == null)
 			authContext = new AuthContextImpl(getSessionID(), getListener());
 		return authContext;
@@ -266,7 +266,7 @@ public class SessionImpl implements Session {
 	public String transformReceiving(String msgText) throws OtrException {
 
 		int policy = getListener().getPolicy(this.getSessionID());
-		if (!PolicyUtils.getAllowV1(policy) && !PolicyUtils.getAllowV2(policy)) {
+		if (!this.getAllowV1(policy) && !this.getAllowV2(policy)) {
 			logger
 					.info("Policy does not allow neither V1 not V2, ignoring message.");
 			return msgText;
@@ -307,12 +307,11 @@ public class SessionImpl implements Session {
 				+ getSessionID().getProtocolName() + ".");
 
 		QueryMessage queryMessage = new QueryMessage(msgText);
-		if (queryMessage.getVersions().contains(2)
-				&& PolicyUtils.getAllowV2(policy)) {
+		if (queryMessage.getVersions().contains(2) && this.getAllowV2(policy)) {
 			logger.info("Query message with V2 support found.");
 			getAuthContext().startV2Auth();
 		} else if (queryMessage.getVersions().contains(1)
-				&& PolicyUtils.getAllowV1(policy)) {
+				&& this.getAllowV1(policy)) {
 			throw new UnsupportedOperationException();
 		}
 	}
@@ -325,13 +324,13 @@ public class SessionImpl implements Session {
 
 		ErrorMessage errorMessage = new ErrorMessage(msgText);
 		getListener().showError(this.getSessionID(), errorMessage.error);
-		if (PolicyUtils.getErrorStartsAKE(policy)) {
+		if (this.getErrorStartsAKE(policy)) {
 			logger.info("Error message starts AKE.");
 			Vector<Integer> versions = new Vector<Integer>();
-			if (PolicyUtils.getAllowV1(policy))
+			if (this.getAllowV1(policy))
 				versions.add(1);
 
-			if (PolicyUtils.getAllowV2(policy))
+			if (this.getAllowV2(policy))
 				versions.add(2);
 
 			QueryMessage queryMessage = new QueryMessage(versions);
@@ -379,8 +378,12 @@ public class SessionImpl implements Session {
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			byte[] computedMAC = CryptoUtils.sha1Hmac(serializedT, matchingKeys
-					.getReceivingMACKey(), SerializationConstants.MAC);
+
+			OtrCryptoEngine otrCryptoEngine = new OtrCryptoEngineImpl();
+
+			byte[] computedMAC = otrCryptoEngine.sha1Hmac(serializedT,
+					matchingKeys.getReceivingMACKey(),
+					SerializationConstants.MAC);
 
 			if (!Arrays.equals(computedMAC, data.getMac())) {
 				logger.info("MAC verification failed, ignoring message");
@@ -394,7 +397,7 @@ public class SessionImpl implements Session {
 
 			matchingKeys.setReceivingCtr(t.ctr);
 
-			String decryptedMsgContent = new String(CryptoUtils.aesDecrypt(
+			String decryptedMsgContent = new String(otrCryptoEngine.aesDecrypt(
 					matchingKeys.getReceivingAESKey(), matchingKeys
 							.getReceivingCtr(), t.encryptedMsg));
 
@@ -486,7 +489,7 @@ public class SessionImpl implements Session {
 				// REQUIRE_ENCRYPTION
 				// is set, warn him that the message was received
 				// unencrypted.
-				if (PolicyUtils.getRequireEncryption(policy)) {
+				if (this.getRequireEncryption(policy)) {
 					getListener().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 				}
@@ -507,20 +510,20 @@ public class SessionImpl implements Session {
 				// user. If REQUIRE_ENCRYPTION is set, warn him that the
 				// message
 				// was received unencrypted.
-				if (PolicyUtils.getRequireEncryption(policy))
+				if (this.getRequireEncryption(policy))
 					getListener().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 			}
 
-			if (PolicyUtils.getWhiteSpaceStartsAKE(policy)) {
+			if (this.getWhiteSpaceStartsAKE(policy)) {
 				logger.info("WHITESPACE_START_AKE is set");
 
 				if (plainTextMessage.getVersions().contains(2)
-						&& PolicyUtils.getAllowV2(policy)) {
+						&& this.getAllowV2(policy)) {
 					logger.info("V2 tag found.");
 					getAuthContext().startV2Auth();
 				} else if (plainTextMessage.getVersions().contains(1)
-						&& PolicyUtils.getAllowV1(policy)) {
+						&& this.getAllowV1(policy)) {
 					throw new UnsupportedOperationException();
 				}
 			}
@@ -532,7 +535,7 @@ public class SessionImpl implements Session {
 	private void handleAuthMessage(String msgText, int policy)
 			throws OtrException {
 
-		AuthContextImpl auth = this.getAuthContext();
+		AuthContext auth = this.getAuthContext();
 		auth.handleReceivingMessage(msgText, policy);
 
 		if (auth.getIsSecure()) {
@@ -546,7 +549,7 @@ public class SessionImpl implements Session {
 				current.setS(this.getAuthContext().getS());
 			}
 
-			KeyPair nextDH = CryptoUtils.generateDHKeyPair();
+			KeyPair nextDH = new OtrCryptoEngineImpl().generateDHKeyPair();
 			for (int i = 0; i < this.getSessionKeys()[1].length; i++) {
 				SessionKeys current = getSessionKeysByIndex(1, i);
 				current.setRemoteDHPublicKey(getAuthContext()
@@ -609,12 +612,14 @@ public class SessionImpl implements Session {
 				}
 			}
 
+			OtrCryptoEngine otrCryptoEngine = new OtrCryptoEngineImpl();
+
 			byte[] data = out.toByteArray();
 			// Encrypt message.
 			logger
 					.info("Encrypting message with keyids (localKeyID, remoteKeyID) = ("
 							+ senderKeyID + ", " + receipientKeyID + ")");
-			byte[] encryptedMsg = CryptoUtils.aesEncrypt(encryptionKeys
+			byte[] encryptedMsg = otrCryptoEngine.aesEncrypt(encryptionKeys
 					.getSendingAESKey(), ctr, data);
 
 			// Get most recent keys to get the next D-H public key.
@@ -636,7 +641,7 @@ public class SessionImpl implements Session {
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			byte[] mac = CryptoUtils.sha1Hmac(serializedT, sendingMACKey,
+			byte[] mac = otrCryptoEngine.sha1Hmac(serializedT, sendingMACKey,
 					SerializationConstants.MAC);
 
 			// Get old MAC keys to be revealed.
@@ -664,7 +669,7 @@ public class SessionImpl implements Session {
 			return;
 
 		int policy = getListener().getPolicy(this.getSessionID());
-		if (!PolicyUtils.getAllowV2(policy))
+		if (!this.getAllowV2(policy))
 			throw new UnsupportedOperationException();
 
 		this.getAuthContext().startV2Auth();
@@ -695,5 +700,25 @@ public class SessionImpl implements Session {
 	public void refreshSession() throws OtrException {
 		this.endSession();
 		this.startSession();
+	}
+
+	private Boolean getAllowV1(int policy) {
+		return (policy & OtrPolicy.ALLOW_V1) != 0;
+	}
+
+	private Boolean getAllowV2(int policy) {
+		return (policy & OtrPolicy.ALLOW_V2) != 0;
+	}
+
+	private Boolean getRequireEncryption(int policy) {
+		return (policy & OtrPolicy.REQUIRE_ENCRYPTION) != 0;
+	}
+
+	private Boolean getWhiteSpaceStartsAKE(int policy) {
+		return (policy & OtrPolicy.WHITESPACE_START_AKE) != 0;
+	}
+
+	private Boolean getErrorStartsAKE(int policy) {
+		return (policy & OtrPolicy.ERROR_START_AKE) != 0;
 	}
 }

@@ -11,7 +11,6 @@ import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -50,14 +49,9 @@ import org.bouncycastle.util.BigIntegers;
  * @author George Politis
  * 
  */
-public class CryptoUtils implements CryptoConstants {
+public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 
-	public static KeyPair generateDsaKeyPair() throws NoSuchAlgorithmException {
-		KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
-		return kg.genKeyPair();
-	}
-
-	public static KeyPair generateDHKeyPair() throws OtrCryptoException {
+	public KeyPair generateDHKeyPair() throws OtrCryptoException {
 
 		// Generate a AsymmetricCipherKeyPair using BC.
 		DHParameters dhParams = new DHParameters(MODULUS, GENERATOR, null,
@@ -94,13 +88,12 @@ public class CryptoUtils implements CryptoConstants {
 		}
 	}
 
-	public static DHPublicKey getDHPublicKey(byte[] mpiBytes)
+	public DHPublicKey getDHPublicKey(byte[] mpiBytes)
 			throws OtrCryptoException {
 		return getDHPublicKey(new BigInteger(mpiBytes));
 	}
 
-	public static DHPublicKey getDHPublicKey(BigInteger mpi)
-			throws OtrCryptoException {
+	public DHPublicKey getDHPublicKey(BigInteger mpi) throws OtrCryptoException {
 		DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(mpi, MODULUS,
 				GENERATOR);
 		try {
@@ -111,12 +104,11 @@ public class CryptoUtils implements CryptoConstants {
 		}
 	}
 
-	public static byte[] sha256Hmac(byte[] b, byte[] key)
-			throws OtrCryptoException {
-		return CryptoUtils.sha256Hmac(b, key, 0);
+	public byte[] sha256Hmac(byte[] b, byte[] key) throws OtrCryptoException {
+		return this.sha256Hmac(b, key, 0);
 	}
 
-	public static byte[] sha256Hmac(byte[] b, byte[] key, int length)
+	public byte[] sha256Hmac(byte[] b, byte[] key, int length)
 			throws OtrCryptoException {
 
 		SecretKeySpec keyspec = new SecretKeySpec(key, "HmacSHA256");
@@ -144,7 +136,7 @@ public class CryptoUtils implements CryptoConstants {
 		}
 	}
 
-	public static byte[] sha1Hmac(byte[] b, byte[] key, int length)
+	public byte[] sha1Hmac(byte[] b, byte[] key, int length)
 			throws OtrCryptoException {
 
 		try {
@@ -167,12 +159,11 @@ public class CryptoUtils implements CryptoConstants {
 		}
 	}
 
-	public static byte[] sha256Hmac160(byte[] b, byte[] key)
-			throws OtrCryptoException {
+	public byte[] sha256Hmac160(byte[] b, byte[] key) throws OtrCryptoException {
 		return sha256Hmac(b, key, 20);
 	}
 
-	public static byte[] sha256Hash(byte[] b) throws OtrCryptoException {
+	public byte[] sha256Hash(byte[] b) throws OtrCryptoException {
 		try {
 			MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
 			sha256.update(b, 0, b.length);
@@ -182,7 +173,7 @@ public class CryptoUtils implements CryptoConstants {
 		}
 	}
 
-	public static byte[] sha1Hash(byte[] b) throws OtrCryptoException {
+	public byte[] sha1Hash(byte[] b) throws OtrCryptoException {
 		try {
 			MessageDigest sha256 = MessageDigest.getInstance("SHA-1");
 			sha256.update(b, 0, b.length);
@@ -192,7 +183,7 @@ public class CryptoUtils implements CryptoConstants {
 		}
 	}
 
-	public static byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b)
+	public byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b)
 			throws OtrCryptoException {
 
 		AESFastEngine aesDec = new AESFastEngine();
@@ -215,7 +206,7 @@ public class CryptoUtils implements CryptoConstants {
 		return aesOutLwDec;
 	}
 
-	public static byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b)
+	public byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b)
 			throws OtrCryptoException {
 
 		AESFastEngine aesEnc = new AESFastEngine();
@@ -237,7 +228,7 @@ public class CryptoUtils implements CryptoConstants {
 		return aesOutLwEnc;
 	}
 
-	public static BigInteger generateSecret(PrivateKey privKey, PublicKey pubKey)
+	public BigInteger generateSecret(PrivateKey privKey, PublicKey pubKey)
 			throws OtrCryptoException {
 		try {
 			KeyAgreement ka = KeyAgreement.getInstance("DH");
@@ -252,7 +243,7 @@ public class CryptoUtils implements CryptoConstants {
 		}
 	}
 
-	public static byte[] sign(byte[] b, PrivateKey privatekey)
+	public byte[] sign(byte[] b, PrivateKey privatekey)
 			throws OtrCryptoException {
 
 		if (!(privatekey instanceof DSAPrivateKey))
@@ -304,7 +295,7 @@ public class CryptoUtils implements CryptoConstants {
 		return sig;
 	}
 
-	public static Boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
+	public Boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
 			throws OtrCryptoException {
 
 		if (!(pubKey instanceof DSAPublicKey))
@@ -320,14 +311,14 @@ public class CryptoUtils implements CryptoConstants {
 		return verify(b, pubKey, r, s);
 	}
 
-	private static Boolean verify(byte[] b, PublicKey pubKey, byte[] r, byte[] s)
+	private Boolean verify(byte[] b, PublicKey pubKey, byte[] r, byte[] s)
 			throws OtrCryptoException {
 		Boolean result = verify(b, pubKey, new BigInteger(1, r),
 				new BigInteger(1, s));
 		return result;
 	}
 
-	private static Boolean verify(byte[] b, PublicKey pubKey, BigInteger r,
+	private Boolean verify(byte[] b, PublicKey pubKey, BigInteger r,
 			BigInteger s) throws OtrCryptoException {
 
 		if (!(pubKey instanceof DSAPublicKey))
