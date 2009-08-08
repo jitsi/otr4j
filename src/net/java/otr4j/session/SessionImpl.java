@@ -73,7 +73,7 @@ public class SessionImpl implements Session {
 	private OtrEngineListener<SessionID> listener;
 	private SessionStatus sessionStatus;
 	private AuthContext authContext;
-	private ISessionKeys[][] sessionKeys;
+	private SessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
 	private static Logger logger = Logger
 			.getLogger(SessionImpl.class.getName());
@@ -86,24 +86,24 @@ public class SessionImpl implements Session {
 		this.setSessionStatus(SessionStatus.PLAINTEXT);
 	}
 
-	private ISessionKeys getEncryptionSessionKeys() {
+	private SessionKeys getEncryptionSessionKeys() {
 		logger.info("Getting encryption keys");
-		return getSessionKeysByIndex(ISessionKeys.Previous, ISessionKeys.Current);
+		return getSessionKeysByIndex(SessionKeys.Previous, SessionKeys.Current);
 	}
 
-	private ISessionKeys getMostRecentSessionKeys() {
+	private SessionKeys getMostRecentSessionKeys() {
 		logger.info("Getting most recent keys.");
-		return getSessionKeysByIndex(ISessionKeys.Current, ISessionKeys.Current);
+		return getSessionKeysByIndex(SessionKeys.Current, SessionKeys.Current);
 	}
 
-	private ISessionKeys getSessionKeysByID(int localKeyID, int remoteKeyID) {
+	private SessionKeys getSessionKeysByID(int localKeyID, int remoteKeyID) {
 		logger
 				.info("Searching for session keys with (localKeyID, remoteKeyID) = ("
 						+ localKeyID + "," + remoteKeyID + ")");
 
 		for (int i = 0; i < getSessionKeys().length; i++) {
 			for (int j = 0; j < getSessionKeys()[i].length; j++) {
-				ISessionKeys current = getSessionKeysByIndex(i, j);
+				SessionKeys current = getSessionKeysByIndex(i, j);
 				if (current.getLocalKeyID() == localKeyID
 						&& current.getRemoteKeyID() == remoteKeyID) {
 					logger.info("Matching keys found.");
@@ -115,7 +115,7 @@ public class SessionImpl implements Session {
 		return null;
 	}
 
-	private ISessionKeys getSessionKeysByIndex(int localKeyIndex,
+	private SessionKeys getSessionKeysByIndex(int localKeyIndex,
 			int remoteKeyIndex) {
 		if (getSessionKeys()[localKeyIndex][remoteKeyIndex] == null)
 			getSessionKeys()[localKeyIndex][remoteKeyIndex] = new SessionKeysImpl(
@@ -128,30 +128,30 @@ public class SessionImpl implements Session {
 			throws OtrException {
 
 		logger.info("Rotating remote keys.");
-		ISessionKeys sess1 = getSessionKeysByIndex(ISessionKeys.Current,
-				ISessionKeys.Previous);
+		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.Current,
+				SessionKeys.Previous);
 		if (sess1.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess1.getReceivingMACKey());
 		}
 
-		ISessionKeys sess2 = getSessionKeysByIndex(ISessionKeys.Previous,
-				ISessionKeys.Previous);
+		SessionKeys sess2 = getSessionKeysByIndex(SessionKeys.Previous,
+				SessionKeys.Previous);
 		if (sess2.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess2.getReceivingMACKey());
 		}
 
-		ISessionKeys sess3 = getSessionKeysByIndex(ISessionKeys.Current,
-				ISessionKeys.Current);
+		SessionKeys sess3 = getSessionKeysByIndex(SessionKeys.Current,
+				SessionKeys.Current);
 		sess1
 				.setRemoteDHPublicKey(sess3.getRemoteKey(), sess3
 						.getRemoteKeyID());
 
-		ISessionKeys sess4 = getSessionKeysByIndex(ISessionKeys.Previous,
-				ISessionKeys.Current);
+		SessionKeys sess4 = getSessionKeysByIndex(SessionKeys.Previous,
+				SessionKeys.Current);
 		sess2
 				.setRemoteDHPublicKey(sess4.getRemoteKey(), sess4
 						.getRemoteKeyID());
@@ -163,27 +163,27 @@ public class SessionImpl implements Session {
 	private void rotateLocalSessionKeys() throws OtrException {
 
 		logger.info("Rotating local keys.");
-		ISessionKeys sess1 = getSessionKeysByIndex(ISessionKeys.Previous,
-				ISessionKeys.Current);
+		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.Previous,
+				SessionKeys.Current);
 		if (sess1.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess1.getReceivingMACKey());
 		}
 
-		ISessionKeys sess2 = getSessionKeysByIndex(ISessionKeys.Previous,
-				ISessionKeys.Previous);
+		SessionKeys sess2 = getSessionKeysByIndex(SessionKeys.Previous,
+				SessionKeys.Previous);
 		if (sess2.getIsUsedReceivingMACKey()) {
 			logger
 					.info("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess2.getReceivingMACKey());
 		}
 
-		ISessionKeys sess3 = getSessionKeysByIndex(ISessionKeys.Current,
-				ISessionKeys.Current);
+		SessionKeys sess3 = getSessionKeysByIndex(SessionKeys.Current,
+				SessionKeys.Current);
 		sess1.setLocalPair(sess3.getLocalPair(), sess3.getLocalKeyID());
-		ISessionKeys sess4 = getSessionKeysByIndex(ISessionKeys.Current,
-				ISessionKeys.Previous);
+		SessionKeys sess4 = getSessionKeysByIndex(SessionKeys.Current,
+				SessionKeys.Previous);
 		sess2.setLocalPair(sess4.getLocalPair(), sess4.getLocalKeyID());
 
 		KeyPair newPair = CryptoUtils.generateDHKeyPair();
@@ -239,9 +239,9 @@ public class SessionImpl implements Session {
 		return listener;
 	}
 
-	private ISessionKeys[][] getSessionKeys() {
+	private SessionKeys[][] getSessionKeys() {
 		if (sessionKeys == null)
-			sessionKeys = new ISessionKeys[2][2];
+			sessionKeys = new SessionKeys[2][2];
 		return sessionKeys;
 	}
 
@@ -363,7 +363,7 @@ public class SessionImpl implements Session {
 			// Find matching session keys.
 			int senderKeyID = t.senderKeyID;
 			int receipientKeyID = t.recipientKeyID;
-			ISessionKeys matchingKeys = this.getSessionKeysByID(receipientKeyID,
+			SessionKeys matchingKeys = this.getSessionKeysByID(receipientKeyID,
 					senderKeyID);
 
 			if (matchingKeys == null) {
@@ -401,7 +401,7 @@ public class SessionImpl implements Session {
 			logger.info("Decrypted message: \"" + decryptedMsgContent + "\"");
 
 			// Rotate keys if necessary.
-			ISessionKeys mostRecent = this.getMostRecentSessionKeys();
+			SessionKeys mostRecent = this.getMostRecentSessionKeys();
 			if (mostRecent.getLocalKeyID() == receipientKeyID)
 				this.rotateLocalSessionKeys();
 
@@ -538,7 +538,7 @@ public class SessionImpl implements Session {
 		if (auth.getIsSecure()) {
 			logger.info("Setting most recent session keys from auth.");
 			for (int i = 0; i < this.getSessionKeys()[0].length; i++) {
-				ISessionKeys current = getSessionKeysByIndex(0, i);
+				SessionKeys current = getSessionKeysByIndex(0, i);
 				current.setLocalPair(this.getAuthContext().getLocalDHKeyPair(),
 						1);
 				current.setRemoteDHPublicKey(this.getAuthContext()
@@ -548,7 +548,7 @@ public class SessionImpl implements Session {
 
 			KeyPair nextDH = CryptoUtils.generateDHKeyPair();
 			for (int i = 0; i < this.getSessionKeys()[1].length; i++) {
-				ISessionKeys current = getSessionKeysByIndex(1, i);
+				SessionKeys current = getSessionKeysByIndex(1, i);
 				current.setRemoteDHPublicKey(getAuthContext()
 						.getRemoteDHPublicKey(), 1);
 				current.setLocalPair(nextDH, 2);
@@ -579,7 +579,7 @@ public class SessionImpl implements Session {
 					+ getSessionID().getProtocolName() + ".");
 
 			// Get encryption keys.
-			ISessionKeys encryptionKeys = this.getEncryptionSessionKeys();
+			SessionKeys encryptionKeys = this.getEncryptionSessionKeys();
 			int senderKeyID = encryptionKeys.getLocalKeyID();
 			int receipientKeyID = encryptionKeys.getRemoteKeyID();
 
@@ -618,7 +618,7 @@ public class SessionImpl implements Session {
 					.getSendingAESKey(), ctr, data);
 
 			// Get most recent keys to get the next D-H public key.
-			ISessionKeys mostRecentKeys = this.getMostRecentSessionKeys();
+			SessionKeys mostRecentKeys = this.getMostRecentSessionKeys();
 			DHPublicKey nextDH = (DHPublicKey) mostRecentKeys.getLocalPair()
 					.getPublic();
 

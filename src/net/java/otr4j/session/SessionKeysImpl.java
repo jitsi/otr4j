@@ -24,7 +24,7 @@ import net.java.otr4j.message.*;
  * 
  * @author George Politis
  */
-class SessionKeysImpl implements ISessionKeys {
+class SessionKeysImpl implements SessionKeys {
 
 	private static Logger logger = Logger
 			.getLogger(SessionKeysImpl.class.getName());
