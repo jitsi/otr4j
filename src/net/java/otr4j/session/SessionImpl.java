@@ -18,11 +18,11 @@ import java.util.Vector;
 import java.util.logging.Logger;
 import javax.crypto.interfaces.DHPublicKey;
 
-import net.java.otr4j.OtrCryptoEngine;
-import net.java.otr4j.OtrCryptoEngineImpl;
 import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrPolicy;
+import net.java.otr4j.crypto.OtrCryptoEngine;
+import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.message.DataMessage;
 import net.java.otr4j.message.ErrorMessage;
 import net.java.otr4j.message.MessageConstants;

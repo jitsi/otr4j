@@ -4,8 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-import net.java.otr4j.OtrCryptoEngineImpl;
 import net.java.otr4j.OtrException;
+import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 
 public abstract class SignatureMessageBase extends EncodedMessageBase {
 

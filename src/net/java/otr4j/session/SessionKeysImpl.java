@@ -15,9 +15,9 @@ import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
 
-import net.java.otr4j.OtrCryptoEngine;
-import net.java.otr4j.OtrCryptoEngineImpl;
 import net.java.otr4j.OtrException;
+import net.java.otr4j.crypto.OtrCryptoEngine;
+import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.message.*;
 
 /**

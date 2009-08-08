@@ -5,7 +5,7 @@
  * See terms of license at gnu.org.
  */
 
-package net.java.otr4j;
+package net.java.otr4j.crypto;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
@@ -13,6 +13,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 
 import javax.crypto.interfaces.DHPublicKey;
+
 
 /**
  * 

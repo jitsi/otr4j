@@ -21,9 +21,9 @@ import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.interfaces.DHPublicKey;
 
-import net.java.otr4j.OtrCryptoEngine;
-import net.java.otr4j.OtrCryptoEngineImpl;
 import net.java.otr4j.OtrException;
+import net.java.otr4j.crypto.OtrCryptoEngine;
+import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 
 import org.bouncycastle.util.BigIntegers;
 
