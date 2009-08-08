@@ -3,13 +3,13 @@ package net.java.otr4j.protocol;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.OtrEngineImpl;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
-import net.java.otr4j.session.SessionIDImpl;
+import net.java.otr4j.session.SessionID;
 
 public class StateMachineTest extends junit.framework.TestCase {
 
-	private SessionIDImpl aliceSessionID = new SessionIDImpl("Alice@Wonderland",
+	private SessionID aliceSessionID = new SessionID("Alice@Wonderland",
 			"Bob@Wonderland", "Scytale");
-	private SessionIDImpl bobSessionID = new SessionIDImpl("Bob@Wonderland",
+	private SessionID bobSessionID = new SessionID("Bob@Wonderland",
 			"Alice@Wonderland", "Scytale");
 
 	public void testReceivingMessage() throws Exception {
@@ -22,23 +22,23 @@ public class StateMachineTest extends junit.framework.TestCase {
 
 		// Bob receives query, sends D-H commit.
 		@SuppressWarnings("unused")
-		String receivedMessage = usBob.transformReceived(bobSessionID,
+		String receivedMessage = usBob.transformReceiving(bobSessionID,
 				UnencodedMessageTextSample.QueryMessage_V12);
 
 		// Alice received D-H Commit, sends D-H key.
-		receivedMessage = usAlice.transformReceived(aliceSessionID,
+		receivedMessage = usAlice.transformReceiving(aliceSessionID,
 				listener.lastInjectedMessage);
 
 		// Bob receives D-H Key, sends reveal signature.
-		receivedMessage = usBob.transformReceived(bobSessionID,
+		receivedMessage = usBob.transformReceiving(bobSessionID,
 				listener.lastInjectedMessage);
 
 		// Alice receives Reveal Signature, sends signature and goes secure.
-		receivedMessage = usAlice.transformReceived(aliceSessionID,
+		receivedMessage = usAlice.transformReceiving(aliceSessionID,
 				listener.lastInjectedMessage);
 
 		// Bobs receives Signature, goes secure.
-		receivedMessage = usBob.transformReceived(bobSessionID,
+		receivedMessage = usBob.transformReceiving(bobSessionID,
 				listener.lastInjectedMessage);
 
 		// We are both secure, send encrypted message.
@@ -49,7 +49,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usBob.transformReceived(bobSessionID,
+		receivedMessage = usBob.transformReceiving(bobSessionID,
 				sentMessage);
 
 		// Send encrypted message.
@@ -59,7 +59,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usAlice.transformReceived(aliceSessionID,
+		receivedMessage = usAlice.transformReceiving(aliceSessionID,
 				sentMessage);
 
 		// Send encrypted message.
@@ -68,7 +68,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usBob.transformReceived(bobSessionID,
+		receivedMessage = usBob.transformReceiving(bobSessionID,
 				sentMessage);
 
 		// Send encrypted message.
@@ -80,7 +80,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usAlice.transformReceived(aliceSessionID,
+		receivedMessage = usAlice.transformReceiving(aliceSessionID,
 				sentMessage);
 
 		// Send encrypted message.
@@ -89,7 +89,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usBob.transformReceived(bobSessionID,
+		receivedMessage = usBob.transformReceiving(bobSessionID,
 				sentMessage);
 
 	}

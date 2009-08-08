@@ -19,12 +19,10 @@ public class DummyOTR4jListener implements OtrEngineListener {
 	private int policy;
 	public String lastInjectedMessage;
 
-	@Override
 	public int getPolicy(SessionID ctx) {
 		return this.policy;
 	}
 
-	@Override
 	public void injectMessage(SessionID sessionID, String msg) {
 
 		this.lastInjectedMessage = msg;
@@ -33,17 +31,14 @@ public class DummyOTR4jListener implements OtrEngineListener {
 		logger.info("IM injects message: " + msgDisplay);
 	}
 
-	@Override
 	public void showError(SessionID sessionID, String error) {
 		logger.severe("IM shows error to user: " + error);
 	}
 
-	@Override
 	public void showWarning(SessionID sessionID, String warning) {
 		logger.warning("IM shows warning to user: " + warning);
 	}
 
-	@Override
 	public KeyPair getKeyPair(SessionID sessionID) {
 		logger.info("IM generates a DSA key pair.");
 		try {

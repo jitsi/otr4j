@@ -11,8 +11,8 @@ import java.util.Hashtable;
 import java.util.Map;
 
 import net.java.otr4j.session.Session;
+import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionImpl;
-import net.java.otr4j.session.SessionIDImpl;
 import net.java.otr4j.session.SessionStatus;
 
 /**
@@ -20,22 +20,22 @@ import net.java.otr4j.session.SessionStatus;
  * @author George Politis
  * 
  */
-public class OtrEngineImpl implements OtrEngine<SessionIDImpl> {
+public class OtrEngineImpl implements OtrEngine<SessionID> {
 
 	public OtrEngineImpl(OtrEngineListener listener) {
 		this.setListener(listener);
 	}
 
 	private OtrEngineListener listener;
-	private Map<SessionIDImpl, Session> sessions;
+	private Map<SessionID, Session> sessions;
 
-	private Session getSession(SessionIDImpl sessionID) {
+	private Session getSession(SessionID sessionID) {
 
-		if (sessionID == null || sessionID.equals(SessionIDImpl.Empty))
+		if (sessionID == null || sessionID.equals(SessionID.Empty))
 			throw new IllegalArgumentException();
 
 		if (sessions == null)
-			sessions = new Hashtable<SessionIDImpl, Session>();
+			sessions = new Hashtable<SessionID, Session>();
 
 		if (!sessions.containsKey(sessionID))
 			sessions.put(sessionID, new SessionImpl(sessionID, getListener()));
@@ -43,26 +43,42 @@ public class OtrEngineImpl implements OtrEngine<SessionIDImpl> {
 		return sessions.get(sessionID);
 	}
 
-	public SessionStatus getSessionStatus(SessionIDImpl sessionID) {
+	public SessionStatus getSessionStatus(SessionID sessionID) {
 		return this.getSession(sessionID).getSessionStatus();
 	}
 
-	public String transformReceived(SessionIDImpl sessionID, String msgText)
-			throws OtrException {
-		return this.getSession(sessionID).transformReceiving(msgText);
+	public String transformReceiving(SessionID sessionID, String msgText) {
+		try {
+			return this.getSession(sessionID).transformReceiving(msgText);
+		} catch (OtrException e) {
+			listener.showError(sessionID, e.getMessage());
+			return null;
+		}
 	}
 
-	public String transformSending(SessionIDImpl sessionID, String msgText)
-			throws OtrException {
-		return this.getSession(sessionID).transformSending(msgText, null);
+	public String transformSending(SessionID sessionID, String msgText) {
+		try {
+			return this.getSession(sessionID).transformSending(msgText, null);
+		} catch (OtrException e) {
+			listener.showError(sessionID, e.getMessage());
+			return null;
+		}
 	}
 
-	public void endSession(SessionIDImpl sessionID) throws OtrException {
-		this.getSession(sessionID).endSession();
+	public void endSession(SessionID sessionID) {
+		try {
+			this.getSession(sessionID).endSession();
+		} catch (OtrException e) {
+			listener.showError(sessionID, e.getMessage());
+		}
 	}
 
-	public void startSession(SessionIDImpl sessionID) throws OtrException {
-		this.getSession(sessionID).startSession();
+	public void startSession(SessionID sessionID) {
+		try {
+			this.getSession(sessionID).startSession();
+		} catch (OtrException e) {
+			listener.showError(sessionID, e.getMessage());
+		}
 	}
 
 	private void setListener(OtrEngineListener listener) {
@@ -73,7 +89,11 @@ public class OtrEngineImpl implements OtrEngine<SessionIDImpl> {
 		return listener;
 	}
 
-	public void refreshSession(SessionIDImpl sessionID) throws OtrException {
-		this.getSession(sessionID).refreshSession();
+	public void refreshSession(SessionID sessionID) {
+		try {
+			this.getSession(sessionID).refreshSession();
+		} catch (OtrException e) {
+			listener.showError(sessionID, e.getMessage());
+		}
 	}
 }
