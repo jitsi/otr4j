@@ -31,7 +31,7 @@ import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.CryptoConstants;
 import net.java.otr4j.CryptoUtils;
-import net.java.otr4j.OTR4jListener;
+import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.PolicyUtils;
 import net.java.otr4j.message.DHCommitMessage;
@@ -239,14 +239,14 @@ class AuthContext {
 	public static final byte M1p_START = (byte) 0x04;
 	public static final byte M2p_START = (byte) 0x05;
 
-	public AuthContext(SessionID sessionID, OTR4jListener listener) {
+	public AuthContext(SessionID sessionID, OtrEngineListener<SessionID> listener) {
 		this.setSessionID(sessionID);
 		this.setListener(listener);
 		this.reset();
 	}
 
 	private SessionID sessionID;
-	private OTR4jListener listener;
+	private OtrEngineListener<SessionID> listener;
 
 	private int authenticationState;
 	private byte[] r;
@@ -596,11 +596,11 @@ class AuthContext {
 		return localLongTermKeyPair;
 	}
 
-	private void setListener(OTR4jListener listener) {
+	private void setListener(OtrEngineListener<SessionID> listener) {
 		this.listener = listener;
 	}
 
-	private OTR4jListener getListener() {
+	private OtrEngineListener<SessionID> getListener() {
 		return listener;
 	}
 

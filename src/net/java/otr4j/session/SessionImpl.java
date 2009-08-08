@@ -29,7 +29,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.CryptoUtils;
-import net.java.otr4j.OTR4jListener;
+import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.PolicyUtils;
 import net.java.otr4j.message.DataMessage;
@@ -46,7 +46,7 @@ import net.java.otr4j.message.SerializationUtils;
  * 
  * @author George Politis
  */
-public class Session implements SessionStatus {
+public class SessionImpl implements ISession {
 
 	/**
 	 * 
@@ -80,18 +80,18 @@ public class Session implements SessionStatus {
 	}
 
 	private SessionID sessionID;
-	private OTR4jListener listener;
-	private int sessionStatus;
+	private OtrEngineListener<SessionID> listener;
+	private SessionStatus sessionStatus;
 	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
-	private static Logger logger = Logger.getLogger(Session.class.getName());
+	private static Logger logger = Logger.getLogger(SessionImpl.class.getName());
 
-	public Session(SessionID sessionID, OTR4jListener listener) {
+	public SessionImpl(SessionID sessionID, OtrEngineListener<SessionID> listener) {
 
 		this.setSessionID(sessionID);
 		this.setListener(listener);
-		this.setSessionStatus(PLAINTEXT);
+		this.setSessionStatus(SessionStatus.PLAINTEXT);
 	}
 
 	private SessionKeys getEncryptionSessionKeys() {
@@ -215,11 +215,14 @@ public class Session implements SessionStatus {
 		return buff.array();
 	}
 
-	private void setSessionStatus(int sessionStatus) {
+	private void setSessionStatus(SessionStatus sessionStatus) {
 		this.sessionStatus = sessionStatus;
 	}
 
-	public int getSessionStatus() {
+	/* (non-Javadoc)
+	 * @see net.java.otr4j.session.ISession#getSessionStatus()
+	 */
+	public SessionStatus getSessionStatus() {
 		return sessionStatus;
 	}
 
@@ -227,15 +230,18 @@ public class Session implements SessionStatus {
 		this.sessionID = sessionID;
 	}
 
+	/* (non-Javadoc)
+	 * @see net.java.otr4j.session.ISession#getSessionID()
+	 */
 	public SessionID getSessionID() {
 		return sessionID;
 	}
 
-	private void setListener(OTR4jListener listener) {
+	private void setListener(OtrEngineListener<SessionID> listener) {
 		this.listener = listener;
 	}
 
-	private OTR4jListener getListener() {
+	private OtrEngineListener<SessionID> getListener() {
 		return listener;
 	}
 
@@ -257,6 +263,9 @@ public class Session implements SessionStatus {
 		return oldMacKeys;
 	}
 
+	/* (non-Javadoc)
+	 * @see net.java.otr4j.session.ISession#handleReceivingMessage(java.lang.String)
+	 */
 	public String handleReceivingMessage(String msgText) throws Exception {
 
 		int policy = getListener().getPolicy(this.getSessionID());
@@ -423,7 +432,7 @@ public class Session implements SessionStatus {
 				for (TLV tlv : tlvs) {
 					switch (tlv.getType()) {
 					case 1:
-						this.setSessionStatus(FINISHED);
+						this.setSessionStatus(SessionStatus.FINISHED);
 						return null;
 					default:
 						return decryptedMsgContent;
@@ -548,11 +557,14 @@ public class Session implements SessionStatus {
 			}
 
 			auth.reset();
-			this.setSessionStatus(ENCRYPTED);
+			this.setSessionStatus(SessionStatus.ENCRYPTED);
 			logger.info("Gone Secure.");
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see net.java.otr4j.session.ISession#handleSendingMessage(java.lang.String, java.util.List)
+	 */
 	public String handleSendingMessage(String msgText, List<TLV> tlvs)
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException,
@@ -626,6 +638,9 @@ public class Session implements SessionStatus {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see net.java.otr4j.session.ISession#startSession()
+	 */
 	public void startSession() throws InvalidKeyException,
 			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException,
@@ -641,6 +656,9 @@ public class Session implements SessionStatus {
 		this.getAuthContext().startV2Auth();
 	}
 
+	/* (non-Javadoc)
+	 * @see net.java.otr4j.session.ISession#endSession()
+	 */
 	public void endSession() throws InvalidKeyException,
 			NoSuchAlgorithmException, NoSuchPaddingException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException,
@@ -653,9 +671,12 @@ public class Session implements SessionStatus {
 
 		String msg = this.handleSendingMessage(null, tlvs);
 		getListener().injectMessage(getSessionID(), msg);
-		this.setSessionStatus(FINISHED);
+		this.setSessionStatus(SessionStatus.FINISHED);
 	}
 
+	/* (non-Javadoc)
+	 * @see net.java.otr4j.session.ISession#refreshSession()
+	 */
 	public void refreshSession() throws InvalidKeyException,
 			NoSuchAlgorithmException, InvalidAlgorithmParameterException,
 			NoSuchProviderException, InvalidKeySpecException,

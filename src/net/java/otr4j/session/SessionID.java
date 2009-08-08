@@ -13,6 +13,8 @@ package net.java.otr4j.session;
  */
 public final class SessionID {
 
+	public static final SessionID Empty = new SessionID(null, null, null);
+
 	public SessionID(String accountID, String userID, String protocolName) {
 		this.setAccountID(accountID);
 		this.setUserID(userID);
@@ -28,6 +30,8 @@ public final class SessionID {
 	}
 
 	public String getAccountID() {
+		if (accountID == null)
+			accountID = "";
 		return accountID;
 	}
 
@@ -36,6 +40,8 @@ public final class SessionID {
 	}
 
 	public String getUserID() {
+		if (userID == null)
+			userID = "";		
 		return userID;
 	}
 
@@ -44,6 +50,8 @@ public final class SessionID {
 	}
 
 	public String getProtocolName() {
+		if (protocolName == null)
+			protocolName = "";
 		return protocolName;
 	}
 
@@ -55,7 +63,7 @@ public final class SessionID {
 			return false;
 
 		SessionID sessionID = (SessionID) obj;
-
+		
 		return this.getAccountID().equals(sessionID.getAccountID())
 				&& this.getUserID().equals(sessionID.getUserID())
 				&& this.getProtocolName().equals(sessionID.getProtocolName());

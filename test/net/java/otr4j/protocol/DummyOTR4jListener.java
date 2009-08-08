@@ -5,10 +5,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.*;
 
 import net.java.otr4j.CryptoUtils;
-import net.java.otr4j.OTR4jListener;
+import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.session.SessionID;
 
-public class DummyOTR4jListener implements OTR4jListener {
+public class DummyOTR4jListener implements OtrEngineListener<SessionID> {
 
 	public DummyOTR4jListener(int policy) {
 		this.policy = policy;
