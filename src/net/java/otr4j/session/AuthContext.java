@@ -24,7 +24,7 @@ interface AuthContext {
 	public abstract void reset();
 
 	public abstract boolean getIsSecure();
-	
+
 	public abstract DHPublicKey getRemoteDHPublicKey();
 
 	public abstract KeyPair getLocalDHKeyPair() throws OtrException;
@@ -37,4 +37,6 @@ interface AuthContext {
 	public abstract void startV2Auth() throws OtrException;
 
 	public abstract PublicKey getRemoteLongTermPublicKey();
+
+	public abstract KeyPair getLocalLongTermKeyPair();
 }

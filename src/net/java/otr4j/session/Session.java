@@ -23,6 +23,8 @@ public interface Session {
 
 	public abstract void refreshSession() throws OtrException;
 
-	public abstract String getFingerprint();
+	public abstract String getRemoteFingerprint();
+	
+	public abstract String getLocalFingerprint();
 	
 }

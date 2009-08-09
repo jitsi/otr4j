@@ -108,10 +108,14 @@ public class OtrEngineImpl implements OtrEngine<SessionID, SessionID> {
 
 	}
 
-	public String getSessionFingerprint(SessionID sessionID) {
-		return this.getSession(sessionID).getFingerprint();
+	public String getRemoteFingerprint(SessionID sessionID) {
+		return this.getSession(sessionID).getRemoteFingerprint();
 	}
 
+	public String getLocalFingerprint(SessionID sessionID) {
+		return this.getSession(sessionID).getLocalFingerprint();
+	}
+	
 	public SessionID getSessionID(SessionID sessionID) {
 		return sessionID;
 	}

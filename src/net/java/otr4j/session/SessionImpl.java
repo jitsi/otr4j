@@ -230,18 +230,55 @@ public class SessionImpl implements Session {
 				current.setLocalPair(nextDH, 2);
 			}
 
-			PublicKey sessionPubKey = auth.getRemoteLongTermPublicKey();
+			PublicKey remotePubKey = auth.getRemoteLongTermPublicKey();
 
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			byte[] fingerprint;
+			byte[] remoteFingerprint;
 			try {
-				SerializationUtils.writePublicKey(out, sessionPubKey);
-				fingerprint = new OtrCryptoEngineImpl().sha1Hash(out
-						.toByteArray());
+				SerializationUtils.writePublicKey(out, remotePubKey);
+				byte[] bRemotePubKey = out.toByteArray();
+				if (remotePubKey.getAlgorithm().equals("DSA")) {
+					byte[] trimmed = new byte[bRemotePubKey.length - 2];
+					System.arraycopy(bRemotePubKey, 2, trimmed, 0,
+							trimmed.length);
+					remoteFingerprint = new OtrCryptoEngineImpl()
+							.sha1Hash(trimmed);
+				} else
+					remoteFingerprint = new OtrCryptoEngineImpl()
+							.sha1Hash(bRemotePubKey);
+
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			this.setFingerprint(this.byteArrayToHexString(fingerprint));
+
+			this.setRemoteFingerprint(this
+					.byteArrayToHexString(remoteFingerprint));
+
+			PublicKey localPubKey = auth.getLocalLongTermKeyPair().getPublic();
+
+			ByteArrayOutputStream out_ = new ByteArrayOutputStream();
+			byte[] localFingerprint;
+			try {
+				SerializationUtils.writePublicKey(out_, localPubKey);
+				byte[] bLocalPubKey = out_.toByteArray();
+				if (localPubKey.getAlgorithm().equals("DSA")) {
+					byte[] trimmed = new byte[bLocalPubKey.length - 2];
+					System.arraycopy(bLocalPubKey, 2, trimmed, 0,
+							trimmed.length);
+					localFingerprint = new OtrCryptoEngineImpl()
+							.sha1Hash(trimmed);
+				} else {
+					localFingerprint = new OtrCryptoEngineImpl()
+							.sha1Hash(bLocalPubKey);
+				}
+
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
+
+			this.setLocalFingerprint(this
+					.byteArrayToHexString(localFingerprint));
+
 			auth.reset();
 			break;
 		}
@@ -791,13 +828,23 @@ public class SessionImpl implements Session {
 		}
 	}
 
-	private String fingerprint;
+	private String remoteFingerprint;
 
-	private void setFingerprint(String fingerprint) {
-		this.fingerprint = fingerprint;
+	private void setRemoteFingerprint(String remoteFingerprint) {
+		this.remoteFingerprint = remoteFingerprint;
 	}
 
-	public String getFingerprint() {
-		return fingerprint;
+	public String getRemoteFingerprint() {
+		return remoteFingerprint;
+	}
+
+	private String localFingerprint;
+
+	private void setLocalFingerprint(String localFingerprint) {
+		this.localFingerprint = localFingerprint;
+	}
+
+	public String getLocalFingerprint() {
+		return localFingerprint;
 	}
 }

@@ -70,7 +70,9 @@ public interface OtrEngine<T, Z> {
 	
 	public boolean getSessionIsAuthenticated(T sessionID);
 	
-	public String getSessionFingerprint(T sessionID);
+	public String getRemoteFingerprint(T sessionID);
+	
+	public String getLocalFingerprint(T sessionID);
 	
 	public Z getSessionID(T sessionID);
 }

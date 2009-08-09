@@ -25,6 +25,7 @@ import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
+import net.java.otr4j.crypto.OtrCryptoException;
 import net.java.otr4j.message.DHCommitMessage;
 import net.java.otr4j.message.DHKeyMessage;
 import net.java.otr4j.message.MessageConstants;
@@ -549,12 +550,17 @@ class AuthContextImpl implements AuthContext {
 		return m2p;
 	}
 
-	private KeyPair getLocalLongTermKeyPair() throws OtrException {
+	public KeyPair getLocalLongTermKeyPair() {
 		if (localLongTermKeyPair == null) {
 			KeyPair pair = getListener().getKeyPair(this.getSessionID());
 			if (pair == null) {
 				// TODO use built-in management
-				return new OtrCryptoEngineImpl().generateDSAKeyPair();
+				try {
+					return new OtrCryptoEngineImpl().generateDSAKeyPair();
+				} catch (OtrCryptoException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			} else
 				localLongTermKeyPair = pair;
 		}
