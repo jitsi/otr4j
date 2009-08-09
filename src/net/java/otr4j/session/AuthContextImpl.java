@@ -373,7 +373,7 @@ class AuthContextImpl implements AuthContext {
 		this.isSecure = isSecure;
 	}
 
-	public Boolean getIsSecure() {
+	public boolean getIsSecure() {
 		return isSecure;
 	}
 
@@ -598,35 +598,34 @@ class AuthContextImpl implements AuthContext {
 		return localDHPublicKeyBytes;
 	}
 
-	public void handleReceivingMessage(String msgText, int policy)
+	public void handleReceivingMessage(String msgText)
 			throws OtrException {
-		Boolean allowV2 = this.getAllowV2(policy);
 
 		switch (MessageUtils.getMessageType(msgText)) {
 		case MessageConstants.DH_COMMIT:
-			handleDHCommitMessage(msgText, allowV2);
+			handleDHCommitMessage(msgText);
 			break;
 		case MessageConstants.DH_KEY:
-			handleDHKeyMessage(msgText, allowV2);
+			handleDHKeyMessage(msgText);
 			break;
 		case MessageConstants.REVEALSIG:
-			handleRevealSignatureMessage(msgText, allowV2);
+			handleRevealSignatureMessage(msgText);
 			break;
 		case MessageConstants.SIGNATURE:
-			handleSignatureMessage(msgText, allowV2);
+			handleSignatureMessage(msgText);
 			break;
 		default:
 			throw new UnsupportedOperationException();
 		}
 	}
 
-	private void handleSignatureMessage(String msgText, Boolean allowV2)
+	private void handleSignatureMessage(String msgText)
 			throws OtrException {
 		logger.info(getSessionID().getAccountID()
 				+ " received a signature message from "
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
-		if (!allowV2) {
+		if (!getAllowV2()) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
 			return;
 		}
@@ -682,7 +681,7 @@ class AuthContextImpl implements AuthContext {
 		}
 	}
 
-	private void handleRevealSignatureMessage(String msgText, Boolean allowV2)
+	private void handleRevealSignatureMessage(String msgText)
 			throws OtrException {
 
 		logger.info(getSessionID().getAccountID()
@@ -690,7 +689,7 @@ class AuthContextImpl implements AuthContext {
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
-		if (!allowV2) {
+		if (!getAllowV2()) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
 			return;
 		}
@@ -799,7 +798,7 @@ class AuthContextImpl implements AuthContext {
 		}
 	}
 
-	private void handleDHKeyMessage(String msgText, Boolean allowV2)
+	private void handleDHKeyMessage(String msgText)
 			throws OtrException {
 
 		try {
@@ -808,7 +807,7 @@ class AuthContextImpl implements AuthContext {
 					+ getSessionID().getUserID() + " throught "
 					+ getSessionID().getProtocolName() + ".");
 
-			if (!allowV2) {
+			if (!getAllowV2()) {
 				logger.info("If ALLOW_V2 is not set, ignore this message.");
 				return;
 			}
@@ -852,7 +851,7 @@ class AuthContextImpl implements AuthContext {
 		}
 	}
 
-	private void handleDHCommitMessage(String msgText, Boolean allowV2)
+	private void handleDHCommitMessage(String msgText)
 			throws OtrException {
 
 		logger.info(getSessionID().getAccountID()
@@ -860,7 +859,7 @@ class AuthContextImpl implements AuthContext {
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
-		if (!allowV2) {
+		if (!getAllowV2()) {
 			logger.info("ALLOW_V2 is not set, ignore this message.");
 			return;
 		}
@@ -1003,7 +1002,8 @@ class AuthContextImpl implements AuthContext {
 		return sessionID;
 	}
 
-	private Boolean getAllowV2(int policy) {
+	private Boolean getAllowV2() {
+		int policy = getListener().getPolicy(getSessionID());
 		return (policy & OtrPolicy.ALLOW_V2) != 0;
 	}
 }

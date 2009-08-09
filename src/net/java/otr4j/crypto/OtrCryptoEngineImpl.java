@@ -296,7 +296,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		return sig;
 	}
 
-	public Boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
+	public boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
 			throws OtrCryptoException {
 
 		if (!(pubKey instanceof DSAPublicKey))

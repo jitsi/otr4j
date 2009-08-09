@@ -76,6 +76,6 @@ public interface OtrCryptoEngine {
 	public abstract byte[] sign(byte[] b, PrivateKey privatekey)
 			throws OtrCryptoException;
 
-	public abstract Boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
+	public abstract boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
 			throws OtrCryptoException;
 }

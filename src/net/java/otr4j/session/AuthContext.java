@@ -22,15 +22,15 @@ interface AuthContext {
 
 	public abstract void reset();
 
-	public abstract Boolean getIsSecure();
-
+	public abstract boolean getIsSecure();
+	
 	public abstract DHPublicKey getRemoteDHPublicKey();
 
 	public abstract KeyPair getLocalDHKeyPair() throws OtrException;
 
 	public abstract BigInteger getS() throws OtrException;
 
-	public abstract void handleReceivingMessage(String msgText, int policy)
+	public abstract void handleReceivingMessage(String msgText)
 			throws OtrException;
 
 	public abstract void startV2Auth() throws OtrException;

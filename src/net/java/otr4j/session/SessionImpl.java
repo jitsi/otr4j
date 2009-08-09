@@ -264,9 +264,8 @@ public class SessionImpl implements Session {
 	 * net.java.otr4j.session.ISession#handleReceivingMessage(java.lang.String)
 	 */
 	public String transformReceiving(String msgText) throws OtrException {
-
-		int policy = getListener().getPolicy(this.getSessionID());
-		if (!this.getAllowV1(policy) && !this.getAllowV2(policy)) {
+		PolicyHelper policyHelper = this.getPolicyHelper();
+		if (!policyHelper.getAllowV1() && !policyHelper.getAllowV2()) {
 			logger
 					.info("Policy does not allow neither V1 not V2, ignoring message.");
 			return msgText;
@@ -276,21 +275,21 @@ public class SessionImpl implements Session {
 		case MessageConstants.DATA:
 			return handleDataMessage(msgText);
 		case MessageConstants.ERROR:
-			handleErrorMessage(msgText, policy);
+			handleErrorMessage(msgText);
 			return null;
 		case MessageConstants.PLAINTEXT:
-			return handlePlainTextMessage(msgText, policy);
+			return handlePlainTextMessage(msgText);
 		case MessageConstants.V1_KEY_EXCHANGE:
 			throw new UnsupportedOperationException(
 					"Received V1 key exchange which is not supported.");
 		case MessageConstants.QUERY:
-			handleQueryMessage(msgText, policy);
+			handleQueryMessage(msgText);
 			return null;
 		case MessageConstants.DH_COMMIT:
 		case MessageConstants.DH_KEY:
 		case MessageConstants.REVEALSIG:
 		case MessageConstants.SIGNATURE:
-			handleAuthMessage(msgText, policy);
+			handleAuthMessage(msgText);
 			return null;
 		default:
 		case MessageConstants.UKNOWN:
@@ -299,24 +298,24 @@ public class SessionImpl implements Session {
 		}
 	}
 
-	private void handleQueryMessage(String msgText, int policy)
-			throws OtrException {
+	private void handleQueryMessage(String msgText) throws OtrException {
 		logger.info(getSessionID().getAccountID()
 				+ " received a query message from "
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
 		QueryMessage queryMessage = new QueryMessage(msgText);
-		if (queryMessage.getVersions().contains(2) && this.getAllowV2(policy)) {
+		if (queryMessage.getVersions().contains(2)
+				&& this.getPolicyHelper().getAllowV2()) {
 			logger.info("Query message with V2 support found.");
 			getAuthContext().startV2Auth();
 		} else if (queryMessage.getVersions().contains(1)
-				&& this.getAllowV1(policy)) {
+				&& this.getPolicyHelper().getAllowV1()) {
 			throw new UnsupportedOperationException();
 		}
 	}
 
-	private void handleErrorMessage(String msgText, int policy) {
+	private void handleErrorMessage(String msgText) {
 		logger.info(getSessionID().getAccountID()
 				+ " received an error message from "
 				+ getSessionID().getUserID() + " throught "
@@ -324,13 +323,13 @@ public class SessionImpl implements Session {
 
 		ErrorMessage errorMessage = new ErrorMessage(msgText);
 		getListener().showError(this.getSessionID(), errorMessage.error);
-		if (this.getErrorStartsAKE(policy)) {
+		if (this.getPolicyHelper().getErrorStartsAKE()) {
 			logger.info("Error message starts AKE.");
 			Vector<Integer> versions = new Vector<Integer>();
-			if (this.getAllowV1(policy))
+			if (this.getPolicyHelper().getAllowV1())
 				versions.add(1);
 
-			if (this.getAllowV2(policy))
+			if (this.getPolicyHelper().getAllowV2())
 				versions.add(2);
 
 			QueryMessage queryMessage = new QueryMessage(versions);
@@ -464,8 +463,7 @@ public class SessionImpl implements Session {
 		return null;
 	}
 
-	private String handlePlainTextMessage(String msgText, int policy)
-			throws OtrException {
+	private String handlePlainTextMessage(String msgText) throws OtrException {
 		logger.info(getSessionID().getAccountID()
 				+ " received a plaintext message from "
 				+ getSessionID().getUserID() + " throught "
@@ -489,7 +487,7 @@ public class SessionImpl implements Session {
 				// REQUIRE_ENCRYPTION
 				// is set, warn him that the message was received
 				// unencrypted.
-				if (this.getRequireEncryption(policy)) {
+				if (this.getPolicyHelper().getRequireEncryption()) {
 					getListener().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 				}
@@ -510,20 +508,20 @@ public class SessionImpl implements Session {
 				// user. If REQUIRE_ENCRYPTION is set, warn him that the
 				// message
 				// was received unencrypted.
-				if (this.getRequireEncryption(policy))
+				if (this.getPolicyHelper().getRequireEncryption())
 					getListener().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 			}
 
-			if (this.getWhiteSpaceStartsAKE(policy)) {
+			if (this.getPolicyHelper().getWhiteSpaceStartsAKE()) {
 				logger.info("WHITESPACE_START_AKE is set");
 
 				if (plainTextMessage.getVersions().contains(2)
-						&& this.getAllowV2(policy)) {
+						&& this.getPolicyHelper().getAllowV2()) {
 					logger.info("V2 tag found.");
 					getAuthContext().startV2Auth();
 				} else if (plainTextMessage.getVersions().contains(1)
-						&& this.getAllowV1(policy)) {
+						&& this.getPolicyHelper().getAllowV1()) {
 					throw new UnsupportedOperationException();
 				}
 			}
@@ -532,11 +530,10 @@ public class SessionImpl implements Session {
 		return msgText;
 	}
 
-	private void handleAuthMessage(String msgText, int policy)
-			throws OtrException {
+	private void handleAuthMessage(String msgText) throws OtrException {
 
 		AuthContext auth = this.getAuthContext();
-		auth.handleReceivingMessage(msgText, policy);
+		auth.handleReceivingMessage(msgText);
 
 		if (auth.getIsSecure()) {
 			logger.info("Setting most recent session keys from auth.");
@@ -563,19 +560,22 @@ public class SessionImpl implements Session {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * net.java.otr4j.session.ISession#handleSendingMessage(java.lang.String,
-	 * java.util.List)
-	 */
+	private String lastSentMessage;
+
 	public String transformSending(String msgText, List<TLV> tlvs)
 			throws OtrException {
+
 		switch (this.getSessionStatus()) {
 		case PLAINTEXT:
-			return msgText;
+			if (this.getPolicyHelper().getRequireEncryption()) {
+				this.lastSentMessage = msgText;
+				this.startSession();
+			} else
+				// TODO this does not precisly behave according to
+				// specification.
+				return msgText;
 		case ENCRYPTED:
+			this.lastSentMessage = msgText;
 			logger.info(getSessionID().getAccountID()
 					+ " sends an encrypted message to "
 					+ getSessionID().getUserID() + " throught "
@@ -653,8 +653,13 @@ public class SessionImpl implements Session {
 				throw new OtrException(e);
 			}
 		case FINISHED:
-			return msgText;
+			this.lastSentMessage = msgText;
+			getListener()
+					.showError(
+							sessionID,
+							"The message cannot be sent because the OTR session state is finished. End your OTR session and start a new one.");
 		default:
+			logger.info("Uknown message state, not processing.");
 			return msgText;
 		}
 	}
@@ -668,8 +673,7 @@ public class SessionImpl implements Session {
 		if (this.getSessionStatus() == SessionStatus.ENCRYPTED)
 			return;
 
-		int policy = getListener().getPolicy(this.getSessionID());
-		if (!this.getAllowV2(policy))
+		if (!this.getPolicyHelper().getAllowV2())
 			throw new UnsupportedOperationException();
 
 		this.getAuthContext().startV2Auth();
@@ -702,23 +706,38 @@ public class SessionImpl implements Session {
 		this.startSession();
 	}
 
-	private Boolean getAllowV1(int policy) {
-		return (policy & OtrPolicy.ALLOW_V1) != 0;
+	private PolicyHelper policyHelper;
+
+	private PolicyHelper getPolicyHelper() {
+		if (policyHelper == null)
+			policyHelper = new PolicyHelper();
+		return policyHelper;
 	}
 
-	private Boolean getAllowV2(int policy) {
-		return (policy & OtrPolicy.ALLOW_V2) != 0;
-	}
+	class PolicyHelper {
+		public boolean getAllowV1() {
+			int policy = getListener().getPolicy(getSessionID());
+			return (policy & OtrPolicy.ALLOW_V1) != 0;
+		}
 
-	private Boolean getRequireEncryption(int policy) {
-		return (policy & OtrPolicy.REQUIRE_ENCRYPTION) != 0;
-	}
+		public boolean getAllowV2() {
+			int policy = getListener().getPolicy(getSessionID());
+			return (policy & OtrPolicy.ALLOW_V2) != 0;
+		}
 
-	private Boolean getWhiteSpaceStartsAKE(int policy) {
-		return (policy & OtrPolicy.WHITESPACE_START_AKE) != 0;
-	}
+		public boolean getRequireEncryption() {
+			int policy = getListener().getPolicy(getSessionID());
+			return (policy & OtrPolicy.REQUIRE_ENCRYPTION) != 0;
+		}
 
-	private Boolean getErrorStartsAKE(int policy) {
-		return (policy & OtrPolicy.ERROR_START_AKE) != 0;
+		public boolean getWhiteSpaceStartsAKE() {
+			int policy = getListener().getPolicy(getSessionID());
+			return (policy & OtrPolicy.WHITESPACE_START_AKE) != 0;
+		}
+
+		public boolean getErrorStartsAKE() {
+			int policy = getListener().getPolicy(getSessionID());
+			return (policy & OtrPolicy.ERROR_START_AKE) != 0;
+		}
 	}
 }
