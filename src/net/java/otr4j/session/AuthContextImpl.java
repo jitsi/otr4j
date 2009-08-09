@@ -22,7 +22,6 @@ import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrException;
-import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.crypto.OtrCryptoException;
@@ -634,7 +633,7 @@ class AuthContextImpl implements AuthContext {
 				+ " received a signature message from "
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
-		if (!getAllowV2()) {
+		if (!getListener().getPolicy(getSessionID()).getAllowV2()) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
 			return;
 		}
@@ -700,7 +699,7 @@ class AuthContextImpl implements AuthContext {
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
-		if (!getAllowV2()) {
+		if (!getListener().getPolicy(getSessionID()).getAllowV2()) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
 			return;
 		}
@@ -819,7 +818,7 @@ class AuthContextImpl implements AuthContext {
 					+ getSessionID().getUserID() + " throught "
 					+ getSessionID().getProtocolName() + ".");
 
-			if (!getAllowV2()) {
+			if (!getListener().getPolicy(getSessionID()).getAllowV2()) {
 				logger.info("If ALLOW_V2 is not set, ignore this message.");
 				return;
 			}
@@ -870,7 +869,7 @@ class AuthContextImpl implements AuthContext {
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
-		if (!getAllowV2()) {
+		if (!getListener().getPolicy(getSessionID()).getAllowV2()) {
 			logger.info("ALLOW_V2 is not set, ignore this message.");
 			return;
 		}
@@ -1011,11 +1010,6 @@ class AuthContextImpl implements AuthContext {
 
 	private SessionID getSessionID() {
 		return sessionID;
-	}
-
-	private Boolean getAllowV2() {
-		int policy = getListener().getPolicy(getSessionID());
-		return (policy & OtrPolicy.ALLOW_V2) != 0;
 	}
 
 	private PublicKey remoteLongTermPublicKey;

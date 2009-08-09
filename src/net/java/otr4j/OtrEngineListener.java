@@ -22,7 +22,7 @@ public interface OtrEngineListener {
 
 	public abstract void showError(SessionID sessionID, String error);
 
-	public abstract int getPolicy(SessionID sessionID);
+	public abstract OtrPolicy getPolicy(SessionID sessionID);
 
 	public abstract KeyPair getKeyPair(SessionID sessionID);
 	

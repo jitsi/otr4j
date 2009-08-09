@@ -365,8 +365,8 @@ public class SessionImpl implements Session {
 	 * net.java.otr4j.session.ISession#handleReceivingMessage(java.lang.String)
 	 */
 	public String transformReceiving(String msgText) throws OtrException {
-		PolicyHelper policyHelper = this.getPolicyHelper();
-		if (!policyHelper.getAllowV1() && !policyHelper.getAllowV2()) {
+		OtrPolicy policy = getListener().getPolicy(getSessionID());
+		if (!policy.getAllowV1() && !policy.getAllowV2()) {
 			logger
 					.info("Policy does not allow neither V1 not V2, ignoring message.");
 			return msgText;
@@ -407,11 +407,11 @@ public class SessionImpl implements Session {
 
 		QueryMessage queryMessage = new QueryMessage(msgText);
 		if (queryMessage.getVersions().contains(2)
-				&& this.getPolicyHelper().getAllowV2()) {
+				&& this.getListener().getPolicy(getSessionID()).getAllowV2()) {
 			logger.info("Query message with V2 support found.");
 			getAuthContext().startV2Auth();
 		} else if (queryMessage.getVersions().contains(1)
-				&& this.getPolicyHelper().getAllowV1()) {
+				&& this.getListener().getPolicy(getSessionID()).getAllowV1()) {
 			throw new UnsupportedOperationException();
 		}
 	}
@@ -424,13 +424,15 @@ public class SessionImpl implements Session {
 
 		ErrorMessage errorMessage = new ErrorMessage(msgText);
 		getListener().showError(this.getSessionID(), errorMessage.error);
-		if (this.getPolicyHelper().getErrorStartsAKE()) {
+
+		OtrPolicy policy = this.getListener().getPolicy(getSessionID());
+		if (policy.getErrorStartAKE()) {
 			logger.info("Error message starts AKE.");
 			Vector<Integer> versions = new Vector<Integer>();
-			if (this.getPolicyHelper().getAllowV1())
+			if (policy.getAllowV1())
 				versions.add(1);
 
-			if (this.getPolicyHelper().getAllowV2())
+			if (policy.getAllowV2())
 				versions.add(2);
 
 			QueryMessage queryMessage = new QueryMessage(versions);
@@ -571,6 +573,7 @@ public class SessionImpl implements Session {
 				+ getSessionID().getProtocolName() + ".");
 
 		PlainTextMessage plainTextMessage = new PlainTextMessage(msgText);
+		OtrPolicy policy = getListener().getPolicy(getSessionID());
 		Vector<Integer> versions = plainTextMessage.getVersions();
 		if (versions.size() < 1) {
 			logger
@@ -588,7 +591,7 @@ public class SessionImpl implements Session {
 				// REQUIRE_ENCRYPTION
 				// is set, warn him that the message was received
 				// unencrypted.
-				if (this.getPolicyHelper().getRequireEncryption()) {
+				if (policy.getRequireEncryption()) {
 					getListener().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 				}
@@ -609,20 +612,20 @@ public class SessionImpl implements Session {
 				// user. If REQUIRE_ENCRYPTION is set, warn him that the
 				// message
 				// was received unencrypted.
-				if (this.getPolicyHelper().getRequireEncryption())
+				if (policy.getRequireEncryption())
 					getListener().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 			}
 
-			if (this.getPolicyHelper().getWhiteSpaceStartsAKE()) {
+			if (policy.getWhitespaceStartAKE()) {
 				logger.info("WHITESPACE_START_AKE is set");
 
 				if (plainTextMessage.getVersions().contains(2)
-						&& this.getPolicyHelper().getAllowV2()) {
+						&& policy.getAllowV2()) {
 					logger.info("V2 tag found.");
 					getAuthContext().startV2Auth();
 				} else if (plainTextMessage.getVersions().contains(1)
-						&& this.getPolicyHelper().getAllowV1()) {
+						&& policy.getAllowV1()) {
 					throw new UnsupportedOperationException();
 				}
 			}
@@ -651,7 +654,8 @@ public class SessionImpl implements Session {
 
 		switch (this.getSessionStatus()) {
 		case PLAINTEXT:
-			if (this.getPolicyHelper().getRequireEncryption()) {
+			if (this.getListener().getPolicy(getSessionID())
+					.getRequireEncryption()) {
 				this.lastSentMessage = msgText;
 				this.startSession();
 			} else
@@ -760,7 +764,7 @@ public class SessionImpl implements Session {
 		if (this.getSessionStatus() == SessionStatus.ENCRYPTED)
 			return;
 
-		if (!this.getPolicyHelper().getAllowV2())
+		if (!getListener().getPolicy(getSessionID()).getAllowV2())
 			throw new UnsupportedOperationException();
 
 		this.getAuthContext().startV2Auth();
@@ -791,41 +795,6 @@ public class SessionImpl implements Session {
 	public void refreshSession() throws OtrException {
 		this.endSession();
 		this.startSession();
-	}
-
-	private PolicyHelper policyHelper;
-
-	private PolicyHelper getPolicyHelper() {
-		if (policyHelper == null)
-			policyHelper = new PolicyHelper();
-		return policyHelper;
-	}
-
-	class PolicyHelper {
-		public boolean getAllowV1() {
-			int policy = getListener().getPolicy(getSessionID());
-			return (policy & OtrPolicy.ALLOW_V1) != 0;
-		}
-
-		public boolean getAllowV2() {
-			int policy = getListener().getPolicy(getSessionID());
-			return (policy & OtrPolicy.ALLOW_V2) != 0;
-		}
-
-		public boolean getRequireEncryption() {
-			int policy = getListener().getPolicy(getSessionID());
-			return (policy & OtrPolicy.REQUIRE_ENCRYPTION) != 0;
-		}
-
-		public boolean getWhiteSpaceStartsAKE() {
-			int policy = getListener().getPolicy(getSessionID());
-			return (policy & OtrPolicy.WHITESPACE_START_AKE) != 0;
-		}
-
-		public boolean getErrorStartsAKE() {
-			int policy = getListener().getPolicy(getSessionID());
-			return (policy & OtrPolicy.ERROR_START_AKE) != 0;
-		}
 	}
 
 	private String remoteFingerprint;

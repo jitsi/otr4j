@@ -6,20 +6,21 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.*;
 
 import net.java.otr4j.OtrEngineListener;
+import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.session.SessionID;
 
 public class DummyOTR4jListener implements OtrEngineListener {
 
-	public DummyOTR4jListener(int policy) {
+	public DummyOTR4jListener(OtrPolicy policy) {
 		this.policy = policy;
 	}
 
 	private static Logger logger = Logger.getLogger(DummyOTR4jListener.class
 			.getName());
-	private int policy;
+	private OtrPolicy policy;
 	public String lastInjectedMessage;
 
-	public int getPolicy(SessionID ctx) {
+	public OtrPolicy getPolicy(SessionID ctx) {
 		return this.policy;
 	}
 

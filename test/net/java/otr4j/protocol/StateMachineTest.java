@@ -2,6 +2,7 @@ package net.java.otr4j.protocol;
 
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.OtrEngineImpl;
+import net.java.otr4j.OtrPolicyImpl;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
 import net.java.otr4j.session.SessionID;
 
@@ -14,8 +15,8 @@ public class StateMachineTest extends junit.framework.TestCase {
 
 	public void testReceivingMessage() throws Exception {
 
-		DummyOTR4jListener listener = new DummyOTR4jListener(
-				OtrPolicy.ALLOW_V2 | OtrPolicy.ERROR_START_AKE);
+		DummyOTR4jListener listener = new DummyOTR4jListener(new OtrPolicyImpl(
+				OtrPolicy.ALLOW_V2 | OtrPolicy.ERROR_START_AKE));
 
 		OtrEngineImpl usAlice = new OtrEngineImpl(listener);
 		OtrEngineImpl usBob = new OtrEngineImpl(listener);
@@ -49,8 +50,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usBob.transformReceiving(bobSessionID,
-				sentMessage);
+		receivedMessage = usBob.transformReceiving(bobSessionID, sentMessage);
 
 		// Send encrypted message.
 		sentMessage = usBob
@@ -68,8 +68,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usBob.transformReceiving(bobSessionID,
-				sentMessage);
+		receivedMessage = usBob.transformReceiving(bobSessionID, sentMessage);
 
 		// Send encrypted message.
 		sentMessage = usBob
@@ -84,13 +83,11 @@ public class StateMachineTest extends junit.framework.TestCase {
 				sentMessage);
 
 		// Send encrypted message.
-		sentMessage = usAlice.transformSending(aliceSessionID,
-				"Oh really?!");
+		sentMessage = usAlice.transformSending(aliceSessionID, "Oh really?!");
 		assertFalse(sentMessage == null || sentMessage.length() < 1);
 
 		// Receive encrypted message.
-		receivedMessage = usBob.transformReceiving(bobSessionID,
-				sentMessage);
+		receivedMessage = usBob.transformReceiving(bobSessionID, sentMessage);
 
 	}
 
