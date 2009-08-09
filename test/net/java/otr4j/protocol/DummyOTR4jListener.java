@@ -50,4 +50,8 @@ public class DummyOTR4jListener implements OtrEngineListener {
 		}
 	}
 
+	public Boolean getSessionIsAuthenticated(SessionID sessionID) {
+		return false;
+	}
+
 }

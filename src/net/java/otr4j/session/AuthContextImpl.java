@@ -550,9 +550,14 @@ class AuthContextImpl implements AuthContext {
 	}
 
 	private KeyPair getLocalLongTermKeyPair() throws OtrException {
-		if (localLongTermKeyPair == null)
-			localLongTermKeyPair = getListener()
-					.getKeyPair(this.getSessionID());
+		if (localLongTermKeyPair == null) {
+			KeyPair pair = getListener().getKeyPair(this.getSessionID());
+			if (pair == null) {
+				// TODO use built-in management
+				return new OtrCryptoEngineImpl().generateDSAKeyPair();
+			} else
+				localLongTermKeyPair = pair;
+		}
 		return localLongTermKeyPair;
 	}
 
@@ -598,8 +603,7 @@ class AuthContextImpl implements AuthContext {
 		return localDHPublicKeyBytes;
 	}
 
-	public void handleReceivingMessage(String msgText)
-			throws OtrException {
+	public void handleReceivingMessage(String msgText) throws OtrException {
 
 		switch (MessageUtils.getMessageType(msgText)) {
 		case MessageConstants.DH_COMMIT:
@@ -619,8 +623,7 @@ class AuthContextImpl implements AuthContext {
 		}
 	}
 
-	private void handleSignatureMessage(String msgText)
-			throws OtrException {
+	private void handleSignatureMessage(String msgText) throws OtrException {
 		logger.info(getSessionID().getAccountID()
 				+ " received a signature message from "
 				+ getSessionID().getUserID() + " throught "
@@ -655,9 +658,10 @@ class AuthContextImpl implements AuthContext {
 			}
 
 			// Compute signature.
+			PublicKey remoteLongTermPublicKey = remoteX.getLongTermPublicKey();
 			MysteriousM remoteM = new MysteriousM(this.getRemoteDHPublicKey(),
-					(DHPublicKey) this.getLocalDHKeyPair().getPublic(), remoteX
-							.getLongTermPublicKey(), remoteX.getDhKeyID());
+					(DHPublicKey) this.getLocalDHKeyPair().getPublic(),
+					remoteLongTermPublicKey, remoteX.getDhKeyID());
 			OtrCryptoEngine otrCryptoEngine = new OtrCryptoEngineImpl();
 			// Verify signature.
 			byte[] signature;
@@ -667,13 +671,14 @@ class AuthContextImpl implements AuthContext {
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			if (!otrCryptoEngine.verify(signature, remoteX
-					.getLongTermPublicKey(), remoteX.getSignature())) {
+			if (!otrCryptoEngine.verify(signature, remoteLongTermPublicKey,
+					remoteX.getSignature())) {
 				logger.info("Signature verification failed.");
 				return;
 			}
 
 			this.setIsSecure(true);
+			this.setRemoteLongTermPublicKey(remoteLongTermPublicKey);
 			break;
 		default:
 			logger.info("We were not expecting a signature, ignoring message.");
@@ -763,9 +768,10 @@ class AuthContextImpl implements AuthContext {
 			}
 
 			// Compute signature.
+			PublicKey remoteLongTermPublicKey = remoteX.getLongTermPublicKey();
 			MysteriousM remoteM = new MysteriousM(this.getRemoteDHPublicKey(),
-					(DHPublicKey) this.getLocalDHKeyPair().getPublic(), remoteX
-							.getLongTermPublicKey(), remoteX.getDhKeyID());
+					(DHPublicKey) this.getLocalDHKeyPair().getPublic(),
+					remoteLongTermPublicKey, remoteX.getDhKeyID());
 
 			// Verify signature.
 			byte[] signature;
@@ -775,8 +781,8 @@ class AuthContextImpl implements AuthContext {
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			if (!otrCryptoEngine.verify(signature, remoteX
-					.getLongTermPublicKey(), remoteX.getSignature())) {
+			if (!otrCryptoEngine.verify(signature, remoteLongTermPublicKey,
+					remoteX.getSignature())) {
 				logger.info("Signature verification failed.");
 				return;
 			}
@@ -785,6 +791,7 @@ class AuthContextImpl implements AuthContext {
 
 			this.setAuthenticationState(AuthContext.NONE);
 			this.setIsSecure(true);
+			this.setRemoteLongTermPublicKey(remoteLongTermPublicKey);
 			try {
 				getListener().injectMessage(getSessionID(),
 						this.getSignatureMessage().writeObject());
@@ -798,8 +805,7 @@ class AuthContextImpl implements AuthContext {
 		}
 	}
 
-	private void handleDHKeyMessage(String msgText)
-			throws OtrException {
+	private void handleDHKeyMessage(String msgText) throws OtrException {
 
 		try {
 			logger.info(getSessionID().getAccountID()
@@ -851,8 +857,7 @@ class AuthContextImpl implements AuthContext {
 		}
 	}
 
-	private void handleDHCommitMessage(String msgText)
-			throws OtrException {
+	private void handleDHCommitMessage(String msgText) throws OtrException {
 
 		logger.info(getSessionID().getAccountID()
 				+ " received a D-H commit message from "
@@ -1005,5 +1010,15 @@ class AuthContextImpl implements AuthContext {
 	private Boolean getAllowV2() {
 		int policy = getListener().getPolicy(getSessionID());
 		return (policy & OtrPolicy.ALLOW_V2) != 0;
+	}
+
+	private PublicKey remoteLongTermPublicKey;
+
+	public PublicKey getRemoteLongTermPublicKey() {
+		return remoteLongTermPublicKey;
+	}
+
+	private void setRemoteLongTermPublicKey(PublicKey pubKey) {
+		this.remoteLongTermPublicKey = pubKey;
 	}
 }

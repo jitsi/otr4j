@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -347,5 +348,15 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		Boolean result = dsaSigner.verifySignature(BigIntegers
 				.asUnsignedByteArray(bmpi.mod(q)), r, s);
 		return result;
+	}
+
+	public KeyPair generateDSAKeyPair() throws OtrCryptoException {
+		 KeyPairGenerator kg;
+		try {
+			kg = KeyPairGenerator.getInstance("DSA");
+		} catch (NoSuchAlgorithmException e) {
+			throw new OtrCryptoException(e);
+		}
+         return kg.genKeyPair();
 	}
 }

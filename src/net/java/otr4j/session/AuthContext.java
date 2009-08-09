@@ -2,6 +2,7 @@ package net.java.otr4j.session;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
+import java.security.PublicKey;
 
 import javax.crypto.interfaces.DHPublicKey;
 
@@ -35,4 +36,5 @@ interface AuthContext {
 
 	public abstract void startV2Auth() throws OtrException;
 
+	public abstract PublicKey getRemoteLongTermPublicKey();
 }

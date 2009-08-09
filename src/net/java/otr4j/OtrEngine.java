@@ -9,7 +9,7 @@ import net.java.otr4j.session.SessionStatus;
  * @param <T>
  *            A class that identifies the Session.
  */
-public interface OtrEngine<T> {
+public interface OtrEngine<T, Z> {
 
 	/**
 	 * 
@@ -67,4 +67,10 @@ public interface OtrEngine<T> {
 	 * @return The status of an Off-the-Record session.
 	 */
 	public SessionStatus getSessionStatus(T sessionID);
+	
+	public boolean getSessionIsAuthenticated(T sessionID);
+	
+	public String getSessionFingerprint(T sessionID);
+	
+	public Z getSessionID(T sessionID);
 }

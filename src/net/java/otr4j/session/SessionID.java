@@ -29,8 +29,6 @@ public final class SessionID {
 	}
 
 	public String getAccountID() {
-		if (accountID == null)
-			accountID = "";
 		return accountID;
 	}
 
@@ -39,8 +37,6 @@ public final class SessionID {
 	}
 
 	public String getUserID() {
-		if (userID == null)
-			userID = "";
 		return userID;
 	}
 
@@ -49,9 +45,12 @@ public final class SessionID {
 	}
 
 	public String getProtocolName() {
-		if (protocolName == null)
-			protocolName = "";
 		return protocolName;
+	}
+
+	public String toString() {
+		return this.getAccountID() + "_" + this.getProtocolName() + "_"
+				+ this.getUserID();
 	}
 
 	public boolean equals(Object obj) {
@@ -62,13 +61,10 @@ public final class SessionID {
 
 		SessionID sessionID = (SessionID) obj;
 
-		return this.getAccountID().equals(sessionID.getAccountID())
-				&& this.getUserID().equals(sessionID.getUserID())
-				&& this.getProtocolName().equals(sessionID.getProtocolName());
+		return this.toString().equals(sessionID.toString());
 	}
 
 	public int hashCode() {
-		return this.getAccountID().hashCode() + this.getUserID().hashCode()
-				+ this.getProtocolName().hashCode();
+		return this.toString().hashCode();
 	}
 }

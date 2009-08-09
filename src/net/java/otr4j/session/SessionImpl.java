@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
@@ -83,7 +84,11 @@ public class SessionImpl implements Session {
 
 		this.setSessionID(sessionID);
 		this.setListener(listener);
-		this.setSessionStatus(SessionStatus.PLAINTEXT);
+		try {
+			this.setSessionStatus(SessionStatus.PLAINTEXT);
+		} catch (OtrException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private SessionKeys getEncryptionSessionKeys() {
@@ -205,8 +210,66 @@ public class SessionImpl implements Session {
 		return buff.array();
 	}
 
-	private void setSessionStatus(SessionStatus sessionStatus) {
+	private void setSessionStatus(SessionStatus sessionStatus)
+			throws OtrException {
+		switch (sessionStatus) {
+		case ENCRYPTED:
+			AuthContext auth = this.getAuthContext();
+			logger.info("Setting most recent session keys from auth.");
+			for (int i = 0; i < this.getSessionKeys()[0].length; i++) {
+				SessionKeys current = getSessionKeysByIndex(0, i);
+				current.setLocalPair(auth.getLocalDHKeyPair(), 1);
+				current.setRemoteDHPublicKey(auth.getRemoteDHPublicKey(), 1);
+				current.setS(auth.getS());
+			}
+
+			KeyPair nextDH = new OtrCryptoEngineImpl().generateDHKeyPair();
+			for (int i = 0; i < this.getSessionKeys()[1].length; i++) {
+				SessionKeys current = getSessionKeysByIndex(1, i);
+				current.setRemoteDHPublicKey(auth.getRemoteDHPublicKey(), 1);
+				current.setLocalPair(nextDH, 2);
+			}
+
+			PublicKey sessionPubKey = auth.getRemoteLongTermPublicKey();
+
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			byte[] fingerprint;
+			try {
+				SerializationUtils.writePublicKey(out, sessionPubKey);
+				fingerprint = new OtrCryptoEngineImpl().sha1Hash(out
+						.toByteArray());
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
+			this.setFingerprint(this.byteArrayToHexString(fingerprint));
+			auth.reset();
+			break;
+		}
+
 		this.sessionStatus = sessionStatus;
+	}
+
+	private String byteArrayToHexString(byte in[]) {
+		byte ch = 0x00;
+		int i = 0;
+		if (in == null || in.length <= 0)
+			return null;
+		String pseudo[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+				"A", "B", "C", "D", "E", "F" };
+		StringBuffer out = new StringBuffer(in.length * 2);
+		while (i < in.length) {
+			ch = (byte) (in[i] & 0xF0);
+			ch = (byte) (ch >>> 4);
+			ch = (byte) (ch & 0x0F);
+			out.append(pseudo[(int) ch]);
+			ch = (byte) (in[i] & 0x0F);
+			out.append(pseudo[(int) ch]);
+			i++;
+		}
+
+		String rslt = new String(out);
+		return rslt;
+
 	}
 
 	/*
@@ -214,6 +277,7 @@ public class SessionImpl implements Session {
 	 * 
 	 * @see net.java.otr4j.session.ISession#getSessionStatus()
 	 */
+
 	public SessionStatus getSessionStatus() {
 		return sessionStatus;
 	}
@@ -536,30 +600,13 @@ public class SessionImpl implements Session {
 		auth.handleReceivingMessage(msgText);
 
 		if (auth.getIsSecure()) {
-			logger.info("Setting most recent session keys from auth.");
-			for (int i = 0; i < this.getSessionKeys()[0].length; i++) {
-				SessionKeys current = getSessionKeysByIndex(0, i);
-				current.setLocalPair(this.getAuthContext().getLocalDHKeyPair(),
-						1);
-				current.setRemoteDHPublicKey(this.getAuthContext()
-						.getRemoteDHPublicKey(), 1);
-				current.setS(this.getAuthContext().getS());
-			}
-
-			KeyPair nextDH = new OtrCryptoEngineImpl().generateDHKeyPair();
-			for (int i = 0; i < this.getSessionKeys()[1].length; i++) {
-				SessionKeys current = getSessionKeysByIndex(1, i);
-				current.setRemoteDHPublicKey(getAuthContext()
-						.getRemoteDHPublicKey(), 1);
-				current.setLocalPair(nextDH, 2);
-			}
-
-			auth.reset();
 			this.setSessionStatus(SessionStatus.ENCRYPTED);
 			logger.info("Gone Secure.");
 		}
 	}
 
+	// Retransmit last sent message. Spec document does not mention where or
+	// when that should happen, must check libotr code.
 	private String lastSentMessage;
 
 	public String transformSending(String msgText, List<TLV> tlvs)
@@ -657,7 +704,10 @@ public class SessionImpl implements Session {
 			getListener()
 					.showError(
 							sessionID,
-							"The message cannot be sent because the OTR session state is finished. End your OTR session and start a new one.");
+							"Your message to "
+									+ sessionID.getUserID()
+									+ " was not sent.  Either end your private conversation, or restart it.");
+			return null;
 		default:
 			logger.info("Uknown message state, not processing.");
 			return msgText;
@@ -739,5 +789,15 @@ public class SessionImpl implements Session {
 			int policy = getListener().getPolicy(getSessionID());
 			return (policy & OtrPolicy.ERROR_START_AKE) != 0;
 		}
+	}
+
+	private String fingerprint;
+
+	private void setFingerprint(String fingerprint) {
+		this.fingerprint = fingerprint;
+	}
+
+	public String getFingerprint() {
+		return fingerprint;
 	}
 }

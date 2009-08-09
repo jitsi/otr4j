@@ -25,4 +25,6 @@ public interface OtrEngineListener {
 	public abstract int getPolicy(SessionID sessionID);
 
 	public abstract KeyPair getKeyPair(SessionID sessionID);
+	
+	public abstract Boolean getSessionIsAuthenticated(SessionID sessionID);
 }

@@ -20,7 +20,7 @@ import net.java.otr4j.session.SessionStatus;
  * @author George Politis
  * 
  */
-public class OtrEngineImpl implements OtrEngine<SessionID> {
+public class OtrEngineImpl implements OtrEngine<SessionID, SessionID> {
 
 	public OtrEngineImpl(OtrEngineListener listener) {
 		this.setListener(listener);
@@ -95,5 +95,24 @@ public class OtrEngineImpl implements OtrEngine<SessionID> {
 		} catch (OtrException e) {
 			listener.showError(sessionID, e.getMessage());
 		}
+	}
+
+	public boolean getSessionIsAuthenticated(SessionID sessionID) {
+		Boolean result = getListener().getSessionIsAuthenticated(sessionID);
+		if (result == null) {
+			// TODO Provide build-in fingerprint management.
+			return false;
+		} else {
+			return result;
+		}
+
+	}
+
+	public String getSessionFingerprint(SessionID sessionID) {
+		return this.getSession(sessionID).getFingerprint();
+	}
+
+	public SessionID getSessionID(SessionID sessionID) {
+		return sessionID;
 	}
 }

@@ -78,4 +78,6 @@ public interface OtrCryptoEngine {
 
 	public abstract boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
 			throws OtrCryptoException;
+	
+	public abstract KeyPair generateDSAKeyPair() throws OtrCryptoException;
 }
