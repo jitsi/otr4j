@@ -776,15 +776,23 @@ public class SessionImpl implements Session {
 	 * @see net.java.otr4j.session.ISession#endSession()
 	 */
 	public void endSession() throws OtrException {
-		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
+		SessionStatus status = this.getSessionStatus();
+		switch (status) {
+		case ENCRYPTED:
+			Vector<TLV> tlvs = new Vector<TLV>();
+			tlvs.add(new TLV(1, null));
+
+			String msg = this.transformSending(null, tlvs);
+			getListener().injectMessage(getSessionID(), msg);
+			this.setSessionStatus(SessionStatus.PLAINTEXT);
+			break;
+		case FINISHED:
+			this.setSessionStatus(SessionStatus.PLAINTEXT);
+			break;
+		case PLAINTEXT:
 			return;
+		}
 
-		Vector<TLV> tlvs = new Vector<TLV>();
-		tlvs.add(new TLV(1, null));
-
-		String msg = this.transformSending(null, tlvs);
-		getListener().injectMessage(getSessionID(), msg);
-		this.setSessionStatus(SessionStatus.FINISHED);
 	}
 
 	/*
