@@ -212,6 +212,10 @@ public class SessionImpl implements Session {
 
 	private void setSessionStatus(SessionStatus sessionStatus)
 			throws OtrException {
+		
+		if (sessionStatus == this.sessionStatus)
+			return;
+		
 		switch (sessionStatus) {
 		case ENCRYPTED:
 			AuthContext auth = this.getAuthContext();
@@ -284,6 +288,7 @@ public class SessionImpl implements Session {
 		}
 
 		this.sessionStatus = sessionStatus;
+		getListener().sessionStatusChanged(getSessionID(), sessionStatus);
 	}
 
 	private String byteArrayToHexString(byte in[]) {

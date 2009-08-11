@@ -9,6 +9,7 @@ package net.java.otr4j;
 import java.security.KeyPair;
 
 import net.java.otr4j.session.SessionID;
+import net.java.otr4j.session.SessionStatus;
 
 /**
  * 
@@ -27,4 +28,6 @@ public interface OtrEngineListener {
 	public abstract KeyPair getKeyPair(SessionID sessionID);
 	
 	public abstract Boolean getSessionIsAuthenticated(SessionID sessionID);
+	
+	public abstract void sessionStatusChanged(SessionID sessionID, SessionStatus status);
 }

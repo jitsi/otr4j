@@ -8,6 +8,7 @@ import java.util.logging.*;
 import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.session.SessionID;
+import net.java.otr4j.session.SessionStatus;
 
 public class DummyOTR4jListener implements OtrEngineListener {
 
@@ -53,6 +54,10 @@ public class DummyOTR4jListener implements OtrEngineListener {
 
 	public Boolean getSessionIsAuthenticated(SessionID sessionID) {
 		return false;
+	}
+
+	public void sessionStatusChanged(SessionID sessionID, SessionStatus status) {
+		// don't care
 	}
 
 }
