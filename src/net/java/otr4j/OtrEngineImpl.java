@@ -37,8 +37,11 @@ public class OtrEngineImpl implements OtrEngine<SessionID, SessionID> {
 		if (sessions == null)
 			sessions = new Hashtable<SessionID, Session>();
 
-		if (!sessions.containsKey(sessionID))
-			sessions.put(sessionID, new SessionImpl(sessionID, getListener()));
+		if (!sessions.containsKey(sessionID)) {
+			Session session = new SessionImpl(sessionID, getListener());
+			sessions.put(sessionID, session);
+
+		}
 
 		return sessions.get(sessionID);
 	}
@@ -115,8 +118,12 @@ public class OtrEngineImpl implements OtrEngine<SessionID, SessionID> {
 	public String getLocalFingerprint(SessionID sessionID) {
 		return this.getSession(sessionID).getLocalFingerprint();
 	}
-	
+
 	public SessionID getSessionID(SessionID sessionID) {
 		return sessionID;
+	}
+
+	public void verifyFingerPrint(SessionID sessionID) {
+		// TODO Auto-generated method stub
 	}
 }

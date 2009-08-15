@@ -111,4 +111,18 @@ public class OtrPolicyImpl implements OtrPolicy {
 		setAllowV2(value);
 	}
 
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (obj == null || obj.getClass() != this.getClass())
+			return false;
+
+		OtrPolicy policy = (OtrPolicy) obj;
+
+		return policy.getPolicy() == this.getPolicy();
+	}
+
+	public int hashCode() {
+		return this.getPolicy();
+	}
 }

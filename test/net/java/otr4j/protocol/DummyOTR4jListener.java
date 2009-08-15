@@ -21,7 +21,7 @@ public class DummyOTR4jListener implements OtrEngineListener {
 	private OtrPolicy policy;
 	public String lastInjectedMessage;
 
-	public OtrPolicy getPolicy(SessionID ctx) {
+	public OtrPolicy getSessionPolicy(SessionID ctx) {
 		return this.policy;
 	}
 
@@ -41,7 +41,7 @@ public class DummyOTR4jListener implements OtrEngineListener {
 		logger.warning("IM shows warning to user: " + warning);
 	}
 
-	public KeyPair getKeyPair(SessionID sessionID) {
+	public KeyPair getSessionKeyPair(SessionID sessionID) {
 		logger.info("IM generates a DSA key pair.");
 		try {
 			KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
@@ -56,7 +56,7 @@ public class DummyOTR4jListener implements OtrEngineListener {
 		return false;
 	}
 
-	public void sessionStatusChanged(SessionID sessionID, SessionStatus status) {
+	public void sessionStatusChanged(SessionID sessionID) {
 		// don't care
 	}
 

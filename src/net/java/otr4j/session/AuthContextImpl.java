@@ -551,7 +551,7 @@ class AuthContextImpl implements AuthContext {
 
 	public KeyPair getLocalLongTermKeyPair() {
 		if (localLongTermKeyPair == null) {
-			KeyPair pair = getListener().getKeyPair(this.getSessionID());
+			KeyPair pair = getListener().getSessionKeyPair(this.getSessionID());
 			if (pair == null) {
 				// TODO use built-in management
 				try {
@@ -633,7 +633,7 @@ class AuthContextImpl implements AuthContext {
 				+ " received a signature message from "
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
-		if (!getListener().getPolicy(getSessionID()).getAllowV2()) {
+		if (!getListener().getSessionPolicy(getSessionID()).getAllowV2()) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
 			return;
 		}
@@ -699,7 +699,7 @@ class AuthContextImpl implements AuthContext {
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
-		if (!getListener().getPolicy(getSessionID()).getAllowV2()) {
+		if (!getListener().getSessionPolicy(getSessionID()).getAllowV2()) {
 			logger.info("Policy does not allow OTRv2, ignoring message.");
 			return;
 		}
@@ -818,7 +818,7 @@ class AuthContextImpl implements AuthContext {
 					+ getSessionID().getUserID() + " throught "
 					+ getSessionID().getProtocolName() + ".");
 
-			if (!getListener().getPolicy(getSessionID()).getAllowV2()) {
+			if (!getListener().getSessionPolicy(getSessionID()).getAllowV2()) {
 				logger.info("If ALLOW_V2 is not set, ignore this message.");
 				return;
 			}
@@ -869,7 +869,7 @@ class AuthContextImpl implements AuthContext {
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
-		if (!getListener().getPolicy(getSessionID()).getAllowV2()) {
+		if (!getListener().getSessionPolicy(getSessionID()).getAllowV2()) {
 			logger.info("ALLOW_V2 is not set, ignore this message.");
 			return;
 		}

@@ -75,4 +75,6 @@ public interface OtrEngine<T, Z> {
 	public String getLocalFingerprint(T sessionID);
 	
 	public Z getSessionID(T sessionID);
+	
+	public void verifyFingerPrint(T sessionID);
 }
