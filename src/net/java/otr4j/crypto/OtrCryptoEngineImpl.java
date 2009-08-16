@@ -6,6 +6,8 @@
  */
 package net.java.otr4j.crypto;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
@@ -28,6 +30,7 @@ import javax.crypto.spec.DHPrivateKeySpec;
 import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import net.java.otr4j.message.SerializationUtils;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.BufferedBlockCipher;
@@ -351,12 +354,55 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	public KeyPair generateDSAKeyPair() throws OtrCryptoException {
-		 KeyPairGenerator kg;
+		KeyPairGenerator kg;
 		try {
 			kg = KeyPairGenerator.getInstance("DSA");
 		} catch (NoSuchAlgorithmException e) {
 			throw new OtrCryptoException(e);
 		}
-         return kg.genKeyPair();
+		return kg.genKeyPair();
+	}
+
+	public String getFingerprint(PublicKey pubKey) throws OtrCryptoException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] b;
+		try {
+			SerializationUtils.writePublicKey(out, pubKey);
+			byte[] bRemotePubKey = out.toByteArray();
+			if (pubKey.getAlgorithm().equals("DSA")) {
+				byte[] trimmed = new byte[bRemotePubKey.length - 2];
+				System.arraycopy(bRemotePubKey, 2, trimmed, 0, trimmed.length);
+				b = new OtrCryptoEngineImpl().sha1Hash(trimmed);
+			} else
+				b = new OtrCryptoEngineImpl().sha1Hash(bRemotePubKey);
+
+		} catch (IOException e) {
+			throw new OtrCryptoException(e);
+		}
+
+		return this.byteArrayToHexString(b);
+	}
+	
+	private String byteArrayToHexString(byte in[]) {
+		byte ch = 0x00;
+		int i = 0;
+		if (in == null || in.length <= 0)
+			return null;
+		String pseudo[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+				"A", "B", "C", "D", "E", "F" };
+		StringBuffer out = new StringBuffer(in.length * 2);
+		while (i < in.length) {
+			ch = (byte) (in[i] & 0xF0);
+			ch = (byte) (ch >>> 4);
+			ch = (byte) (ch & 0x0F);
+			out.append(pseudo[(int) ch]);
+			ch = (byte) (in[i] & 0x0F);
+			out.append(pseudo[(int) ch]);
+			i++;
+		}
+
+		String rslt = new String(out);
+		return rslt;
+
 	}
 }
