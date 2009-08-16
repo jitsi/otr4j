@@ -1,5 +1,5 @@
 /*
- * otr4j, the open source java otr library.
+ * otr4j, the open source java otr librar
  *
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
@@ -7,6 +7,7 @@
 
 package net.java.otr4j;
 
+import java.security.PublicKey;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -20,13 +21,13 @@ import net.java.otr4j.session.SessionStatus;
  * @author George Politis
  * 
  */
-public class OtrEngineImpl implements OtrEngine<SessionID, SessionID> {
+public class OtrEngineImpl implements OtrEngine {
 
-	public OtrEngineImpl(OtrEngineListener listener) {
+	public OtrEngineImpl(OtrEngineHost listener) {
 		this.setListener(listener);
 	}
 
-	private OtrEngineListener listener;
+	private OtrEngineHost listener;
 	private Map<SessionID, Session> sessions;
 
 	private Session getSession(SessionID sessionID) {
@@ -84,11 +85,11 @@ public class OtrEngineImpl implements OtrEngine<SessionID, SessionID> {
 		}
 	}
 
-	private void setListener(OtrEngineListener listener) {
+	private void setListener(OtrEngineHost listener) {
 		this.listener = listener;
 	}
 
-	private OtrEngineListener getListener() {
+	private OtrEngineHost getListener() {
 		return listener;
 	}
 
@@ -100,30 +101,7 @@ public class OtrEngineImpl implements OtrEngine<SessionID, SessionID> {
 		}
 	}
 
-	public boolean getSessionIsAuthenticated(SessionID sessionID) {
-		Boolean result = getListener().getSessionIsAuthenticated(sessionID);
-		if (result == null) {
-			// TODO Provide build-in fingerprint management.
-			return false;
-		} else {
-			return result;
-		}
-
-	}
-
-	public String getRemoteFingerprint(SessionID sessionID) {
-		return this.getSession(sessionID).getRemoteFingerprint();
-	}
-
-	public String getLocalFingerprint(SessionID sessionID) {
-		return this.getSession(sessionID).getLocalFingerprint();
-	}
-
-	public SessionID getSessionID(SessionID sessionID) {
-		return sessionID;
-	}
-
-	public void verifyFingerPrint(SessionID sessionID) {
-		// TODO Auto-generated method stub
+	public PublicKey getRemotePublicKey(SessionID sessionID) {
+		return this.getSession(sessionID).getRemotePublicKey();
 	}
 }

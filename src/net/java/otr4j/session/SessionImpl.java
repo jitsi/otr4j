@@ -19,7 +19,7 @@ import java.util.Vector;
 import java.util.logging.Logger;
 import javax.crypto.interfaces.DHPublicKey;
 
-import net.java.otr4j.OtrEngineListener;
+import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.crypto.OtrCryptoEngine;
@@ -72,7 +72,7 @@ public class SessionImpl implements Session {
 	}
 
 	private SessionID sessionID;
-	private OtrEngineListener listener;
+	private OtrEngineHost listener;
 	private SessionStatus sessionStatus;
 	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
@@ -80,7 +80,7 @@ public class SessionImpl implements Session {
 	private static Logger logger = Logger
 			.getLogger(SessionImpl.class.getName());
 
-	public SessionImpl(SessionID sessionID, OtrEngineListener listener) {
+	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
 
 		this.setSessionID(sessionID);
 		this.setListener(listener);
@@ -235,54 +235,7 @@ public class SessionImpl implements Session {
 				current.setLocalPair(nextDH, 2);
 			}
 
-			PublicKey remotePubKey = auth.getRemoteLongTermPublicKey();
-
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			byte[] remoteFingerprint;
-			try {
-				SerializationUtils.writePublicKey(out, remotePubKey);
-				byte[] bRemotePubKey = out.toByteArray();
-				if (remotePubKey.getAlgorithm().equals("DSA")) {
-					byte[] trimmed = new byte[bRemotePubKey.length - 2];
-					System.arraycopy(bRemotePubKey, 2, trimmed, 0,
-							trimmed.length);
-					remoteFingerprint = new OtrCryptoEngineImpl()
-							.sha1Hash(trimmed);
-				} else
-					remoteFingerprint = new OtrCryptoEngineImpl()
-							.sha1Hash(bRemotePubKey);
-
-			} catch (IOException e) {
-				throw new OtrException(e);
-			}
-
-			this.setRemoteFingerprint(this
-					.byteArrayToHexString(remoteFingerprint));
-
-			PublicKey localPubKey = auth.getLocalLongTermKeyPair().getPublic();
-
-			ByteArrayOutputStream out_ = new ByteArrayOutputStream();
-			byte[] localFingerprint;
-			try {
-				SerializationUtils.writePublicKey(out_, localPubKey);
-				byte[] bLocalPubKey = out_.toByteArray();
-				if (localPubKey.getAlgorithm().equals("DSA")) {
-					byte[] trimmed = new byte[bLocalPubKey.length - 2];
-					System.arraycopy(bLocalPubKey, 2, trimmed, 0,
-							trimmed.length);
-					localFingerprint = new OtrCryptoEngineImpl()
-							.sha1Hash(trimmed);
-				} else {
-					localFingerprint = new OtrCryptoEngineImpl()
-							.sha1Hash(bLocalPubKey);
-				}
-
-			} catch (IOException e) {
-				throw new OtrException(e);
-			}
-
-			this.setLocalFingerprint(this
-					.byteArrayToHexString(localFingerprint));
+			this.setRemotePublicKey(auth.getRemoteLongTermPublicKey());
 
 			auth.reset();
 			break;
@@ -290,29 +243,6 @@ public class SessionImpl implements Session {
 
 		this.sessionStatus = sessionStatus;
 		getListener().sessionStatusChanged(getSessionID());
-	}
-
-	private String byteArrayToHexString(byte in[]) {
-		byte ch = 0x00;
-		int i = 0;
-		if (in == null || in.length <= 0)
-			return null;
-		String pseudo[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-				"A", "B", "C", "D", "E", "F" };
-		StringBuffer out = new StringBuffer(in.length * 2);
-		while (i < in.length) {
-			ch = (byte) (in[i] & 0xF0);
-			ch = (byte) (ch >>> 4);
-			ch = (byte) (ch & 0x0F);
-			out.append(pseudo[(int) ch]);
-			ch = (byte) (in[i] & 0x0F);
-			out.append(pseudo[(int) ch]);
-			i++;
-		}
-
-		String rslt = new String(out);
-		return rslt;
-
 	}
 
 	/*
@@ -338,11 +268,11 @@ public class SessionImpl implements Session {
 		return sessionID;
 	}
 
-	private void setListener(OtrEngineListener listener) {
+	private void setListener(OtrEngineHost listener) {
 		this.listener = listener;
 	}
 
-	private OtrEngineListener getListener() {
+	private OtrEngineHost getListener() {
 		return listener;
 	}
 
@@ -813,23 +743,13 @@ public class SessionImpl implements Session {
 		this.startSession();
 	}
 
-	private String remoteFingerprint;
+	private PublicKey remotePublicKey;
 
-	private void setRemoteFingerprint(String remoteFingerprint) {
-		this.remoteFingerprint = remoteFingerprint;
+	private void setRemotePublicKey(PublicKey pubKey) {
+		this.remotePublicKey = pubKey;
 	}
 
-	public String getRemoteFingerprint() {
-		return remoteFingerprint;
-	}
-
-	private String localFingerprint;
-
-	private void setLocalFingerprint(String localFingerprint) {
-		this.localFingerprint = localFingerprint;
-	}
-
-	public String getLocalFingerprint() {
-		return localFingerprint;
+	public PublicKey getRemotePublicKey() {
+		return remotePublicKey;
 	}
 }

@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
 
-import net.java.otr4j.OtrEngineListener;
+import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
@@ -215,14 +215,14 @@ class AuthContextImpl implements AuthContext {
 		}
 	}
 
-	public AuthContextImpl(SessionID sessionID, OtrEngineListener listener) {
+	public AuthContextImpl(SessionID sessionID, OtrEngineHost listener) {
 		this.setSessionID(sessionID);
 		this.setListener(listener);
 		this.reset();
 	}
 
 	private SessionID sessionID;
-	private OtrEngineListener listener;
+	private OtrEngineHost listener;
 
 	private int authenticationState;
 	private byte[] r;
@@ -566,11 +566,11 @@ class AuthContextImpl implements AuthContext {
 		return localLongTermKeyPair;
 	}
 
-	private void setListener(OtrEngineListener listener) {
+	private void setListener(OtrEngineHost listener) {
 		this.listener = listener;
 	}
 
-	private OtrEngineListener getListener() {
+	private OtrEngineHost getListener() {
 		return listener;
 	}
 

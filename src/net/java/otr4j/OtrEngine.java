@@ -1,15 +1,16 @@
 package net.java.otr4j;
 
+import java.security.PublicKey;
+
+import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionStatus;
 
 /**
  * 
  * @author George Politis
  * 
- * @param <T>
- *            A class that identifies the Session.
  */
-public interface OtrEngine<T, Z> {
+public interface OtrEngine {
 
 	/**
 	 * 
@@ -18,9 +19,9 @@ public interface OtrEngine<T, Z> {
 	 * @param content
 	 *            The message content to be transformed.
 	 * @return The transformed message content.
-	 * @throws OtrException
 	 */
-	public String transformReceiving(T sessionID, String content);
+	public abstract String transformReceiving(SessionID sessionID,
+			String content);
 
 	/**
 	 * 
@@ -29,36 +30,32 @@ public interface OtrEngine<T, Z> {
 	 * @param content
 	 *            The message content to be transformed.
 	 * @return The transformed message content.
-	 * @throws OtrException
 	 */
-	public String transformSending(T sessionID, String content);
+	public abstract String transformSending(SessionID sessionID, String content);
 
 	/**
 	 * Starts an Off-the-Record session, if there is no active one.
 	 * 
 	 * @param sessionID
 	 *            The session identifier.
-	 * @throws OtrException
 	 */
-	public void startSession(T sessionID);
+	public abstract void startSession(SessionID sessionID);
 
 	/**
 	 * Ends the Off-the-Record session, if exists.
 	 * 
 	 * @param sessionID
 	 *            The session identifier.
-	 * @throws OtrException
 	 */
-	public void endSession(T sessionID);
+	public abstract void endSession(SessionID sessionID);
 
 	/**
 	 * Stops/Starts the Off-the-Record session.
 	 * 
 	 * @param sessionID
 	 *            The session identifier.
-	 * @throws OtrException
 	 */
-	public void refreshSession(T sessionID);
+	public abstract void refreshSession(SessionID sessionID);
 
 	/**
 	 * 
@@ -66,15 +63,13 @@ public interface OtrEngine<T, Z> {
 	 *            The session identifier.
 	 * @return The status of an Off-the-Record session.
 	 */
-	public SessionStatus getSessionStatus(T sessionID);
-	
-	public boolean getSessionIsAuthenticated(T sessionID);
-	
-	public String getRemoteFingerprint(T sessionID);
-	
-	public String getLocalFingerprint(T sessionID);
-	
-	public Z getSessionID(T sessionID);
-	
-	public void verifyFingerPrint(T sessionID);
+	public abstract SessionStatus getSessionStatus(SessionID sessionID);
+
+	/**
+	 * 
+	 * @param sessionID
+	 *            The session identifier.
+	 * @return The remote public key.
+	 */
+	public abstract PublicKey getRemotePublicKey(SessionID sessionID);
 }

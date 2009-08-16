@@ -1,5 +1,6 @@
 package net.java.otr4j.session;
 
+import java.security.PublicKey;
 import java.util.List;
 
 import net.java.otr4j.OtrException;
@@ -23,8 +24,5 @@ public interface Session {
 
 	public abstract void refreshSession() throws OtrException;
 
-	public abstract String getRemoteFingerprint();
-	
-	public abstract String getLocalFingerprint();
-	
+	public abstract PublicKey getRemotePublicKey();
 }

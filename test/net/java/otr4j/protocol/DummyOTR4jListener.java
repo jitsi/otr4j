@@ -5,12 +5,11 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.*;
 
-import net.java.otr4j.OtrEngineListener;
+import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.session.SessionID;
-import net.java.otr4j.session.SessionStatus;
 
-public class DummyOTR4jListener implements OtrEngineListener {
+public class DummyOTR4jListener implements OtrEngineHost {
 
 	public DummyOTR4jListener(OtrPolicy policy) {
 		this.policy = policy;

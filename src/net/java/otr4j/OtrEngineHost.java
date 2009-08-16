@@ -15,7 +15,7 @@ import net.java.otr4j.session.SessionID;
  * @author George Politis
  * 
  */
-public interface OtrEngineListener {
+public interface OtrEngineHost {
 	public abstract void injectMessage(SessionID sessionID, String msg);
 
 	public abstract void showWarning(SessionID sessionID, String warning);
@@ -25,8 +25,6 @@ public interface OtrEngineListener {
 	public abstract OtrPolicy getSessionPolicy(SessionID sessionID);
 
 	public abstract KeyPair getSessionKeyPair(SessionID sessionID);
-	
-	public abstract Boolean getSessionIsAuthenticated(SessionID sessionID);
 	
 	public abstract void sessionStatusChanged(SessionID sessionID);
 }
