@@ -9,13 +9,13 @@ import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.session.SessionID;
 
-public class DummyOTR4jListener implements OtrEngineHost {
+public class DummyOtrEngineHost implements OtrEngineHost {
 
-	public DummyOTR4jListener(OtrPolicy policy) {
+	public DummyOtrEngineHost(OtrPolicy policy) {
 		this.policy = policy;
 	}
 
-	private static Logger logger = Logger.getLogger(DummyOTR4jListener.class
+	private static Logger logger = Logger.getLogger(DummyOtrEngineHost.class
 			.getName());
 	private OtrPolicy policy;
 	public String lastInjectedMessage;

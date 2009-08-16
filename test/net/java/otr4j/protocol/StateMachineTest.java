@@ -15,7 +15,7 @@ public class StateMachineTest extends junit.framework.TestCase {
 
 	public void testReceivingMessage() throws Exception {
 
-		DummyOTR4jListener listener = new DummyOTR4jListener(new OtrPolicyImpl(
+		DummyOtrEngineHost listener = new DummyOtrEngineHost(new OtrPolicyImpl(
 				OtrPolicy.ALLOW_V2 | OtrPolicy.ERROR_START_AKE));
 
 		OtrEngineImpl usAlice = new OtrEngineImpl(listener);
