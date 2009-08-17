@@ -164,7 +164,7 @@ class SessionKeysImpl implements SessionKeys {
 
 	public byte[] getSendingMACKey() throws OtrException {
 		if (sendingMACKey != null)
-			return sendingAESKey;
+			return sendingMACKey;
 
 		sendingMACKey = new OtrCryptoEngineImpl().sha1Hash(getSendingAESKey());
 		logger.info("Calculated sending MAC key.");
