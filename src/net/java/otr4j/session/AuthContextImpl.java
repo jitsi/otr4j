@@ -22,9 +22,9 @@ import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrException;
+import net.java.otr4j.OtrKeyManager;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
-import net.java.otr4j.crypto.OtrCryptoException;
 import net.java.otr4j.message.DHCommitMessage;
 import net.java.otr4j.message.DHKeyMessage;
 import net.java.otr4j.message.MessageConstants;
@@ -215,14 +215,17 @@ class AuthContextImpl implements AuthContext {
 		}
 	}
 
-	public AuthContextImpl(SessionID sessionID, OtrEngineHost listener) {
+	public AuthContextImpl(SessionID sessionID, OtrEngineHost listener,
+			OtrKeyManager keyManager) {
 		this.setSessionID(sessionID);
 		this.setListener(listener);
+		setKeyManager(keyManager);
 		this.reset();
 	}
 
 	private SessionID sessionID;
 	private OtrEngineHost listener;
+	private OtrKeyManager keyManager;
 
 	private int authenticationState;
 	private byte[] r;
@@ -551,17 +554,7 @@ class AuthContextImpl implements AuthContext {
 
 	public KeyPair getLocalLongTermKeyPair() {
 		if (localLongTermKeyPair == null) {
-			KeyPair pair = getListener().getSessionKeyPair(this.getSessionID());
-			if (pair == null) {
-				// TODO use built-in management
-				try {
-					return new OtrCryptoEngineImpl().generateDSAKeyPair();
-				} catch (OtrCryptoException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			} else
-				localLongTermKeyPair = pair;
+			localLongTermKeyPair = getKeyManager().getKeyPair(this.getSessionID());
 		}
 		return localLongTermKeyPair;
 	}
@@ -1020,5 +1013,13 @@ class AuthContextImpl implements AuthContext {
 
 	private void setRemoteLongTermPublicKey(PublicKey pubKey) {
 		this.remoteLongTermPublicKey = pubKey;
+	}
+
+	private void setKeyManager(OtrKeyManager keyManager) {
+		this.keyManager = keyManager;
+	}
+
+	private OtrKeyManager getKeyManager() {
+		return this.keyManager;
 	}
 }

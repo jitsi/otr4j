@@ -1,8 +1,14 @@
 package net.java.otr4j.protocol;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+
+import net.java.otr4j.OtrKeyManager;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.OtrEngineImpl;
 import net.java.otr4j.OtrPolicyImpl;
+import net.java.otr4j.crypto.OtrCryptoException;
 import net.java.otr4j.message.unencoded.UnencodedMessageTextSample;
 import net.java.otr4j.session.SessionID;
 
@@ -18,8 +24,21 @@ public class StateMachineTest extends junit.framework.TestCase {
 		DummyOtrEngineHost listener = new DummyOtrEngineHost(new OtrPolicyImpl(
 				OtrPolicy.ALLOW_V2 | OtrPolicy.ERROR_START_AKE));
 
-		OtrEngineImpl usAlice = new OtrEngineImpl(listener);
-		OtrEngineImpl usBob = new OtrEngineImpl(listener);
+		OtrKeyManager keyManager = new OtrKeyManager() {
+			public KeyPair getKeyPair(SessionID paramSessionID) {
+				KeyPairGenerator kg;
+				try {
+					kg = KeyPairGenerator.getInstance("DSA");
+				} catch (NoSuchAlgorithmException e) {
+					e.printStackTrace();
+					return null;
+				}
+				return kg.genKeyPair();
+			}
+		};
+		
+		OtrEngineImpl usAlice = new OtrEngineImpl(listener, keyManager);
+		OtrEngineImpl usBob = new OtrEngineImpl(listener, keyManager);
 
 		// Bob receives query, sends D-H commit.
 		@SuppressWarnings("unused")
