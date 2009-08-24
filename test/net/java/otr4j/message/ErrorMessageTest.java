@@ -1,4 +1,4 @@
-package net.java.otr4j.message.unencoded;
+package net.java.otr4j.message;
 
 import net.java.otr4j.message.ErrorMessage;
 import junit.framework.TestCase;

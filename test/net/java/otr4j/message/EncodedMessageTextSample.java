@@ -1,4 +1,4 @@
-package net.java.otr4j.message.encoded;
+package net.java.otr4j.message;
 
 public interface EncodedMessageTextSample {
 
