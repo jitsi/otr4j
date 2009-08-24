@@ -61,13 +61,22 @@ public final class QueryMessage extends QueryMessageBase {
 	}
 
 	public String writeObject() throws IOException {
-		String txt = MessageConstants.BASE_HEAD + "?v";
+		String txt = MessageConstants.BASE_HEAD;
+		Vector<Integer> versions = getVersions();
 
-		for (int version : getVersions()) {
-			txt += version;
-		}
+		if (versions.contains(1))
+			txt += "?";
 
-		return txt + "? You don't have a plugin to handle OTR.";
+		if (versions.size() > 1 || versions.get(0) != 1) {
+			txt += "v";
+			for (int version : versions)
+				if (version != 1)
+					txt += version;
+
+			return txt + "? You don't have a plugin to handle OTR.";
+		} else
+			return txt + " You don't have a plugin to handle OTR.";
+
 	}
 
 }
