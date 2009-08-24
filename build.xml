@@ -35,19 +35,6 @@
 
 	<target name="main" depends="jar" />
 
-	<target name="junit-all" depends="compile">
-		<junit printsummary="yes">
-			<classpath>
-				<path refid="classpath" />
-				<path location="${classes.dir}" />
-			</classpath>
-			<formatter type="brief" usefile="off" />
-			<batchtest fork="yes">
-				<fileset dir="${test.dir}" includes="**/*Test.java" />
-			</batchtest>
-		</junit>
-	</target>
-
 	<target name="junit" depends="compile">
 		<junit printsummary="yes">
 			<classpath>
@@ -56,7 +43,7 @@
 			</classpath>
 			<formatter type="brief" usefile="off" />
 			<batchtest fork="yes">
-				<fileset dir="${test.dir}" includes="**/protocol*/*Test.java" />
+				<fileset dir="${test.dir}" includes="**/*Test.java" />
 			</batchtest>
 		</junit>
 	</target>

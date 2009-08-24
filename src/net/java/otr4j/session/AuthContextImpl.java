@@ -1004,7 +1004,7 @@ class AuthContextImpl implements AuthContext {
 	}
 
 	public void respondV2Auth() throws OtrException {
-		logger.info("Responding to Authenticated Key Exchange Start");
+		logger.info("Responding to Query Message");
 		this.reset();
 		this.setProtocolVersion(2);
 		this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
