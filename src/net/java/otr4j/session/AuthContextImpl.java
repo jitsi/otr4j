@@ -16,6 +16,7 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.Vector;
 import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
@@ -29,6 +30,7 @@ import net.java.otr4j.message.DHCommitMessage;
 import net.java.otr4j.message.DHKeyMessage;
 import net.java.otr4j.message.MessageConstants;
 import net.java.otr4j.message.MessageUtils;
+import net.java.otr4j.message.QueryMessage;
 import net.java.otr4j.message.RevealSignatureMessage;
 import net.java.otr4j.message.SerializationUtils;
 import net.java.otr4j.message.SignatureMessage;
@@ -262,6 +264,12 @@ class AuthContextImpl implements AuthContext {
 
 	private static Logger logger = Logger.getLogger(AuthContextImpl.class
 			.getName());
+
+	private QueryMessage getQueryMessage() {
+		Vector<Integer> versions = new Vector<Integer>();
+		versions.add(2);
+		return new QueryMessage(versions);
+	}
 
 	private DHCommitMessage getDHCommitMessage() throws OtrException {
 		return new DHCommitMessage(this.getProtocolVersion(), this
@@ -554,7 +562,8 @@ class AuthContextImpl implements AuthContext {
 
 	public KeyPair getLocalLongTermKeyPair() {
 		if (localLongTermKeyPair == null) {
-			localLongTermKeyPair = getKeyManager().getKeyPair(this.getSessionID());
+			localLongTermKeyPair = getKeyManager().getKeyPair(
+					this.getSessionID());
 		}
 		return localLongTermKeyPair;
 	}
@@ -984,7 +993,18 @@ class AuthContextImpl implements AuthContext {
 	}
 
 	public void startV2Auth() throws OtrException {
-		logger.info("Starting Authenticated Key Exchange");
+		logger
+				.info("Starting Authenticated Key Exchange, sending query message");
+		try {
+			getListener().injectMessage(getSessionID(),
+					this.getQueryMessage().writeObject());
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
+	}
+
+	public void respondV2Auth() throws OtrException {
+		logger.info("Responding to Authenticated Key Exchange Start");
 		this.reset();
 		this.setProtocolVersion(2);
 		this.setAuthenticationState(AuthContext.AWAITING_DHKEY);

@@ -6,6 +6,8 @@
  */
 package net.java.otr4j.message;
 
+import java.io.IOException;
+
 /**
  * 
  * @author George Politis
@@ -24,4 +26,8 @@ public abstract class MessageBase {
 	public int getMessageType() {
 		return messageType;
 	}
+	
+	public abstract void readObject(String msg) throws IOException;
+	
+	public abstract String writeObject() throws IOException;
 }

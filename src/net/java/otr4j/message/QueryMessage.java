@@ -1,29 +1,20 @@
 package net.java.otr4j.message;
 
+import java.io.IOException;
 import java.util.Vector;
 
-
-
 public final class QueryMessage extends QueryMessageBase {
-
-	public String toString() {
-		String txt = MessageConstants.BASE_HEAD + "?";
-
-		for (int version : getVersions()) {
-			txt += version;
-		}
-
-		txt += "?";
-		return txt;
-	}
 
 	public QueryMessage(Vector<Integer> versions) {
 		super(MessageConstants.QUERY);
 		this.setVersions(versions);
 	}
 
-	public QueryMessage(String msgText) {
+	public QueryMessage() {
 		super(MessageConstants.QUERY);
+	}
+
+	public void readObject(String msgText) throws IOException {
 		if (!msgText.startsWith(MessageConstants.QUERY1_HEAD)
 				&& !msgText.startsWith(MessageConstants.QUERY2_HEAD))
 			return;
@@ -66,6 +57,17 @@ public final class QueryMessage extends QueryMessageBase {
 		}
 
 		this.setVersions(versions);
+
+	}
+
+	public String writeObject() throws IOException {
+		String txt = MessageConstants.BASE_HEAD + "?v";
+
+		for (int version : getVersions()) {
+			txt += version;
+		}
+
+		return txt + "? You don't have a plugin to handle OTR.";
 	}
 
 }

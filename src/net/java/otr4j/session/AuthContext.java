@@ -35,6 +35,8 @@ interface AuthContext {
 			throws OtrException;
 
 	public abstract void startV2Auth() throws OtrException;
+	
+	public abstract void respondV2Auth() throws OtrException;
 
 	public abstract PublicKey getRemoteLongTermPublicKey();
 

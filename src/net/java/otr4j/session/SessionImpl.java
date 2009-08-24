@@ -82,7 +82,8 @@ public class SessionImpl implements Session {
 	private static Logger logger = Logger
 			.getLogger(SessionImpl.class.getName());
 
-	public SessionImpl(SessionID sessionID, OtrEngineHost listener, OtrKeyManager keyManager) {
+	public SessionImpl(SessionID sessionID, OtrEngineHost listener,
+			OtrKeyManager keyManager) {
 
 		this.setSessionID(sessionID);
 		this.setListener(listener);
@@ -287,7 +288,8 @@ public class SessionImpl implements Session {
 
 	private AuthContext getAuthContext() {
 		if (authContext == null)
-			authContext = new AuthContextImpl(getSessionID(), getListener(), getKeyManager());
+			authContext = new AuthContextImpl(getSessionID(), getListener(),
+					getKeyManager());
 		return authContext;
 	}
 
@@ -345,13 +347,18 @@ public class SessionImpl implements Session {
 				+ getSessionID().getProtocolName() + ".");
 
 		setSessionStatus(SessionStatus.PLAINTEXT);
-		
-		QueryMessage queryMessage = new QueryMessage(msgText);
+
+		QueryMessage queryMessage = new QueryMessage();
+		try {
+			queryMessage.readObject(msgText);
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 		if (queryMessage.getVersions().contains(2)
 				&& this.getListener().getSessionPolicy(getSessionID())
 						.getAllowV2()) {
 			logger.info("Query message with V2 support found.");
-			getAuthContext().startV2Auth();
+			getAuthContext().respondV2Auth();
 		} else if (queryMessage.getVersions().contains(1)
 				&& this.getListener().getSessionPolicy(getSessionID())
 						.getAllowV1()) {
@@ -359,13 +366,19 @@ public class SessionImpl implements Session {
 		}
 	}
 
-	private void handleErrorMessage(String msgText) {
+	private void handleErrorMessage(String msgText) throws OtrException {
 		logger.info(getSessionID().getAccountID()
 				+ " received an error message from "
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getUserID() + ".");
 
-		ErrorMessage errorMessage = new ErrorMessage(msgText);
+		ErrorMessage errorMessage = new ErrorMessage();
+		try {
+			errorMessage.readObject(msgText);
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
+		
 		getListener().showError(this.getSessionID(), errorMessage.error);
 
 		OtrPolicy policy = this.getListener().getSessionPolicy(getSessionID());
@@ -381,8 +394,12 @@ public class SessionImpl implements Session {
 			QueryMessage queryMessage = new QueryMessage(versions);
 
 			logger.info("Sending Query");
-			getListener()
-					.injectMessage(getSessionID(), queryMessage.toString());
+			try {
+				getListener()
+						.injectMessage(getSessionID(), queryMessage.writeObject());
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 		}
 	}
 
@@ -502,7 +519,12 @@ public class SessionImpl implements Session {
 					"Unreadable encrypted message was received.");
 			ErrorMessage errormsg = new ErrorMessage(
 					"You sent me an unreadable encrypted message..");
-			getListener().injectMessage(getSessionID(), errormsg.toString());
+			try {
+				getListener().injectMessage(getSessionID(),
+						errormsg.writeObject());
+			} catch (IOException e) {
+				throw new OtrException(e);
+			}
 			break;
 		}
 
@@ -515,7 +537,12 @@ public class SessionImpl implements Session {
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
-		PlainTextMessage plainTextMessage = new PlainTextMessage(msgText);
+		PlainTextMessage plainTextMessage = new PlainTextMessage();
+		try {
+			plainTextMessage.readObject(lastSentMessage);
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
 		OtrPolicy policy = getListener().getSessionPolicy(getSessionID());
 		Vector<Integer> versions = plainTextMessage.getVersions();
 		if (versions.size() < 1) {
@@ -566,7 +593,7 @@ public class SessionImpl implements Session {
 				if (plainTextMessage.getVersions().contains(2)
 						&& policy.getAllowV2()) {
 					logger.info("V2 tag found.");
-					getAuthContext().startV2Auth();
+					getAuthContext().respondV2Auth();
 				} else if (plainTextMessage.getVersions().contains(1)
 						&& policy.getAllowV1()) {
 					throw new UnsupportedOperationException();

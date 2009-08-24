@@ -6,6 +6,8 @@
  */
 package net.java.otr4j.message;
 
+import java.io.IOException;
+
 /**
  * 
  * @author George Politis
@@ -13,15 +15,20 @@ package net.java.otr4j.message;
 public final class ErrorMessage extends MessageBase {
 	public String error;
 	
-	public ErrorMessage(String msgText){
+	public ErrorMessage(){
 		super(MessageConstants.ERROR);
-		
-		if (!msgText.startsWith(MessageConstants.ERROR_HEAD))
-			return;
-		this.error = msgText.substring(MessageConstants.ERROR_HEAD.length());
 	}
 	
-	public String toString(){
+	public ErrorMessage(String error){
+		super(MessageConstants.ERROR);
+		this.error = error;
+	}
+
+	public void readObject(String msg) throws IOException {
+		this.error = msg.substring(MessageConstants.ERROR_HEAD.length());
+	}
+
+	public String writeObject() throws IOException {
 		return MessageConstants.ERROR_HEAD + error;
 	}
 }
