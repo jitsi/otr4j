@@ -539,7 +539,7 @@ public class SessionImpl implements Session {
 
 		PlainTextMessage plainTextMessage = new PlainTextMessage();
 		try {
-			plainTextMessage.readObject(lastSentMessage);
+			plainTextMessage.readObject(msgText);
 		} catch (IOException e) {
 			throw new OtrException(e);
 		}
