@@ -74,7 +74,7 @@ class AuthContextImpl implements AuthContext {
 				this.setLongTermPublicKey(SerializationUtils
 						.readPublicKey(stream));
 			} catch (Exception e) {
-				throw new IOException(e);
+				throw new IOException();
 			}
 			this.setDhKeyID(SerializationUtils.readInt(stream));
 			this.setSignature(SerializationUtils.readSignature(stream, this
@@ -92,7 +92,7 @@ class AuthContextImpl implements AuthContext {
 				SerializationUtils.writePublicKey(stream, this
 						.getLongTermPublicKey());
 			} catch (Exception e) {
-				throw new IOException(e);
+				throw new IOException();
 			}
 			SerializationUtils.writeInt(stream, this.getDhKeyID());
 			SerializationUtils.writeSignature(stream, this.getSignature(), this

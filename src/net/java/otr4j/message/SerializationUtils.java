@@ -128,7 +128,14 @@ public class SerializationUtils implements SerializationConstants {
 
 	public static void writeCtr(OutputStream out, byte[] ctr)
 			throws IOException {
-		out.write(java.util.Arrays.copyOfRange(ctr, 0, CTR));
+		if (ctr == null || ctr.length < 1)
+			return;
+
+		int i = 0;
+		while (i < CTR && i < ctr.length) {
+			out.write(ctr[i]);
+			i++;
+		}
 	}
 
 	public static void writePublicKeyFingerPrint(OutputStream bos,
@@ -154,7 +161,7 @@ public class SerializationUtils implements SerializationConstants {
 			byte[] fingerprint = new OtrCryptoEngineImpl().sha1Hash(b);
 			writeData(bos, fingerprint);
 		} catch (OtrException e) {
-			throw new IOException(e);
+			throw new IOException();
 		}
 	}
 
@@ -181,12 +188,12 @@ public class SerializationUtils implements SerializationConstants {
 			try {
 				keyFactory = KeyFactory.getInstance("DSA");
 			} catch (NoSuchAlgorithmException e) {
-				throw new IOException(e);
+				throw new IOException();
 			}
 			try {
 				return keyFactory.generatePublic(keySpec);
 			} catch (InvalidKeySpecException e) {
-				throw new IOException(e);
+				throw new IOException();
 			}
 		default:
 			throw new UnsupportedOperationException();
@@ -278,7 +285,7 @@ public class SerializationUtils implements SerializationConstants {
 		try {
 			return new OtrCryptoEngineImpl().getDHPublicKey(gyMpi);
 		} catch (Exception ex) {
-			throw new IOException(ex);
+			throw new IOException();
 		}
 	}
 }
