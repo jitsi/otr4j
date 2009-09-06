@@ -23,7 +23,6 @@ import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrException;
-import net.java.otr4j.OtrKeyManager;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.message.DHCommitMessage;
@@ -217,17 +216,14 @@ class AuthContextImpl implements AuthContext {
 		}
 	}
 
-	public AuthContextImpl(SessionID sessionID, OtrEngineHost listener,
-			OtrKeyManager keyManager) {
+	public AuthContextImpl(SessionID sessionID, OtrEngineHost listener) {
 		this.setSessionID(sessionID);
 		this.setListener(listener);
-		setKeyManager(keyManager);
 		this.reset();
 	}
 
 	private SessionID sessionID;
 	private OtrEngineHost listener;
-	private OtrKeyManager keyManager;
 
 	private int authenticationState;
 	private byte[] r;
@@ -562,7 +558,7 @@ class AuthContextImpl implements AuthContext {
 
 	public KeyPair getLocalLongTermKeyPair() {
 		if (localLongTermKeyPair == null) {
-			localLongTermKeyPair = getKeyManager().getKeyPair(
+			localLongTermKeyPair = getListener().getKeyPair(
 					this.getSessionID());
 		}
 		return localLongTermKeyPair;
@@ -1033,13 +1029,5 @@ class AuthContextImpl implements AuthContext {
 
 	private void setRemoteLongTermPublicKey(PublicKey pubKey) {
 		this.remoteLongTermPublicKey = pubKey;
-	}
-
-	private void setKeyManager(OtrKeyManager keyManager) {
-		this.keyManager = keyManager;
-	}
-
-	private OtrKeyManager getKeyManager() {
-		return this.keyManager;
 	}
 }

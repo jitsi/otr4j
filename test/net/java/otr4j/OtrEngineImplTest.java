@@ -5,7 +5,6 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Logger;
 
-import net.java.otr4j.OtrKeyManager;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.OtrEngineImpl;
 import net.java.otr4j.OtrPolicyImpl;
@@ -55,6 +54,17 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			// don't care.
 		}
 
+		public KeyPair getKeyPair(SessionID paramSessionID) {
+			KeyPairGenerator kg;
+			try {
+				kg = KeyPairGenerator.getInstance("DSA");
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+				return null;
+			}
+			return kg.genKeyPair();
+		}
+
 	}
 
 	public void testReceivingMessage() throws Exception {
@@ -72,21 +82,8 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 		listener = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2
 				| OtrPolicy.ERROR_START_AKE));
 
-		OtrKeyManager keyManager = new OtrKeyManager() {
-			public KeyPair getKeyPair(SessionID paramSessionID) {
-				KeyPairGenerator kg;
-				try {
-					kg = KeyPairGenerator.getInstance("DSA");
-				} catch (NoSuchAlgorithmException e) {
-					e.printStackTrace();
-					return null;
-				}
-				return kg.genKeyPair();
-			}
-		};
-
-		usAlice = new OtrEngineImpl(listener, keyManager);
-		usBob = new OtrEngineImpl(listener, keyManager);
+		usAlice = new OtrEngineImpl(listener);
+		usBob = new OtrEngineImpl(listener);
 
 		usAlice.startSession(aliceSessionID);
 

@@ -22,7 +22,6 @@ import javax.crypto.interfaces.DHPublicKey;
 import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrException;
-import net.java.otr4j.OtrKeyManager;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
@@ -75,7 +74,6 @@ public class SessionImpl implements Session {
 
 	private SessionID sessionID;
 	private OtrEngineHost listener;
-	private OtrKeyManager keyManager;
 	private SessionStatus sessionStatus;
 	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
@@ -83,12 +81,10 @@ public class SessionImpl implements Session {
 	private static Logger logger = Logger
 			.getLogger(SessionImpl.class.getName());
 
-	public SessionImpl(SessionID sessionID, OtrEngineHost listener,
-			OtrKeyManager keyManager) {
+	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
 
 		this.setSessionID(sessionID);
 		this.setListener(listener);
-		this.setKeyManager(keyManager);
 
 		// client application calls OtrEngine.getSessionStatus()
 		// -> create new session if it does not exist, end up here
@@ -291,8 +287,7 @@ public class SessionImpl implements Session {
 
 	private AuthContext getAuthContext() {
 		if (authContext == null)
-			authContext = new AuthContextImpl(getSessionID(), getListener(),
-					getKeyManager());
+			authContext = new AuthContextImpl(getSessionID(), getListener());
 		return authContext;
 	}
 
@@ -786,14 +781,6 @@ public class SessionImpl implements Session {
 
 	public PublicKey getRemotePublicKey() {
 		return remotePublicKey;
-	}
-
-	private void setKeyManager(OtrKeyManager keyManager) {
-		this.keyManager = keyManager;
-	}
-
-	private OtrKeyManager getKeyManager() {
-		return keyManager;
 	}
 
 	private List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();

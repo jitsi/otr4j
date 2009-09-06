@@ -25,13 +25,14 @@ import net.java.otr4j.session.SessionStatus;
  */
 public class OtrEngineImpl implements OtrEngine {
 
-	public OtrEngineImpl(OtrEngineHost listener, OtrKeyManager keyManager) {
+	public OtrEngineImpl(OtrEngineHost listener) {
+		if (listener == null)
+			throw new IllegalArgumentException("OtrEgineHost is required.");
+
 		this.setListener(listener);
-		this.setKeyManager(keyManager);
 	}
 
 	private OtrEngineHost listener;
-	private OtrKeyManager keyManager;
 	private Map<SessionID, Session> sessions;
 
 	private Session getSession(SessionID sessionID) {
@@ -43,8 +44,7 @@ public class OtrEngineImpl implements OtrEngine {
 			sessions = new Hashtable<SessionID, Session>();
 
 		if (!sessions.containsKey(sessionID)) {
-			Session session = new SessionImpl(sessionID, getListener(),
-					getKeyManager());
+			Session session = new SessionImpl(sessionID, getListener());
 			sessions.put(sessionID, session);
 
 			session.addOtrEngineListener(new OtrEngineListener() {
@@ -116,14 +116,6 @@ public class OtrEngineImpl implements OtrEngine {
 
 	public PublicKey getRemotePublicKey(SessionID sessionID) {
 		return this.getSession(sessionID).getRemotePublicKey();
-	}
-
-	private void setKeyManager(OtrKeyManager keyManager) {
-		this.keyManager = keyManager;
-	}
-
-	private OtrKeyManager getKeyManager() {
-		return keyManager;
 	}
 
 	private List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
