@@ -72,4 +72,8 @@ public interface OtrEngine {
 	 * @return The remote public key.
 	 */
 	public abstract PublicKey getRemotePublicKey(SessionID sessionID);
+
+	public abstract void addOtrEngineListener(OtrEngineListener l);
+
+	public abstract void removeOtrEngineListener(OtrEngineListener l);
 }

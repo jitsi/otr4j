@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.OtrEngineHost;
+import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrKeyManager;
 import net.java.otr4j.OtrPolicy;
@@ -246,7 +247,9 @@ public class SessionImpl implements Session {
 		}
 
 		this.sessionStatus = sessionStatus;
-		getListener().sessionStatusChanged(getSessionID());
+
+		for (OtrEngineListener l : this.listeners)
+			l.sessionStatusChanged(getSessionID());
 	}
 
 	/*
@@ -378,7 +381,7 @@ public class SessionImpl implements Session {
 		} catch (IOException e) {
 			throw new OtrException(e);
 		}
-		
+
 		getListener().showError(this.getSessionID(), errorMessage.error);
 
 		OtrPolicy policy = this.getListener().getSessionPolicy(getSessionID());
@@ -395,8 +398,8 @@ public class SessionImpl implements Session {
 
 			logger.info("Sending Query");
 			try {
-				getListener()
-						.injectMessage(getSessionID(), queryMessage.writeObject());
+				getListener().injectMessage(getSessionID(),
+						queryMessage.writeObject());
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
@@ -791,5 +794,21 @@ public class SessionImpl implements Session {
 
 	private OtrKeyManager getKeyManager() {
 		return keyManager;
+	}
+
+	private List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
+
+	public void addOtrEngineListener(OtrEngineListener l) {
+		synchronized (listeners) {
+			if (!listeners.contains(l))
+				listeners.add(l);
+		}
+
+	}
+
+	public void removeOtrEngineListener(OtrEngineListener l) {
+		synchronized (listeners) {
+			listeners.remove(l);
+		}
 	}
 }

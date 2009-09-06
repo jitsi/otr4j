@@ -9,7 +9,9 @@ package net.java.otr4j;
 
 import java.security.PublicKey;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionID;
@@ -41,8 +43,17 @@ public class OtrEngineImpl implements OtrEngine {
 			sessions = new Hashtable<SessionID, Session>();
 
 		if (!sessions.containsKey(sessionID)) {
-			Session session = new SessionImpl(sessionID, getListener(), getKeyManager());
+			Session session = new SessionImpl(sessionID, getListener(),
+					getKeyManager());
 			sessions.put(sessionID, session);
+
+			session.addOtrEngineListener(new OtrEngineListener() {
+
+				public void sessionStatusChanged(SessionID sessionID) {
+					for (OtrEngineListener l : listeners)
+						l.sessionStatusChanged(sessionID);
+				}
+			});
 
 		}
 
@@ -113,5 +124,21 @@ public class OtrEngineImpl implements OtrEngine {
 
 	private OtrKeyManager getKeyManager() {
 		return keyManager;
+	}
+
+	private List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
+
+	public void addOtrEngineListener(OtrEngineListener l) {
+		synchronized (listeners) {
+			if (!listeners.contains(l))
+				listeners.add(l);
+		}
+
+	}
+
+	public void removeOtrEngineListener(OtrEngineListener l) {
+		synchronized (listeners) {
+			listeners.remove(l);
+		}
 	}
 }

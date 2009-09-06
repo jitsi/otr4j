@@ -3,6 +3,7 @@ package net.java.otr4j.session;
 import java.security.PublicKey;
 import java.util.List;
 
+import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.session.SessionImpl.TLV;
 
@@ -25,4 +26,8 @@ public interface Session {
 	public abstract void refreshSession() throws OtrException;
 
 	public abstract PublicKey getRemotePublicKey();
+	
+	public abstract void addOtrEngineListener(OtrEngineListener l);
+
+	public abstract void removeOtrEngineListener(OtrEngineListener l);
 }
