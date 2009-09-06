@@ -39,7 +39,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			this.lastInjectedMessage = msg;
 			String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10)
 					+ "..." : msg;
-			logger.info("IM injects message: " + msgDisplay);
+			logger.finest("IM injects message: " + msgDisplay);
 		}
 
 		public void showError(SessionID sessionID, String error) {

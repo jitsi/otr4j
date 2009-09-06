@@ -354,7 +354,7 @@ class AuthContextImpl implements AuthContext {
 	}
 
 	public void reset() {
-		logger.info("Resetting authentication state.");
+		logger.finest("Resetting authentication state.");
 		authenticationState = AuthContext.NONE;
 		r = null;
 
@@ -394,7 +394,7 @@ class AuthContextImpl implements AuthContext {
 
 	private byte[] getR() {
 		if (r == null) {
-			logger.info("Picking random key r.");
+			logger.finest("Picking random key r.");
 			r = new byte[OtrCryptoEngine.AES_KEY_BYTE_LENGTH];
 			new Random().nextBytes(r);
 		}
@@ -410,7 +410,7 @@ class AuthContextImpl implements AuthContext {
 			throw new IllegalArgumentException(
 					"Illegal D-H Public Key value, Ignoring message.");
 		}
-		logger.info("Received D-H Public Key is a legal value.");
+		logger.finest("Received D-H Public Key is a legal value.");
 
 		this.remoteDHPublicKey = dhPublicKey;
 	}
@@ -420,7 +420,7 @@ class AuthContextImpl implements AuthContext {
 	}
 
 	private void setRemoteDHPublicKeyEncrypted(byte[] remoteDHPublicKeyEncrypted) {
-		logger.info("Storing encrypted remote public key.");
+		logger.finest("Storing encrypted remote public key.");
 		this.remoteDHPublicKeyEncrypted = remoteDHPublicKeyEncrypted;
 	}
 
@@ -429,7 +429,7 @@ class AuthContextImpl implements AuthContext {
 	}
 
 	private void setRemoteDHPublicKeyHash(byte[] remoteDHPublicKeyHash) {
-		logger.info("Storing encrypted remote public key hash.");
+		logger.finest("Storing encrypted remote public key hash.");
 		this.remoteDHPublicKeyHash = remoteDHPublicKeyHash;
 	}
 
@@ -440,7 +440,7 @@ class AuthContextImpl implements AuthContext {
 	public KeyPair getLocalDHKeyPair() throws OtrException {
 		if (localDHKeyPair == null) {
 			localDHKeyPair = new OtrCryptoEngineImpl().generateDHKeyPair();
-			logger.info("Generated local D-H key pair.");
+			logger.finest("Generated local D-H key pair.");
 		}
 		return localDHKeyPair;
 	}
@@ -453,7 +453,7 @@ class AuthContextImpl implements AuthContext {
 		if (localDHPublicKeyHash == null) {
 			localDHPublicKeyHash = new OtrCryptoEngineImpl()
 					.sha256Hash(getLocalDHPublicKeyBytes());
-			logger.info("Hashed local D-H public key.");
+			logger.finest("Hashed local D-H public key.");
 		}
 		return localDHPublicKeyHash;
 	}
@@ -462,7 +462,7 @@ class AuthContextImpl implements AuthContext {
 		if (localDHPublicKeyEncrypted == null) {
 			localDHPublicKeyEncrypted = new OtrCryptoEngineImpl().aesEncrypt(
 					getR(), null, getLocalDHPublicKeyBytes());
-			logger.info("Encrypted our D-H public key.");
+			logger.finest("Encrypted our D-H public key.");
 		}
 		return localDHPublicKeyEncrypted;
 	}
@@ -472,7 +472,7 @@ class AuthContextImpl implements AuthContext {
 			s = new OtrCryptoEngineImpl().generateSecret(this
 					.getLocalDHKeyPair().getPrivate(), this
 					.getRemoteDHPublicKey());
-			logger.info("Generated shared secret.");
+			logger.finest("Generated shared secret.");
 		}
 		return s;
 	}
@@ -485,7 +485,7 @@ class AuthContextImpl implements AuthContext {
 		ByteBuffer buff = ByteBuffer.wrap(h2);
 		this.c = new byte[OtrCryptoEngine.AES_KEY_BYTE_LENGTH];
 		buff.get(this.c);
-		logger.info("Computed c.");
+		logger.finest("Computed c.");
 		return c;
 
 	}
@@ -498,7 +498,7 @@ class AuthContextImpl implements AuthContext {
 		ByteBuffer buff = ByteBuffer.wrap(h2);
 		byte[] m1 = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
 		buff.get(m1);
-		logger.info("Computed m1.");
+		logger.finest("Computed m1.");
 		this.m1 = m1;
 		return m1;
 	}
@@ -511,7 +511,7 @@ class AuthContextImpl implements AuthContext {
 		ByteBuffer buff = ByteBuffer.wrap(h2);
 		byte[] m2 = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
 		buff.get(m2);
-		logger.info("Computed m2.");
+		logger.finest("Computed m2.");
 		this.m2 = m2;
 		return m2;
 	}
@@ -525,7 +525,7 @@ class AuthContextImpl implements AuthContext {
 		byte[] cp = new byte[OtrCryptoEngine.AES_KEY_BYTE_LENGTH];
 		buff.position(OtrCryptoEngine.AES_KEY_BYTE_LENGTH);
 		buff.get(cp);
-		logger.info("Computed c'.");
+		logger.finest("Computed c'.");
 		this.cp = cp;
 		return cp;
 	}
@@ -539,7 +539,7 @@ class AuthContextImpl implements AuthContext {
 		byte[] m1p = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
 		buff.get(m1p);
 		this.m1p = m1p;
-		logger.info("Computed m1'.");
+		logger.finest("Computed m1'.");
 		return m1p;
 	}
 
@@ -552,7 +552,7 @@ class AuthContextImpl implements AuthContext {
 		byte[] m2p = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
 		buff.get(m2p);
 		this.m2p = m2p;
-		logger.info("Computed m2'.");
+		logger.finest("Computed m2'.");
 		return m2p;
 	}
 
@@ -627,12 +627,12 @@ class AuthContextImpl implements AuthContext {
 	}
 
 	private void handleSignatureMessage(String msgText) throws OtrException {
-		logger.info(getSessionID().getAccountID()
+		logger.finest(getSessionID().getAccountID()
 				+ " received a signature message from "
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 		if (!getListener().getSessionPolicy(getSessionID()).getAllowV2()) {
-			logger.info("Policy does not allow OTRv2, ignoring message.");
+			logger.finest("Policy does not allow OTRv2, ignoring message.");
 			return;
 		}
 
@@ -647,7 +647,7 @@ class AuthContextImpl implements AuthContext {
 		case AWAITING_SIG:
 			// Verify MAC.
 			if (!sigMessage.verify(this.getM2p())) {
-				logger.info("Signature MACs are not equal, ignoring message.");
+				logger.finest("Signature MACs are not equal, ignoring message.");
 				return;
 			}
 
@@ -676,7 +676,7 @@ class AuthContextImpl implements AuthContext {
 			}
 			if (!otrCryptoEngine.verify(signature, remoteLongTermPublicKey,
 					remoteX.getSignature())) {
-				logger.info("Signature verification failed.");
+				logger.finest("Signature verification failed.");
 				return;
 			}
 
@@ -684,7 +684,7 @@ class AuthContextImpl implements AuthContext {
 			this.setRemoteLongTermPublicKey(remoteLongTermPublicKey);
 			break;
 		default:
-			logger.info("We were not expecting a signature, ignoring message.");
+			logger.finest("We were not expecting a signature, ignoring message.");
 			return;
 		}
 	}
@@ -692,13 +692,13 @@ class AuthContextImpl implements AuthContext {
 	private void handleRevealSignatureMessage(String msgText)
 			throws OtrException {
 
-		logger.info(getSessionID().getAccountID()
+		logger.finest(getSessionID().getAccountID()
 				+ " received a reveal signature message from "
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
 		if (!getListener().getSessionPolicy(getSessionID()).getAllowV2()) {
-			logger.info("Policy does not allow OTRv2, ignoring message.");
+			logger.finest("Policy does not allow OTRv2, ignoring message.");
 			return;
 		}
 
@@ -737,7 +737,7 @@ class AuthContextImpl implements AuthContext {
 					.sha256Hash(remoteDHPublicKeyDecrypted);
 			if (!Arrays.equals(remoteDHPublicKeyHash, this
 					.getRemoteDHPublicKeyHash())) {
-				logger.info("Hashes don't match, ignoring message.");
+				logger.finest("Hashes don't match, ignoring message.");
 				return;
 			}
 
@@ -757,7 +757,7 @@ class AuthContextImpl implements AuthContext {
 
 			// Verify received Data.
 			if (!revealSigMessage.verify(this.getM2())) {
-				logger.info("Signature MACs are not equal, ignoring message.");
+				logger.finest("Signature MACs are not equal, ignoring message.");
 				return;
 			}
 
@@ -786,11 +786,11 @@ class AuthContextImpl implements AuthContext {
 			}
 			if (!otrCryptoEngine.verify(signature, remoteLongTermPublicKey,
 					remoteX.getSignature())) {
-				logger.info("Signature verification failed.");
+				logger.finest("Signature verification failed.");
 				return;
 			}
 
-			logger.info("Signature verification succeeded.");
+			logger.finest("Signature verification succeeded.");
 
 			this.setAuthenticationState(AuthContext.NONE);
 			this.setIsSecure(true);
@@ -803,7 +803,7 @@ class AuthContextImpl implements AuthContext {
 			}
 			break;
 		default:
-			logger.info("Ignoring message.");
+			logger.finest("Ignoring message.");
 			break;
 		}
 	}
@@ -811,13 +811,13 @@ class AuthContextImpl implements AuthContext {
 	private void handleDHKeyMessage(String msgText) throws OtrException {
 
 		try {
-			logger.info(getSessionID().getAccountID()
+			logger.finest(getSessionID().getAccountID()
 					+ " received a D-H key message from "
 					+ getSessionID().getUserID() + " throught "
 					+ getSessionID().getProtocolName() + ".");
 
 			if (!getListener().getSessionPolicy(getSessionID()).getAllowV2()) {
-				logger.info("If ALLOW_V2 is not set, ignore this message.");
+				logger.finest("If ALLOW_V2 is not set, ignore this message.");
 				return;
 			}
 
@@ -833,7 +833,7 @@ class AuthContextImpl implements AuthContext {
 				this.setAuthenticationState(AuthContext.AWAITING_SIG);
 				getListener().injectMessage(getSessionID(),
 						this.getRevealSignatureMessage().writeObject());
-				logger.info("Sent Reveal Signature.");
+				logger.finest("Sent Reveal Signature.");
 				break;
 			case AWAITING_SIG:
 
@@ -845,10 +845,10 @@ class AuthContextImpl implements AuthContext {
 					// your Reveal Signature Message.
 					getListener().injectMessage(getSessionID(),
 							this.getRevealSignatureMessage().writeObject());
-					logger.info("Resent Reveal Signature.");
+					logger.finest("Resent Reveal Signature.");
 				} else {
 					// Otherwise: Ignore the message.
-					logger.info("Ignoring message.");
+					logger.finest("Ignoring message.");
 				}
 				break;
 			default:
@@ -862,13 +862,13 @@ class AuthContextImpl implements AuthContext {
 
 	private void handleDHCommitMessage(String msgText) throws OtrException {
 
-		logger.info(getSessionID().getAccountID()
+		logger.finest(getSessionID().getAccountID()
 				+ " received a D-H commit message from "
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
 		if (!getListener().getSessionPolicy(getSessionID()).getAllowV2()) {
-			logger.info("ALLOW_V2 is not set, ignore this message.");
+			logger.finest("ALLOW_V2 is not set, ignore this message.");
 			return;
 		}
 
@@ -895,7 +895,7 @@ class AuthContextImpl implements AuthContext {
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			logger.info("Sent D-H key.");
+			logger.finest("Sent D-H key.");
 			break;
 
 		case AWAITING_DHKEY:
@@ -926,7 +926,7 @@ class AuthContextImpl implements AuthContext {
 					throw new OtrException(e);
 				}
 				logger
-						.info("Ignored the incoming D-H Commit message, but resent our D-H Commit message.");
+						.finest("Ignored the incoming D-H Commit message, but resent our D-H Commit message.");
 			} else {
 				// *Forget* your old gx value that you sent (encrypted)
 				// earlier,
@@ -947,7 +947,7 @@ class AuthContextImpl implements AuthContext {
 					throw new OtrException(e);
 				}
 				logger
-						.info("Forgot our old gx value that we sent (encrypted) earlier, and pretended we're in AUTHSTATE_NONE -> Sent D-H key.");
+						.finest("Forgot our old gx value that we sent (encrypted) earlier, and pretended we're in AUTHSTATE_NONE -> Sent D-H key.");
 			}
 			break;
 
@@ -965,7 +965,7 @@ class AuthContextImpl implements AuthContext {
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			logger.info("Sent D-H key.");
+			logger.finest("Sent D-H key.");
 			break;
 		case AWAITING_SIG:
 			// Reply with a new D-H Key message, and transition authstate to
@@ -981,7 +981,7 @@ class AuthContextImpl implements AuthContext {
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			logger.info("Sent D-H key.");
+			logger.finest("Sent D-H key.");
 			break;
 		case V1_SETUP:
 			throw new UnsupportedOperationException();
@@ -990,7 +990,7 @@ class AuthContextImpl implements AuthContext {
 
 	public void startV2Auth() throws OtrException {
 		logger
-				.info("Starting Authenticated Key Exchange, sending query message");
+				.finest("Starting Authenticated Key Exchange, sending query message");
 		try {
 			getListener().injectMessage(getSessionID(),
 					this.getQueryMessage().writeObject());
@@ -1000,11 +1000,11 @@ class AuthContextImpl implements AuthContext {
 	}
 
 	public void respondV2Auth() throws OtrException {
-		logger.info("Responding to Query Message");
+		logger.finest("Responding to Query Message");
 		this.reset();
 		this.setProtocolVersion(2);
 		this.setAuthenticationState(AuthContext.AWAITING_DHKEY);
-		logger.info("Sending D-H Commit.");
+		logger.finest("Sending D-H Commit.");
 		try {
 			getListener().injectMessage(getSessionID(),
 					this.getDHCommitMessage().writeObject());
