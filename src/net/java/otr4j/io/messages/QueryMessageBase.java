@@ -1,4 +1,4 @@
-package net.java.otr4j.message;
+package net.java.otr4j.io.messages;
 
 import java.util.Vector;
 

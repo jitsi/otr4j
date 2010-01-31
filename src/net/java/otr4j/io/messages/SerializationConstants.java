@@ -1,4 +1,4 @@
-package net.java.otr4j.message;
+package net.java.otr4j.io.messages;
 
 public interface SerializationConstants {
 	public static final int BYTE = 1;

@@ -3,6 +3,8 @@ package net.java.otr4j.message;
 import java.io.IOException;
 import java.util.Vector;
 
+import net.java.otr4j.io.messages.QueryMessage;
+
 public class QueryMessageTest extends AbstractMessageTestCase {
 
 	// A bizarre claim that Alice would like to start an OTR conversation, but

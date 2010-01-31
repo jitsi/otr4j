@@ -2,6 +2,9 @@ package net.java.otr4j.message;
 
 import java.io.IOException;
 
+import net.java.otr4j.io.messages.ErrorMessage;
+import net.java.otr4j.io.messages.MessageConstants;
+
 public class ErrorMessageTest extends AbstractMessageTestCase {
 
 	public static final String ErrorMessageText = "This is a test error.";

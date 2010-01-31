@@ -3,6 +3,9 @@ package net.java.otr4j.message;
 import java.io.IOException;
 import java.util.Vector;
 
+import net.java.otr4j.io.messages.MessageConstants;
+import net.java.otr4j.io.messages.PlainTextMessage;
+
 public class PlainTextMessageTest extends AbstractMessageTestCase {
 
 	private static final String plaintextMessage = "Hello There. ";

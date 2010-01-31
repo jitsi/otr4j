@@ -1,4 +1,4 @@
-package net.java.otr4j.message;
+package net.java.otr4j.io.messages;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -29,7 +29,7 @@ import javax.crypto.spec.DHPrivateKeySpec;
 import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import net.java.otr4j.message.SerializationUtils;
+import net.java.otr4j.io.messages.SerializationUtils;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.BufferedBlockCipher;

@@ -25,14 +25,14 @@ import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
-import net.java.otr4j.message.DHCommitMessage;
-import net.java.otr4j.message.DHKeyMessage;
-import net.java.otr4j.message.MessageConstants;
-import net.java.otr4j.message.MessageUtils;
-import net.java.otr4j.message.QueryMessage;
-import net.java.otr4j.message.RevealSignatureMessage;
-import net.java.otr4j.message.SerializationUtils;
-import net.java.otr4j.message.SignatureMessage;
+import net.java.otr4j.io.messages.DHCommitMessage;
+import net.java.otr4j.io.messages.DHKeyMessage;
+import net.java.otr4j.io.messages.MessageConstants;
+import net.java.otr4j.io.messages.MessageUtils;
+import net.java.otr4j.io.messages.QueryMessage;
+import net.java.otr4j.io.messages.RevealSignatureMessage;
+import net.java.otr4j.io.messages.SerializationUtils;
+import net.java.otr4j.io.messages.SignatureMessage;
 
 /**
  * 

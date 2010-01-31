@@ -25,15 +25,15 @@ import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
-import net.java.otr4j.message.DataMessage;
-import net.java.otr4j.message.ErrorMessage;
-import net.java.otr4j.message.MessageConstants;
-import net.java.otr4j.message.MessageUtils;
-import net.java.otr4j.message.MysteriousT;
-import net.java.otr4j.message.PlainTextMessage;
-import net.java.otr4j.message.QueryMessage;
-import net.java.otr4j.message.SerializationConstants;
-import net.java.otr4j.message.SerializationUtils;
+import net.java.otr4j.io.messages.DataMessage;
+import net.java.otr4j.io.messages.ErrorMessage;
+import net.java.otr4j.io.messages.MessageConstants;
+import net.java.otr4j.io.messages.MessageUtils;
+import net.java.otr4j.io.messages.MysteriousT;
+import net.java.otr4j.io.messages.PlainTextMessage;
+import net.java.otr4j.io.messages.QueryMessage;
+import net.java.otr4j.io.messages.SerializationConstants;
+import net.java.otr4j.io.messages.SerializationUtils;
 
 /**
  * 

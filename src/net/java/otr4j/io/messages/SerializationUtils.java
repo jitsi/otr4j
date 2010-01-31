@@ -4,7 +4,7 @@
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
-package net.java.otr4j.message;
+package net.java.otr4j.io.messages;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
