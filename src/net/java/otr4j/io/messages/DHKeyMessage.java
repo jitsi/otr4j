@@ -6,48 +6,48 @@
  */
 package net.java.otr4j.io.messages;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import javax.crypto.interfaces.DHPublicKey;
-
 
 /**
  * 
  * @author George Politis
  */
-public final class DHKeyMessage extends EncodedMessageBase {
+public class DHKeyMessage extends EncodedMessageBase {
 
-	private DHPublicKey dhPublicKey;
+	// Fields.
+	public DHPublicKey dhPublicKey;
 
-	public DHKeyMessage() {
-		super(MessageConstants.DH_KEY);
-	}
-
+	// Ctor.
 	public DHKeyMessage(int protocolVersion, DHPublicKey dhPublicKey) {
-		super(MessageConstants.DH_KEY);
-		this.setDhPublicKey(dhPublicKey);
-		this.setProtocolVersion(protocolVersion);
-	}
-
-	public void writeObject(OutputStream out) throws IOException {
-		SerializationUtils.writeShort(out, this.getProtocolVersion());
-		SerializationUtils.writeByte(out, this.getMessageType());
-		SerializationUtils.writeDHPublicKey(out, this.getDhPublicKey());
-	}
-
-	public void readObject(InputStream in) throws IOException {
-		this.setProtocolVersion(SerializationUtils.readShort(in));
-		this.setMessageType(SerializationUtils.readByte(in));
-		this.setDhPublicKey(SerializationUtils.readDHPublicKey(in));
-	}
-
-	public void setDhPublicKey(DHPublicKey dhPublicKey) {
+		super(MESSAGE_DHKEY, protocolVersion);
 		this.dhPublicKey = dhPublicKey;
 	}
 
-	public DHPublicKey getDhPublicKey() {
-		return dhPublicKey;
+	// Methods.
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		// TODO: Needs work.
+		result = prime * result
+				+ ((dhPublicKey == null) ? 0 : dhPublicKey.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DHKeyMessage other = (DHKeyMessage) obj;
+		if (dhPublicKey == null) {
+			if (other.dhPublicKey != null)
+				return false;
+		} else if (dhPublicKey.getY().compareTo(other.dhPublicKey.getY()) != 0)
+			return false;
+		return true;
 	}
 }

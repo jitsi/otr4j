@@ -1,65 +1,52 @@
+/*
+ * otr4j, the open source java otr library.
+ *
+ * Distributable under LGPL license.
+ * See terms of license at gnu.org.
+ */
 package net.java.otr4j.io.messages;
 
-import java.io.IOException;
-import java.util.Vector;
+import java.util.List;
 
-public final class PlainTextMessage extends QueryMessageBase {
+/**
+ * 
+ * @author George Politis
+ */
+public class PlainTextMessage extends QueryMessage {
+	// Fields.
+	public String cleanText;
 
-	private String cleanText;
-
-	public PlainTextMessage(String text, Vector<Integer> versions) {
-		super(MessageConstants.PLAINTEXT);
-		this.setCleanText(text);
-		this.setVersions(versions);
-	}
-
-	public PlainTextMessage() {
-		super(MessageConstants.PLAINTEXT);
-	}
-
-	private void setCleanText(String cleanText) {
+	// Ctor.
+	public PlainTextMessage(List<Integer> versions, String cleanText) {
+		super(MESSAGE_PLAINTEXT, versions);
 		this.cleanText = cleanText;
 	}
 
-	public String getCleanText() {
-		return cleanText;
+	// Methods.
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result
+				+ ((cleanText == null) ? 0 : cleanText.hashCode());
+		return result;
 	}
 
-	public void readObject(String msgText) throws IOException {
-		Vector<Integer> versions = new Vector<Integer>();
-
-		String cleanText = msgText;
-		if (msgText.contains(MessageConstants.BASE)) {
-			cleanText = cleanText.replace(MessageConstants.BASE, "");
-			// We have a base tag
-			if (msgText.contains(MessageConstants.V1)) {
-				cleanText = cleanText.replace(MessageConstants.V1, "");
-				versions.add(1);
-			}
-
-			if (msgText.contains(MessageConstants.V2)) {
-				cleanText = cleanText.replace(MessageConstants.V2, "");
-				versions.add(2);
-			}
-		}
-
-		this.setVersions(versions);
-		this.setCleanText(cleanText);
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		PlainTextMessage other = (PlainTextMessage) obj;
+		if (cleanText == null) {
+			if (other.cleanText != null)
+				return false;
+		} else if (!cleanText.equals(other.cleanText))
+			return false;
+		return true;
 	}
 
-	public String writeObject() throws IOException {
-		String text = this.getCleanText();
-		Vector<Integer> versions = this.getVersions();
-		
-		if (versions != null && versions.size() > 0) {
-			text += MessageConstants.BASE;
-			if (versions.contains(1))
-				text += MessageConstants.V1;
-
-			if (versions.contains(2))
-				text += MessageConstants.V2;
-		}
-		
-		return text;
-	}
 }

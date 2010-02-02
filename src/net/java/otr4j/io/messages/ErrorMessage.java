@@ -6,29 +6,43 @@
  */
 package net.java.otr4j.io.messages;
 
-import java.io.IOException;
-
 /**
  * 
  * @author George Politis
  */
-public final class ErrorMessage extends MessageBase {
+public class ErrorMessage extends MessageBase {
+	// Fields.
 	public String error;
 	
-	public ErrorMessage(){
-		super(MessageConstants.ERROR);
-	}
-	
-	public ErrorMessage(String error){
-		super(MessageConstants.ERROR);
+	// Ctor.
+	public ErrorMessage(int messageType, String error) {
+		super(messageType);
 		this.error = error;
 	}
 
-	public void readObject(String msg) throws IOException {
-		this.error = msg.substring(MessageConstants.ERROR_HEAD.length());
+	// Methods.
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((error == null) ? 0 : error.hashCode());
+		return result;
 	}
 
-	public String writeObject() throws IOException {
-		return MessageConstants.ERROR_HEAD + error;
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ErrorMessage other = (ErrorMessage) obj;
+		if (error == null) {
+			if (other.error != null)
+				return false;
+		} else if (!error.equals(other.error))
+			return false;
+		return true;
 	}
 }

@@ -1,3 +1,9 @@
+/*
+ * otr4j, the open source java otr library.
+ *
+ * Distributable under LGPL license.
+ * See terms of license at gnu.org.
+ */
 package net.java.otr4j.session;
 
 import java.math.BigInteger;
@@ -7,7 +13,12 @@ import java.security.PublicKey;
 import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.OtrException;
+import net.java.otr4j.io.messages.MessageBase;
 
+/**
+ * 
+ * @author George Politis
+ */
 interface AuthContext {
 
 	public static final int NONE = 0;
@@ -31,11 +42,11 @@ interface AuthContext {
 
 	public abstract BigInteger getS() throws OtrException;
 
-	public abstract void handleReceivingMessage(String msgText)
+	public abstract void handleReceivingMessage(MessageBase m)
 			throws OtrException;
 
 	public abstract void startV2Auth() throws OtrException;
-	
+
 	public abstract void respondV2Auth() throws OtrException;
 
 	public abstract PublicKey getRemoteLongTermPublicKey();

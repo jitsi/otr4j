@@ -6,286 +6,110 @@
  */
 package net.java.otr4j.io.messages;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.interfaces.DSAParams;
-import java.security.interfaces.DSAPublicKey;
-import java.security.spec.DSAPublicKeySpec;
-import java.security.spec.InvalidKeySpecException;
-
-import javax.crypto.interfaces.DHPublicKey;
-
-import net.java.otr4j.OtrException;
-import net.java.otr4j.crypto.OtrCryptoEngine;
-import net.java.otr4j.crypto.OtrCryptoEngineImpl;
-
-import org.bouncycastle.util.BigIntegers;
+import net.java.otr4j.io.OtrInputStream;
+import net.java.otr4j.io.OtrOutputStream;
 
 /**
  * 
  * @author George Politis
  */
-public class SerializationUtils implements SerializationConstants {
+public class SerializationUtils {
+	// Mysterious X IO.
+	public static SignatureX toMysteriousX(byte[] b) throws IOException {
+		ByteArrayInputStream in = new ByteArrayInputStream(b);
+		OtrInputStream ois = new OtrInputStream(in);
+		SignatureX x = ois.readMysteriousX();
+		ois.close();
+		return x;
+	}
 
-	private static byte[] intToByteArray(int value, int length) {
-		byte[] b = new byte[length];
-		for (int i = 0; i < length; i++) {
-			int offset = (b.length - 1 - i) * 8;
-			b[i] = (byte) ((value >>> offset) & 0xFF);
-		}
+	public static byte[] toByteArray(SignatureX x) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		OtrOutputStream oos = new OtrOutputStream(out);
+		oos.writeMysteriousX(x);
+		byte[] b = out.toByteArray();
+		oos.close();
 		return b;
 	}
 
-	public static void writeShort(OutputStream out, int n) throws IOException {
-		out.write(intToByteArray(n, SHORT));
-	}
-
-	public static void writeByte(OutputStream out, int n) throws IOException {
-		out.write(intToByteArray(n, BYTE));
-	}
-
-	public static void writeInt(OutputStream out, int n) throws IOException {
-		out.write(intToByteArray(n, INT));
-	}
-
-	public static void writeTlvData(OutputStream out, byte[] b)
-			throws IOException {
-		if (b == null || b.length < 0) {
-			out.write(intToByteArray(0, TLVDATALEN));
-		} else {
-			out.write(intToByteArray(b.length, TLVDATALEN));
-			out.write(b);
-		}
-	}
-
-	public static void writeData(OutputStream out, byte[] b) throws IOException {
-		if (b == null || b.length < 0) {
-			out.write(intToByteArray(0, DATALEN));
-		} else {
-			out.write(intToByteArray(b.length, DATALEN));
-			out.write(b);
-		}
-	}
-
-	public static byte[] toByteArray(byte[] b) throws IOException {
+	// Mysterious M IO.
+	public static byte[] toByteArray(SignatureM m) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		SerializationUtils.writeData(out, b);
-		byte[] tmp = out.toByteArray();
-		out.close();
-		return tmp;
+		OtrOutputStream oos = new OtrOutputStream(out);
+		oos.writeMysteriousX(m);
+		byte[] b = out.toByteArray();
+		oos.close();
+		return b;
 	}
 
-	public static void writeDHPublicKey(OutputStream out, DHPublicKey pubKey)
-			throws IOException {
-		byte[] b = BigIntegers.asUnsignedByteArray(pubKey.getY());
-		writeData(out, b);
-	}
-
-	public static void writeMpi(OutputStream out, BigInteger i)
-			throws IOException {
-		byte[] b = BigIntegers.asUnsignedByteArray(i);
-		writeData(out, b);
-	}
-
-	public static void writePublicKey(OutputStream out, PublicKey pubKey)
-			throws IOException {
-
-		if (!(pubKey instanceof DSAPublicKey))
-			throw new UnsupportedOperationException(
-					"Key types other than DSA are not supported at the moment.");
-
-		DSAPublicKey dsaKey = (DSAPublicKey) pubKey;
-
-		writeShort(out, OtrCryptoEngine.DSA_PUB_TYPE);
-
-		DSAParams dsaParams = dsaKey.getParams();
-		writeMpi(out, dsaParams.getP());
-		writeMpi(out, dsaParams.getQ());
-		writeMpi(out, dsaParams.getG());
-		writeMpi(out, dsaKey.getY());
-	}
-
-	public static void writeSignature(OutputStream out, byte[] signature,
-			PublicKey pubKey) throws IOException {
-		if (!pubKey.getAlgorithm().equals("DSA"))
-			throw new UnsupportedOperationException();
-		out.write(signature);
-	}
-
-	public static void writeMac(OutputStream out, byte[] mac)
-			throws IOException {
-		if (mac == null || mac.length != MAC)
-			throw new IllegalArgumentException();
-
-		out.write(mac);
-	}
-
-	public static void writeCtr(OutputStream out, byte[] ctr)
-			throws IOException {
-		if (ctr == null || ctr.length < 1)
-			return;
-
-		int i = 0;
-		while (i < CTR && i < ctr.length) {
-			out.write(ctr[i]);
-			i++;
-		}
-	}
-
-	public static void writePublicKeyFingerPrint(OutputStream bos,
-			PublicKey pubKey) throws IOException {
-
-		if (!(pubKey instanceof DSAPublicKey))
-			throw new UnsupportedOperationException(
-					"Key types other than DSA are not supported at the moment.");
-
-		writeShort(bos, OtrCryptoEngine.DSA_PUB_TYPE);
-
+	// Mysterious T IO.
+	public static byte[] toByteArray(MysteriousT t) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		DSAPublicKey dsaKey = (DSAPublicKey) pubKey;
-		DSAParams dsaParams = dsaKey.getParams();
-		writeMpi(out, dsaParams.getP());
-		writeMpi(out, dsaParams.getQ());
-		writeMpi(out, dsaParams.getG());
-		writeMpi(out, dsaKey.getY());
+		OtrOutputStream oos = new OtrOutputStream(out);
+		oos.writeMysteriousT(t);
 		byte[] b = out.toByteArray();
 		out.close();
-
-		try {
-			byte[] fingerprint = new OtrCryptoEngineImpl().sha1Hash(b);
-			writeData(bos, fingerprint);
-		} catch (OtrException e) {
-			throw new IOException();
-		}
-	}
-
-	private static int byteArrayToInt(byte[] b) {
-		int value = 0;
-		for (int i = 0; i < b.length; i++) {
-			int shift = (b.length - 1 - i) * 8;
-			value += (b[i] & 0x000000FF) << shift;
-		}
-		return value;
-	}
-
-	public static PublicKey readPublicKey(InputStream in) throws IOException {
-
-		int type = readShort(in);
-		switch (type) {
-		case OtrCryptoEngine.DSA_PUB_TYPE:
-			BigInteger p = readMpi(in);
-			BigInteger q = readMpi(in);
-			BigInteger g = readMpi(in);
-			BigInteger y = readMpi(in);
-			DSAPublicKeySpec keySpec = new DSAPublicKeySpec(y, p, q, g);
-			KeyFactory keyFactory;
-			try {
-				keyFactory = KeyFactory.getInstance("DSA");
-			} catch (NoSuchAlgorithmException e) {
-				throw new IOException();
-			}
-			try {
-				return keyFactory.generatePublic(keySpec);
-			} catch (InvalidKeySpecException e) {
-				throw new IOException();
-			}
-		default:
-			throw new UnsupportedOperationException();
-		}
-
-	}
-
-	public static int readShort(InputStream in) throws IOException {
-		byte[] b = new byte[SHORT];
-		in.read(b);
-		return byteArrayToInt(b);
-	}
-
-	public static int readByte(InputStream in) throws IOException {
-		byte[] b = new byte[BYTE];
-		in.read(b);
-		return byteArrayToInt(b);
-	}
-
-	static int readDataLen(InputStream in) throws IOException {
-		byte[] b = new byte[DATALEN];
-		in.read(b);
-		return byteArrayToInt(b);
-	}
-
-	static int readTlvDataLen(InputStream in) throws IOException {
-		byte[] b = new byte[TLVDATALEN];
-		in.read(b);
-		return byteArrayToInt(b);
-	}
-
-	public static byte[] readData(InputStream in) throws IOException {
-		int len = readDataLen(in);
-
-		byte[] b = new byte[len];
-		in.read(b);
 		return b;
 	}
 
-	public static byte[] readTlvData(InputStream in) throws IOException {
-		int len = readTlvDataLen(in);
+	// Basic IO.
+	public static byte[] writeData(byte[] b) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		OtrOutputStream oos = new OtrOutputStream(out);
+		oos.writeData(b);
+		byte[] otrb = out.toByteArray();
+		out.close();
+		return otrb;
+	}
 
-		byte[] b = new byte[len];
-		in.read(b);
+	// BigInteger IO.
+	public static byte[] writeMpi(BigInteger bigInt) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		OtrOutputStream oos = new OtrOutputStream(out);
+		oos.writeBigInt(bigInt);
+		byte[] b = out.toByteArray();
+		oos.close();
 		return b;
 	}
 
-	public static byte[] readMac(InputStream in) throws IOException {
-		byte[] b = new byte[MAC];
-		in.read(b);
+	public static BigInteger readMpi(byte[] b) throws IOException {
+		ByteArrayInputStream in = new ByteArrayInputStream(b);
+		OtrInputStream ois = new OtrInputStream(in);
+		BigInteger bigint = ois.readBigInt();
+		ois.close();
+		return bigint;
+	}
+
+	// Public Key IO.
+	public static byte[] writePublicKey(PublicKey pubKey) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		OtrOutputStream oos = new OtrOutputStream(out);
+		oos.writePublicKey(pubKey);
+		byte[] b = out.toByteArray();
+		oos.close();
 		return b;
 	}
 
-	public static BigInteger readMpi(InputStream in) throws IOException {
-		int len = readDataLen(in);
-
-		byte[] b = new byte[len];
-		in.read(b);
-		return new BigInteger(1, b);
-	}
-
-	public static int readInt(InputStream in) throws IOException {
-		byte[] b = new byte[INT];
-		in.read(b);
-		return byteArrayToInt(b);
-	}
-
-	public static byte[] readCtr(InputStream in) throws IOException {
-		byte[] b = new byte[CTR];
-		in.read(b);
+	// Message IO.
+	public static byte[] toByteArray(MessageBase m) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		OtrOutputStream oos = new OtrOutputStream(out);
+		oos.writeMessage(m);
+		byte[] b = out.toByteArray();
+		oos.close();
 		return b;
 	}
 
-	public static byte[] readSignature(InputStream in, PublicKey pubKey)
-			throws IOException {
-		if (!pubKey.getAlgorithm().equals("DSA"))
-			throw new UnsupportedOperationException();
-
-		DSAPublicKey dsaPubKey = (DSAPublicKey) pubKey;
-		DSAParams dsaParams = dsaPubKey.getParams();
-		byte[] sig = new byte[dsaParams.getQ().bitLength() / 4];
-		in.read(sig);
-		return sig;
-	}
-
-	public static DHPublicKey readDHPublicKey(InputStream in)
-			throws IOException {
-		BigInteger gyMpi = readMpi(in);
-		try {
-			return new OtrCryptoEngineImpl().getDHPublicKey(gyMpi);
-		} catch (Exception ex) {
-			throw new IOException();
-		}
+	public static MessageBase toMessage(byte[] b) throws IOException {
+		ByteArrayInputStream in = new ByteArrayInputStream(b);
+		OtrInputStream ois = new OtrInputStream(in);
+		MessageBase m = ois.readMessage();
+		ois.close();
+		return m;
 	}
 }

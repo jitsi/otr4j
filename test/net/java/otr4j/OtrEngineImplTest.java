@@ -76,36 +76,36 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 
 	private OtrEngineImpl usAlice;
 	private OtrEngineImpl usBob;
-	private DummyOtrEngineHost listener;
+	private DummyOtrEngineHost host;
 
 	private void startSession() {
-		listener = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2
+		host = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2
 				| OtrPolicy.ERROR_START_AKE));
 
-		usAlice = new OtrEngineImpl(listener);
-		usBob = new OtrEngineImpl(listener);
+		usAlice = new OtrEngineImpl(host);
+		usBob = new OtrEngineImpl(host);
 
 		usAlice.startSession(aliceSessionID);
 
 		// Bob receives query, sends D-H commit.
 
-		usBob.transformReceiving(bobSessionID, listener.lastInjectedMessage);
+		usBob.transformReceiving(bobSessionID, host.lastInjectedMessage);
 
 		// Alice received D-H Commit, sends D-H key.
 		usAlice
 				.transformReceiving(aliceSessionID,
-						listener.lastInjectedMessage);
+						host.lastInjectedMessage);
 
 		// Bob receives D-H Key, sends reveal signature.
-		usBob.transformReceiving(bobSessionID, listener.lastInjectedMessage);
+		usBob.transformReceiving(bobSessionID, host.lastInjectedMessage);
 
 		// Alice receives Reveal Signature, sends signature and goes secure.
 		usAlice
 				.transformReceiving(aliceSessionID,
-						listener.lastInjectedMessage);
+						host.lastInjectedMessage);
 
 		// Bobs receives Signature, goes secure.
-		usBob.transformReceiving(bobSessionID, listener.lastInjectedMessage);
+		usBob.transformReceiving(bobSessionID, host.lastInjectedMessage);
 
 		if (usBob.getSessionStatus(bobSessionID) != SessionStatus.ENCRYPTED
 				|| usAlice.getSessionStatus(aliceSessionID) != SessionStatus.ENCRYPTED)
@@ -155,8 +155,8 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 		if (!clearTextMessage.equals(receivedMessage))
 			fail();
 
-		// Send encrypted message.
-		clearTextMessage = "Oh really?!";
+		// Send encrypted message. Test UTF-8 space characters.
+		clearTextMessage = "Oh really?! pouvons-nous parler en français?";
 		sentMessage = usAlice
 				.transformSending(aliceSessionID, clearTextMessage);
 

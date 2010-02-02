@@ -1,54 +1,49 @@
+/*
+ * otr4j, the open source java otr library.
+ *
+ * Distributable under LGPL license.
+ * See terms of license at gnu.org.
+ */
 package net.java.otr4j.io.messages;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.Arrays;
 
+/**
+ * 
+ * @author George Politis
+ */
+public class RevealSignatureMessage extends SignatureMessage {
+	// Fields.
+	public byte[] revealedKey;
 
+	// Ctor.
+	public RevealSignatureMessage(int protocolVersion, byte[] xEncrypted,
+			byte[] xEncryptedMAC, byte[] revealedKey) {
+		super(MESSAGE_REVEALSIG, protocolVersion, xEncrypted, xEncryptedMAC);
 
-public final class RevealSignatureMessage extends SignatureMessageBase {
-
-	public RevealSignatureMessage(int protocolVersion, byte[] r,
-			byte[] xEncryptedMAC, byte[] xEncrypted) {
-
-		super(MessageConstants.REVEALSIG);
-		this.setProtocolVersion(protocolVersion);
-		this.setXEncryptedMAC(xEncryptedMAC);
-		this.setXEncrypted(xEncrypted);
-		this.setRevealedKey(r);
-	}
-
-	private byte[] revealedKey;
-
-	public RevealSignatureMessage() {
-		super(MessageConstants.REVEALSIG);
-	}
-
-	public void writeObject(OutputStream out) throws IOException {
-
-		SerializationUtils.writeShort(out, this.getProtocolVersion());
-		SerializationUtils.writeByte(out, this.getMessageType());
-		SerializationUtils.writeData(out, this.getRevealedKey());
-		SerializationUtils.writeData(out, this.getXEncrypted());
-		SerializationUtils.writeMac(out, this.getXEncryptedMAC());
-	}
-
-	public void readObject(InputStream in) throws IOException {
-		this.setProtocolVersion(SerializationUtils.readShort(in));
-		this.setMessageType(SerializationUtils.readByte(in));
-		if (getMessageType() != MessageConstants.REVEALSIG)
-			throw new IOException("Object is not reveal signature.");
-
-		this.setRevealedKey(SerializationUtils.readData(in));
-		this.setXEncrypted(SerializationUtils.readData(in));
-		this.setXEncryptedMAC(SerializationUtils.readMac(in));
-	}
-
-	public void setRevealedKey(byte[] revealedKey) {
 		this.revealedKey = revealedKey;
 	}
 
-	public byte[] getRevealedKey() {
-		return revealedKey;
+	// Methods.
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(revealedKey);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		RevealSignatureMessage other = (RevealSignatureMessage) obj;
+		if (!Arrays.equals(revealedKey, other.revealedKey))
+			return false;
+		return true;
 	}
 }

@@ -25,14 +25,15 @@ import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
+import net.java.otr4j.io.OtrInputStream;
+import net.java.otr4j.io.OtrOutputStream;
 import net.java.otr4j.io.messages.DataMessage;
+import net.java.otr4j.io.messages.EncodedMessageBase;
 import net.java.otr4j.io.messages.ErrorMessage;
-import net.java.otr4j.io.messages.MessageConstants;
-import net.java.otr4j.io.messages.MessageUtils;
+import net.java.otr4j.io.messages.MessageBase;
 import net.java.otr4j.io.messages.MysteriousT;
 import net.java.otr4j.io.messages.PlainTextMessage;
 import net.java.otr4j.io.messages.QueryMessage;
-import net.java.otr4j.io.messages.SerializationConstants;
 import net.java.otr4j.io.messages.SerializationUtils;
 
 /**
@@ -311,34 +312,44 @@ public class SessionImpl implements Session {
 			return msgText;
 		}
 
-		switch (MessageUtils.getMessageType(msgText)) {
-		case MessageConstants.DATA:
-			return handleDataMessage(msgText);
-		case MessageConstants.ERROR:
-			handleErrorMessage(msgText);
+		MessageBase m;
+		try {
+			m = SerializationUtils.toMessage(msgText.getBytes());
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
+
+		switch (m.messageType) {
+		case EncodedMessageBase.MESSAGE_DATA:
+			return handleDataMessage((DataMessage) m);
+		case MessageBase.MESSAGE_ERROR:
+			handleErrorMessage((ErrorMessage) m);
 			return null;
-		case MessageConstants.PLAINTEXT:
-			return handlePlainTextMessage(msgText);
-		case MessageConstants.V1_KEY_EXCHANGE:
-			throw new UnsupportedOperationException(
-					"Received V1 key exchange which is not supported.");
-		case MessageConstants.QUERY:
-			handleQueryMessage(msgText);
+		case MessageBase.MESSAGE_PLAINTEXT:
+			return handlePlainTextMessage((PlainTextMessage) m);
+		case MessageBase.MESSAGE_QUERY:
+			handleQueryMessage((QueryMessage) m);
 			return null;
-		case MessageConstants.DH_COMMIT:
-		case MessageConstants.DH_KEY:
-		case MessageConstants.REVEALSIG:
-		case MessageConstants.SIGNATURE:
-			handleAuthMessage(msgText);
+		case EncodedMessageBase.MESSAGE_DH_COMMIT:
+		case EncodedMessageBase.MESSAGE_DHKEY:
+		case EncodedMessageBase.MESSAGE_REVEALSIG:
+		case EncodedMessageBase.MESSAGE_SIGNATURE:
+			AuthContext auth = this.getAuthContext();
+			auth.handleReceivingMessage(m);
+
+			if (auth.getIsSecure()) {
+				this.setSessionStatus(SessionStatus.ENCRYPTED);
+				logger.finest("Gone Secure.");
+			}
 			return null;
 		default:
-		case MessageConstants.UKNOWN:
 			throw new UnsupportedOperationException(
 					"Received an uknown message type.");
 		}
 	}
 
-	private void handleQueryMessage(String msgText) throws OtrException {
+	private void handleQueryMessage(QueryMessage queryMessage)
+			throws OtrException {
 		logger.finest(getSessionID().getAccountID()
 				+ " received a query message from "
 				+ getSessionID().getUserID() + " throught "
@@ -346,36 +357,24 @@ public class SessionImpl implements Session {
 
 		setSessionStatus(SessionStatus.PLAINTEXT);
 
-		QueryMessage queryMessage = new QueryMessage();
-		try {
-			queryMessage.readObject(msgText);
-		} catch (IOException e) {
-			throw new OtrException(e);
-		}
-		if (queryMessage.getVersions().contains(2)
+		if (queryMessage.versions.contains(2)
 				&& this.getListener().getSessionPolicy(getSessionID())
 						.getAllowV2()) {
 			logger.finest("Query message with V2 support found.");
 			getAuthContext().respondV2Auth();
-		} else if (queryMessage.getVersions().contains(1)
+		} else if (queryMessage.versions.contains(1)
 				&& this.getListener().getSessionPolicy(getSessionID())
 						.getAllowV1()) {
 			throw new UnsupportedOperationException();
 		}
 	}
 
-	private void handleErrorMessage(String msgText) throws OtrException {
+	private void handleErrorMessage(ErrorMessage errorMessage)
+			throws OtrException {
 		logger.finest(getSessionID().getAccountID()
 				+ " received an error message from "
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getUserID() + ".");
-
-		ErrorMessage errorMessage = new ErrorMessage();
-		try {
-			errorMessage.readObject(msgText);
-		} catch (IOException e) {
-			throw new OtrException(e);
-		}
 
 		getListener().showError(this.getSessionID(), errorMessage.error);
 
@@ -389,39 +388,24 @@ public class SessionImpl implements Session {
 			if (policy.getAllowV2())
 				versions.add(2);
 
-			QueryMessage queryMessage = new QueryMessage(versions);
-
 			logger.finest("Sending Query");
-			try {
-				getListener().injectMessage(getSessionID(),
-						queryMessage.writeObject());
-			} catch (IOException e) {
-				throw new OtrException(e);
-			}
+			injectMessage(new QueryMessage(versions));
 		}
 	}
 
-	private String handleDataMessage(String msgText) throws OtrException {
+	private String handleDataMessage(DataMessage data) throws OtrException {
 		logger.finest(getSessionID().getAccountID()
 				+ " received a data message from " + getSessionID().getUserID()
 				+ ".");
-		DataMessage data = new DataMessage();
-		ByteArrayInputStream in = new ByteArrayInputStream(MessageUtils
-				.decodeMessage(msgText));
-		try {
-			data.readObject(in);
-		} catch (IOException e) {
-			throw new OtrException(e);
-		}
+
 		switch (this.getSessionStatus()) {
 		case ENCRYPTED:
 			logger
 					.finest("Message state is ENCRYPTED. Trying to decrypt message.");
-			MysteriousT t = data.getT();
 
 			// Find matching session keys.
-			int senderKeyID = t.senderKeyID;
-			int receipientKeyID = t.recipientKeyID;
+			int senderKeyID = data.senderKeyID;
+			int receipientKeyID = data.recipientKeyID;
 			SessionKeys matchingKeys = this.getSessionKeysByID(receipientKeyID,
 					senderKeyID);
 
@@ -431,10 +415,12 @@ public class SessionImpl implements Session {
 			}
 
 			// Verify received MAC with a locally calculated MAC.
-			logger.finest("Transforming T to byte[] to calculate it's HmacSHA1.");
+			logger
+					.finest("Transforming T to byte[] to calculate it's HmacSHA1.");
+
 			byte[] serializedT;
 			try {
-				serializedT = t.toByteArray();
+				serializedT = SerializationUtils.toByteArray(data.getT());
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
@@ -443,9 +429,9 @@ public class SessionImpl implements Session {
 
 			byte[] computedMAC = otrCryptoEngine.sha1Hmac(serializedT,
 					matchingKeys.getReceivingMACKey(),
-					SerializationConstants.MAC);
+					OtrOutputStream.TYPE_LEN_MAC);
 
-			if (!Arrays.equals(computedMAC, data.getMac())) {
+			if (!Arrays.equals(computedMAC, data.mac)) {
 				logger.finest("MAC verification failed, ignoring message");
 				return null;
 			}
@@ -455,11 +441,11 @@ public class SessionImpl implements Session {
 			// Mark this MAC key as old to be revealed.
 			matchingKeys.setIsUsedReceivingMACKey(true);
 
-			matchingKeys.setReceivingCtr(t.ctr);
+			matchingKeys.setReceivingCtr(data.ctr);
 
 			String decryptedMsgContent = new String(otrCryptoEngine.aesDecrypt(
 					matchingKeys.getReceivingAESKey(), matchingKeys
-							.getReceivingCtr(), t.encryptedMsg));
+							.getReceivingCtr(), data.encryptedMessage));
 
 			logger.finest("Decrypted message: \"" + decryptedMsgContent + "\"");
 
@@ -469,7 +455,7 @@ public class SessionImpl implements Session {
 				this.rotateLocalSessionKeys();
 
 			if (mostRecent.getRemoteKeyID() == senderKeyID)
-				this.rotateRemoteSessionKeys(t.nextDHPublicKey);
+				this.rotateRemoteSessionKeys(data.nextDH);
 
 			// Handle TLVs
 			List<TLV> tlvs = null;
@@ -487,13 +473,15 @@ public class SessionImpl implements Session {
 				while (tin.available() > 0) {
 					int type;
 					byte[] tdata;
-
+					OtrInputStream eois = new OtrInputStream(tin);
 					try {
-						type = SerializationUtils.readShort(tin);
-						tdata = SerializationUtils.readTlvData(tin);
+						type = eois.readShort();
+						tdata = eois.readTlvData();
+						eois.close();
 					} catch (IOException e) {
 						throw new OtrException(e);
 					}
+
 					tlvs.add(new TLV(type, tdata));
 				}
 			}
@@ -515,34 +503,34 @@ public class SessionImpl implements Session {
 		case PLAINTEXT:
 			getListener().showWarning(this.getSessionID(),
 					"Unreadable encrypted message was received.");
-			ErrorMessage errormsg = new ErrorMessage(
-					"You sent me an unreadable encrypted message..");
-			try {
-				getListener().injectMessage(getSessionID(),
-						errormsg.writeObject());
-			} catch (IOException e) {
-				throw new OtrException(e);
-			}
+
+			injectMessage(new ErrorMessage(MessageBase.MESSAGE_ERROR,
+					"You sent me an unreadable encrypted message.."));
 			break;
 		}
 
 		return null;
 	}
 
-	private String handlePlainTextMessage(String msgText) throws OtrException {
+	private void injectMessage(MessageBase m) throws OtrException {
+		String msg;
+		try {
+			msg = new String(SerializationUtils.toByteArray(m));
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
+		getListener().injectMessage(getSessionID(), msg);
+	}
+
+	private String handlePlainTextMessage(PlainTextMessage plainTextMessage)
+			throws OtrException {
 		logger.finest(getSessionID().getAccountID()
 				+ " received a plaintext message from "
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
-		PlainTextMessage plainTextMessage = new PlainTextMessage();
-		try {
-			plainTextMessage.readObject(msgText);
-		} catch (IOException e) {
-			throw new OtrException(e);
-		}
 		OtrPolicy policy = getListener().getSessionPolicy(getSessionID());
-		Vector<Integer> versions = plainTextMessage.getVersions();
+		List<Integer> versions = plainTextMessage.versions;
 		if (versions.size() < 1) {
 			logger
 					.finest("Received plaintext message without the whitespace tag.");
@@ -553,7 +541,7 @@ public class SessionImpl implements Session {
 				// message was received unencrypted.
 				getListener().showWarning(this.getSessionID(),
 						"The message was received unencrypted.");
-				return plainTextMessage.getCleanText();
+				return plainTextMessage.cleanText;
 			case PLAINTEXT:
 				// Simply display the message to the user. If
 				// REQUIRE_ENCRYPTION
@@ -563,10 +551,11 @@ public class SessionImpl implements Session {
 					getListener().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 				}
-				return plainTextMessage.getCleanText();
+				return plainTextMessage.cleanText;
 			}
 		} else {
-			logger.finest("Received plaintext message with the whitespace tag.");
+			logger
+					.finest("Received plaintext message with the whitespace tag.");
 			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
 			case FINISHED:
@@ -588,29 +577,18 @@ public class SessionImpl implements Session {
 			if (policy.getWhitespaceStartAKE()) {
 				logger.finest("WHITESPACE_START_AKE is set");
 
-				if (plainTextMessage.getVersions().contains(2)
+				if (plainTextMessage.versions.contains(2)
 						&& policy.getAllowV2()) {
 					logger.finest("V2 tag found.");
 					getAuthContext().respondV2Auth();
-				} else if (plainTextMessage.getVersions().contains(1)
+				} else if (plainTextMessage.versions.contains(1)
 						&& policy.getAllowV1()) {
 					throw new UnsupportedOperationException();
 				}
 			}
 		}
 
-		return msgText;
-	}
-
-	private void handleAuthMessage(String msgText) throws OtrException {
-
-		AuthContext auth = this.getAuthContext();
-		auth.handleReceivingMessage(msgText);
-
-		if (auth.getIsSecure()) {
-			this.setSessionStatus(SessionStatus.ENCRYPTED);
-			logger.finest("Gone Secure.");
-		}
+		return plainTextMessage.cleanText;
 	}
 
 	// Retransmit last sent message. Spec document does not mention where or
@@ -658,10 +636,11 @@ public class SessionImpl implements Session {
 			if (tlvs != null && tlvs.size() > 0) {
 				out.write((byte) 0x00);
 
+				OtrOutputStream eoos = new OtrOutputStream(out);
 				for (TLV tlv : tlvs) {
 					try {
-						SerializationUtils.writeShort(out, tlv.type);
-						SerializationUtils.writeTlvData(out, tlv.value);
+						eoos.writeShort(tlv.type);
+						eoos.writeTlvData(tlv.value);
 					} catch (IOException e) {
 						throw new OtrException(e);
 					}
@@ -684,27 +663,30 @@ public class SessionImpl implements Session {
 					.getPublic();
 
 			// Calculate T.
-			MysteriousT t = new MysteriousT(senderKeyID, receipientKeyID,
-					nextDH, ctr, encryptedMsg, 2, 0);
+			MysteriousT t = new MysteriousT(2, 0, senderKeyID, receipientKeyID,
+					nextDH, ctr, encryptedMsg);
 
 			// Calculate T hash.
 			byte[] sendingMACKey = encryptionKeys.getSendingMACKey();
 
-			logger.finest("Transforming T to byte[] to calculate it's HmacSHA1.");
+			logger
+					.finest("Transforming T to byte[] to calculate it's HmacSHA1.");
 			byte[] serializedT;
 			try {
-				serializedT = t.toByteArray();
+				serializedT = SerializationUtils.toByteArray(t);
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
+
 			byte[] mac = otrCryptoEngine.sha1Hmac(serializedT, sendingMACKey,
-					SerializationConstants.MAC);
+					OtrOutputStream.TYPE_LEN_MAC);
 
 			// Get old MAC keys to be revealed.
-			byte[] oldMacKeys = this.collectOldMacKeys();
-			DataMessage msg = new DataMessage(t, mac, oldMacKeys);
+			byte[] oldKeys = this.collectOldMacKeys();
+			DataMessage m = new DataMessage(t, mac, oldKeys);
+
 			try {
-				return msg.writeObject();
+				return new String(SerializationUtils.toByteArray(m));
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}

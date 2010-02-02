@@ -6,62 +6,50 @@
  */
 package net.java.otr4j.io.messages;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-
+import java.util.Arrays;
 
 /**
  * 
  * @author George Politis
  */
-public final class DHCommitMessage extends EncodedMessageBase {
+public class DHCommitMessage extends EncodedMessageBase {
 
-	private byte[] dhPublicKeyEncrypted;
-	private byte[] dhPublicKeyHash;
+	// Fields.
+	public byte[] dhPublicKeyEncrypted;
+	public byte[] dhPublicKeyHash;
 
-	public DHCommitMessage() {
-		super(MessageConstants.DH_COMMIT);
-	}
-
-	public void writeObject(OutputStream out) throws IOException {
-
-		SerializationUtils.writeShort(out, this.getProtocolVersion());
-		SerializationUtils.writeByte(out, this.getMessageType());
-		SerializationUtils.writeData(out, this.getDhPublicKeyEncrypted());
-		SerializationUtils.writeData(out, this.getDhPublicKeyHash());
-	}
-
-	public void readObject(InputStream in) throws IOException {
-		this.setProtocolVersion(SerializationUtils.readShort(in));
-		this.setMessageType(SerializationUtils.readByte(in));
-		this.setDhPublicKeyEncrypted(SerializationUtils.readData(in));
-		this.setDhPublicKeyHash(SerializationUtils.readData(in));
-	}
-
-	public DHCommitMessage(int protocolVersion, byte[] gxHash,
-			byte[] gxEncrypted) {
-		super(MessageConstants.DH_COMMIT);
-		this.setMessageType(MessageConstants.DH_COMMIT);
-		this.setProtocolVersion(protocolVersion);
-		this.setDhPublicKeyEncrypted(gxEncrypted);
-		this.setDhPublicKeyHash(gxHash);
-	}
-
-	public void setDhPublicKeyHash(byte[] dhPublicKeyHash) {
+	// Ctor.
+	public DHCommitMessage(int protocolVersion, byte[] dhPublicKeyHash,
+			byte[] dhPublicKeyEncrypted) {
+		super(MESSAGE_DH_COMMIT, protocolVersion);
+		this.dhPublicKeyEncrypted = dhPublicKeyEncrypted;
 		this.dhPublicKeyHash = dhPublicKeyHash;
 	}
 
-	public byte[] getDhPublicKeyHash() {
-		return dhPublicKeyHash;
+	// Methods.
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(dhPublicKeyEncrypted);
+		result = prime * result + Arrays.hashCode(dhPublicKeyHash);
+		return result;
 	}
 
-	public void setDhPublicKeyEncrypted(byte[] dhPublicKeyEncrypted) {
-		this.dhPublicKeyEncrypted = dhPublicKeyEncrypted;
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DHCommitMessage other = (DHCommitMessage) obj;
+		if (!Arrays.equals(dhPublicKeyEncrypted, other.dhPublicKeyEncrypted))
+			return false;
+		if (!Arrays.equals(dhPublicKeyHash, other.dhPublicKeyHash))
+			return false;
+		return true;
 	}
 
-	public byte[] getDhPublicKeyEncrypted() {
-		return dhPublicKeyEncrypted;
-	}
 }

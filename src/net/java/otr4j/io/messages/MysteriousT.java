@@ -1,94 +1,81 @@
-/*
- * otr4j, the open source java otr library.
- *
- * Distributable under LGPL license.
- * See terms of license at gnu.org.
- */
 package net.java.otr4j.io.messages;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.Arrays;
 
 import javax.crypto.interfaces.DHPublicKey;
 
-
-/**
- * 
- * @author George Politis
- */
-public class MysteriousT extends EncodedMessageBase {
-
-	private int flags;
+public class MysteriousT {
+	// Fields.
+	public int protocolVersion;
+	public int messageType;
+	public int flags;
 	public int senderKeyID;
 	public int recipientKeyID;
-	public DHPublicKey nextDHPublicKey;
+	public DHPublicKey nextDH;
 	public byte[] ctr;
-	public byte[] encryptedMsg;
+	public byte[] encryptedMessage;
 
-	public MysteriousT() {
-		super(MessageConstants.DATA);
-	}
+	// Ctor.
+	public MysteriousT(int protocolVersion, int flags, int senderKeyID,
+			int recipientKeyID, DHPublicKey nextDH, byte[] ctr,
+			byte[] encryptedMessage) {
 
-	public void setFlags(int flags) {
+		this.protocolVersion = protocolVersion;
 		this.flags = flags;
-	}
-
-	public int getFlags() {
-		return flags;
-	}
-
-	public MysteriousT(int senderKeyID, int receipientKeyID,
-			DHPublicKey nextDHPublicKey, byte[] ctr, byte[] encryptedMsg,
-			int protocolVersion, int flags) {
-
-		super(MessageConstants.DATA);
-		this.setProtocolVersion(protocolVersion);
-		this.setFlags(flags);
 		this.senderKeyID = senderKeyID;
-		this.recipientKeyID = receipientKeyID;
-		this.nextDHPublicKey = nextDHPublicKey;
+		this.recipientKeyID = recipientKeyID;
+		this.nextDH = nextDH;
 		this.ctr = ctr;
-		this.encryptedMsg = encryptedMsg;
+		this.encryptedMessage = encryptedMessage;
 	}
 
-	public void readObject(InputStream in) throws IOException {
-		this.setProtocolVersion(SerializationUtils.readShort(in));
-		this.setMessageType(SerializationUtils.readByte(in));
-		this.setFlags(SerializationUtils.readByte(in));
-
-		senderKeyID = SerializationUtils.readInt(in);
-		recipientKeyID = SerializationUtils.readInt(in);
-		nextDHPublicKey = SerializationUtils.readDHPublicKey(in);
-		ctr = SerializationUtils.readCtr(in);
-		encryptedMsg = SerializationUtils.readData(in);
+	// Methods.
+	@Override
+	public int hashCode() {
+		// TODO: Needs work.
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(ctr);
+		result = prime * result + Arrays.hashCode(encryptedMessage);
+		result = prime * result + flags;
+		result = prime * result + messageType;
+		result = prime * result + ((nextDH == null) ? 0 : nextDH.hashCode());
+		result = prime * result + protocolVersion;
+		result = prime * result + recipientKeyID;
+		result = prime * result + senderKeyID;
+		return result;
 	}
 
-	public void writeObject(OutputStream out) throws IOException {
-		SerializationUtils.writeShort(out, this.getProtocolVersion());
-		SerializationUtils.writeByte(out, this.getMessageType());
-		SerializationUtils.writeByte(out, this.getFlags());
-
-		SerializationUtils.writeInt(out, senderKeyID);
-		SerializationUtils.writeInt(out, recipientKeyID);
-		SerializationUtils.writeDHPublicKey(out, nextDHPublicKey);
-		SerializationUtils.writeCtr(out, ctr);
-		SerializationUtils.writeData(out, encryptedMsg);
+	@Override
+	public boolean equals(Object obj) {
+		// TODO: Needs work.
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		MysteriousT other = (MysteriousT) obj;
+		if (!Arrays.equals(ctr, other.ctr))
+			return false;
+		if (!Arrays.equals(encryptedMessage, other.encryptedMessage))
+			return false;
+		if (flags != other.flags)
+			return false;
+		if (messageType != other.messageType)
+			return false;
+		if (nextDH == null) {
+			if (other.nextDH != null)
+				return false;
+		} else if (!nextDH.equals(other.nextDH))
+			return false;
+		if (protocolVersion != other.protocolVersion)
+			return false;
+		if (recipientKeyID != other.recipientKeyID)
+			return false;
+		if (senderKeyID != other.senderKeyID)
+			return false;
+		return true;
 	}
 
-	public byte[] toByteArray() throws IOException {
-		ByteArrayOutputStream out = null;
-		byte[] bosArray = null;
-		try {
-			out = new ByteArrayOutputStream();
-			this.writeObject(out);
-			bosArray = out.toByteArray();
-		} finally {
-			if (out != null)
-				out.close();
-		}
-
-		return bosArray;
-	}
 }

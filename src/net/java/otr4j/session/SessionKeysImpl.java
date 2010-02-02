@@ -6,7 +6,6 @@
  */
 package net.java.otr4j.session;
 
-import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
@@ -18,7 +17,7 @@ import javax.crypto.interfaces.DHPublicKey;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
-import net.java.otr4j.io.messages.*;
+import net.java.otr4j.io.messages.SerializationUtils;
 
 /**
  * 
@@ -109,10 +108,7 @@ class SessionKeysImpl implements SessionKeys {
 	private byte[] h1(byte b) throws OtrException {
 
 		try {
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			SerializationUtils.writeMpi(bos, getS());
-			byte[] secbytes = bos.toByteArray();
-			bos.close();
+			byte[] secbytes = SerializationUtils.writeMpi(getS());
 
 			int len = secbytes.length + 1;
 			ByteBuffer buff = ByteBuffer.allocate(len);

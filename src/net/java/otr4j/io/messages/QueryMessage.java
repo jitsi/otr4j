@@ -1,82 +1,56 @@
+/*
+ * otr4j, the open source java otr library.
+ *
+ * Distributable under LGPL license.
+ * See terms of license at gnu.org.
+ */
 package net.java.otr4j.io.messages;
 
-import java.io.IOException;
-import java.util.Vector;
+import java.util.List;
 
-public final class QueryMessage extends QueryMessageBase {
+/**
+ * 
+ * @author George Politis
+ */
+public class QueryMessage extends MessageBase {
+	// Fields.
+	public List<Integer> versions;
 
-	public QueryMessage(Vector<Integer> versions) {
-		super(MessageConstants.QUERY);
-		this.setVersions(versions);
+	// Ctor.
+	protected QueryMessage(int messageType, List<Integer> versions) {
+		super(messageType);
+		this.versions = versions;
 	}
 
-	public QueryMessage() {
-		super(MessageConstants.QUERY);
+	public QueryMessage(List<Integer> versions) {
+		this(MESSAGE_QUERY, versions);
 	}
 
-	public void readObject(String msgText) throws IOException {
-		if (!msgText.startsWith(MessageConstants.QUERY1_HEAD)
-				&& !msgText.startsWith(MessageConstants.QUERY2_HEAD))
-			return;
-
-		msgText = msgText.substring(MessageConstants.BASE_HEAD.length());
-		char[] chars = msgText.toCharArray();
-		Vector<Integer> versions = new Vector<Integer>();
-		Boolean stop = false;
-		for (int i = 0; i < chars.length; i++) {
-			char c = chars[i];
-			switch (c) {
-			case 'V':
-			case 'v':
-				// Ignore, signifies version numbers will follow.
-				break;
-			case '?':
-				if (i == 0) {
-					// Signifies Version 1.
-					versions.add(1);
-					if (chars.length == 1)
-						stop = true;
-				} else {
-					// Signifies end of version description
-					stop = true;
-				}
-				break;
-			default:
-				// Control chars are v and ?, everything else should be version
-				// descriptors, but no character versions exists, so skip the
-				// evil character.
-				try {
-					versions.add(Integer.parseInt(String.valueOf(c)));
-				} catch (NumberFormatException ex) {
-					continue;
-				}
-			}
-
-			if (stop)
-				break;
-		}
-
-		this.setVersions(versions);
-
+	// Methods.
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result
+				+ ((versions == null) ? 0 : versions.hashCode());
+		return result;
 	}
 
-	public String writeObject() throws IOException {
-		String txt = MessageConstants.BASE_HEAD;
-		Vector<Integer> versions = getVersions();
-
-		if (versions.contains(1))
-			txt += "?";
-
-		if (versions.size() > 1 || versions.get(0) != 1) {
-			txt += "v";
-			for (int version : versions)
-				if (version != 1)
-					txt += version;
-
-			return txt + "? You don't have a plugin to handle OTR.";
-		} else
-			return txt + " You don't have a plugin to handle OTR.";
-
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		QueryMessage other = (QueryMessage) obj;
+		if (versions == null) {
+			if (other.versions != null)
+				return false;
+		} else if (!versions.equals(other.versions))
+			return false;
+		return true;
 	}
 
 }

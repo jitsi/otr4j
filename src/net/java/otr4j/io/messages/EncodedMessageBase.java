@@ -6,60 +6,47 @@
  */
 package net.java.otr4j.io.messages;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-
 /**
  * 
  * @author George Politis
  */
 public abstract class EncodedMessageBase extends MessageBase {
-	private int protocolVersion;
+	// Fields.
+	public int protocolVersion;
 
-	public EncodedMessageBase(int messageType) {
+	// Ctor.
+	public EncodedMessageBase(int messageType, int protocolVersion) {
 		super(messageType);
-	}
-
-	public abstract void writeObject(OutputStream out) throws IOException;
-
-	public abstract void readObject(InputStream in) throws IOException;
-
-	public void readObject(String msg) throws IOException {
-		ByteArrayInputStream in = null;
-		try {
-			in = new ByteArrayInputStream(MessageUtils.decodeMessage(msg));
-			this.readObject(in);
-		} finally {
-			if (in != null)
-				in.close();
-		}
-	}
-
-	public String writeObject() throws IOException {
-		ByteArrayOutputStream out = null;
-		byte[] bosArray = null;
-		try {
-			out = new ByteArrayOutputStream();
-			this.writeObject(out);
-			bosArray = out.toByteArray();
-		} finally {
-			if (out != null)
-				out.close();
-		}
-
-		String encodedMessage = MessageUtils.encodeMessage(bosArray);
-		return encodedMessage;
-	}
-
-	public void setProtocolVersion(int protocolVersion) {
 		this.protocolVersion = protocolVersion;
 	}
 
-	public int getProtocolVersion() {
-		return protocolVersion;
+	// Methods.
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + protocolVersion;
+		return result;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		EncodedMessageBase other = (EncodedMessageBase) obj;
+		if (protocolVersion != other.protocolVersion)
+			return false;
+		return true;
+	}
+
+	// Encoded Message Types
+	public static final int MESSAGE_DH_COMMIT = 0x02;
+	public static final int MESSAGE_DATA = 0x03;
+	public static final int MESSAGE_DHKEY = 0x0a;
+	public static final int MESSAGE_REVEALSIG = 0x11;
+	public static final int MESSAGE_SIGNATURE = 0x12;
 }

@@ -6,7 +6,6 @@
  */
 package net.java.otr4j.crypto;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -353,25 +352,22 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	public String getFingerprint(PublicKey pubKey) throws OtrCryptoException {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] b;
 		try {
-			SerializationUtils.writePublicKey(out, pubKey);
-			byte[] bRemotePubKey = out.toByteArray();
+			byte[] bRemotePubKey = SerializationUtils.writePublicKey(pubKey);
+
 			if (pubKey.getAlgorithm().equals("DSA")) {
 				byte[] trimmed = new byte[bRemotePubKey.length - 2];
 				System.arraycopy(bRemotePubKey, 2, trimmed, 0, trimmed.length);
 				b = new OtrCryptoEngineImpl().sha1Hash(trimmed);
 			} else
 				b = new OtrCryptoEngineImpl().sha1Hash(bRemotePubKey);
-
 		} catch (IOException e) {
 			throw new OtrCryptoException(e);
 		}
-
 		return this.byteArrayToHexString(b);
 	}
-	
+
 	private String byteArrayToHexString(byte in[]) {
 		byte ch = 0x00;
 		int i = 0;

@@ -6,28 +6,44 @@
  */
 package net.java.otr4j.io.messages;
 
-import java.io.IOException;
-
 /**
  * 
  * @author George Politis
  */
 public abstract class MessageBase {
-	public MessageBase(int messageType){
-		setMessageType(messageType);
-	}
-	
-	private int messageType;
+	// Fields.
+	public int messageType;
 
-	public void setMessageType(int messageType) {
+	// Ctor.
+	public MessageBase(int messageType) {
 		this.messageType = messageType;
 	}
 
-	public int getMessageType() {
-		return messageType;
+	// Methods.
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + messageType;
+		return result;
 	}
-	
-	public abstract void readObject(String msg) throws IOException;
-	
-	public abstract String writeObject() throws IOException;
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		MessageBase other = (MessageBase) obj;
+		if (messageType != other.messageType)
+			return false;
+		return true;
+	}
+
+	// Unencoded
+	public static final int MESSAGE_ERROR = 0xff;
+	public static final int MESSAGE_QUERY = 0x100;
+	public static final int MESSAGE_PLAINTEXT = 0x102;
 }

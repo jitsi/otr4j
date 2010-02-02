@@ -5,3 +5,8 @@ doc/*
 uml/*
 nbproject/*
 nb-build.xml
+otr.properties
+
+log4j*.jar
+lib/logging.properties
+ChainsawHandler.java
