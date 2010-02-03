@@ -27,6 +27,7 @@ import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.io.OtrInputStream;
 import net.java.otr4j.io.OtrOutputStream;
+import net.java.otr4j.io.SerializationUtils;
 import net.java.otr4j.io.messages.DataMessage;
 import net.java.otr4j.io.messages.EncodedMessageBase;
 import net.java.otr4j.io.messages.ErrorMessage;
@@ -34,7 +35,6 @@ import net.java.otr4j.io.messages.MessageBase;
 import net.java.otr4j.io.messages.MysteriousT;
 import net.java.otr4j.io.messages.PlainTextMessage;
 import net.java.otr4j.io.messages.QueryMessage;
-import net.java.otr4j.io.messages.SerializationUtils;
 
 /**
  * 
@@ -288,7 +288,7 @@ public class SessionImpl implements Session {
 
 	private AuthContext getAuthContext() {
 		if (authContext == null)
-			authContext = new AuthContextImpl(getSessionID(), getListener());
+			authContext = new AuthContextImpl(this);
 		return authContext;
 	}
 
@@ -305,7 +305,7 @@ public class SessionImpl implements Session {
 	 * net.java.otr4j.session.ISession#handleReceivingMessage(java.lang.String)
 	 */
 	public String transformReceiving(String msgText) throws OtrException {
-		OtrPolicy policy = getListener().getSessionPolicy(getSessionID());
+		OtrPolicy policy = getSessionPolicy();
 		if (!policy.getAllowV1() && !policy.getAllowV2()) {
 			logger
 					.finest("Policy does not allow neither V1 not V2, ignoring message.");
@@ -357,14 +357,11 @@ public class SessionImpl implements Session {
 
 		setSessionStatus(SessionStatus.PLAINTEXT);
 
-		if (queryMessage.versions.contains(2)
-				&& this.getListener().getSessionPolicy(getSessionID())
-						.getAllowV2()) {
+		OtrPolicy policy = getSessionPolicy();
+		if (queryMessage.versions.contains(2) && policy.getAllowV2()) {
 			logger.finest("Query message with V2 support found.");
 			getAuthContext().respondV2Auth();
-		} else if (queryMessage.versions.contains(1)
-				&& this.getListener().getSessionPolicy(getSessionID())
-						.getAllowV1()) {
+		} else if (queryMessage.versions.contains(1) && policy.getAllowV1()) {
 			throw new UnsupportedOperationException();
 		}
 	}
@@ -378,7 +375,7 @@ public class SessionImpl implements Session {
 
 		getListener().showError(this.getSessionID(), errorMessage.error);
 
-		OtrPolicy policy = this.getListener().getSessionPolicy(getSessionID());
+		OtrPolicy policy = getSessionPolicy();
 		if (policy.getErrorStartAKE()) {
 			logger.finest("Error message starts AKE.");
 			Vector<Integer> versions = new Vector<Integer>();
@@ -512,7 +509,7 @@ public class SessionImpl implements Session {
 		return null;
 	}
 
-	private void injectMessage(MessageBase m) throws OtrException {
+	public void injectMessage(MessageBase m) throws OtrException {
 		String msg;
 		try {
 			msg = new String(SerializationUtils.toByteArray(m));
@@ -529,7 +526,7 @@ public class SessionImpl implements Session {
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getProtocolName() + ".");
 
-		OtrPolicy policy = getListener().getSessionPolicy(getSessionID());
+		OtrPolicy policy = getSessionPolicy();
 		List<Integer> versions = plainTextMessage.versions;
 		if (versions.size() < 1) {
 			logger
@@ -600,8 +597,7 @@ public class SessionImpl implements Session {
 
 		switch (this.getSessionStatus()) {
 		case PLAINTEXT:
-			if (this.getListener().getSessionPolicy(getSessionID())
-					.getRequireEncryption()) {
+			if (getSessionPolicy().getRequireEncryption()) {
 				this.lastSentMessage = msgText;
 				this.startSession();
 			} else
@@ -714,7 +710,7 @@ public class SessionImpl implements Session {
 		if (this.getSessionStatus() == SessionStatus.ENCRYPTED)
 			return;
 
-		if (!getListener().getSessionPolicy(getSessionID()).getAllowV2())
+		if (!getSessionPolicy().getAllowV2())
 			throw new UnsupportedOperationException();
 
 		this.getAuthContext().startV2Auth();
@@ -779,5 +775,13 @@ public class SessionImpl implements Session {
 		synchronized (listeners) {
 			listeners.remove(l);
 		}
+	}
+
+	public OtrPolicy getSessionPolicy() {
+		return getListener().getSessionPolicy(getSessionID());
+	}
+
+	public KeyPair getLocalKeyPair() {
+		return getListener().getKeyPair(this.getSessionID());
 	}
 }

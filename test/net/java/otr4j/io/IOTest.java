@@ -10,7 +10,6 @@ import javax.crypto.interfaces.DHPublicKey;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.io.messages.DHKeyMessage;
 import net.java.otr4j.io.messages.RevealSignatureMessage;
-import net.java.otr4j.io.messages.SerializationConstants;
 
 public class IOTest extends junit.framework.TestCase {
 

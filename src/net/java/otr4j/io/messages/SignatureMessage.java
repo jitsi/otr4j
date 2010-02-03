@@ -11,6 +11,7 @@ import java.util.Arrays;
 
 import net.java.otr4j.OtrException;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
+import net.java.otr4j.io.SerializationUtils;
 
 /**
  * 

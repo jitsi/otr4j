@@ -23,7 +23,6 @@ import net.java.otr4j.io.messages.SignatureX;
 import net.java.otr4j.io.messages.PlainTextMessage;
 import net.java.otr4j.io.messages.QueryMessage;
 import net.java.otr4j.io.messages.RevealSignatureMessage;
-import net.java.otr4j.io.messages.SerializationConstants;
 import net.java.otr4j.io.messages.SignatureMessage;
 
 import org.bouncycastle.util.BigIntegers;

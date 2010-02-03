@@ -17,7 +17,7 @@ import javax.crypto.interfaces.DHPublicKey;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
-import net.java.otr4j.io.messages.SerializationUtils;
+import net.java.otr4j.io.SerializationUtils;
 
 /**
  * 

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Vector;
 
 import net.java.otr4j.io.messages.QueryMessage;
-import net.java.otr4j.io.messages.SerializationConstants;
 
 public class OtrQueryReader extends FilterReader {
 

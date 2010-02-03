@@ -4,15 +4,18 @@
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
-package net.java.otr4j.io.messages;
+package net.java.otr4j.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.PublicKey;
-import net.java.otr4j.io.OtrInputStream;
-import net.java.otr4j.io.OtrOutputStream;
+
+import net.java.otr4j.io.messages.MessageBase;
+import net.java.otr4j.io.messages.MysteriousT;
+import net.java.otr4j.io.messages.SignatureM;
+import net.java.otr4j.io.messages.SignatureX;
 
 /**
  * 
