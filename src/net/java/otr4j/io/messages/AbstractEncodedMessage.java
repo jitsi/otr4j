@@ -10,12 +10,12 @@ package net.java.otr4j.io.messages;
  * 
  * @author George Politis
  */
-public abstract class EncodedMessageBase extends MessageBase {
+public abstract class AbstractEncodedMessage extends AbstractMessage {
 	// Fields.
 	public int protocolVersion;
 
 	// Ctor.
-	public EncodedMessageBase(int messageType, int protocolVersion) {
+	public AbstractEncodedMessage(int messageType, int protocolVersion) {
 		super(messageType);
 		this.protocolVersion = protocolVersion;
 	}
@@ -37,7 +37,7 @@ public abstract class EncodedMessageBase extends MessageBase {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		EncodedMessageBase other = (EncodedMessageBase) obj;
+		AbstractEncodedMessage other = (AbstractEncodedMessage) obj;
 		if (protocolVersion != other.protocolVersion)
 			return false;
 		return true;

@@ -10,7 +10,7 @@ package net.java.otr4j.io.messages;
  * 
  * @author George Politis
  */
-public class ErrorMessage extends MessageBase {
+public class ErrorMessage extends AbstractMessage {
 	// Fields.
 	public String error;
 	

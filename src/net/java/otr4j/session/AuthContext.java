@@ -13,7 +13,7 @@ import java.security.PublicKey;
 import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.OtrException;
-import net.java.otr4j.io.messages.MessageBase;
+import net.java.otr4j.io.messages.AbstractMessage;
 
 /**
  * 
@@ -42,7 +42,7 @@ interface AuthContext {
 
 	public abstract BigInteger getS() throws OtrException;
 
-	public abstract void handleReceivingMessage(MessageBase m)
+	public abstract void handleReceivingMessage(AbstractMessage m)
 			throws OtrException;
 
 	public abstract void startV2Auth() throws OtrException;

@@ -10,12 +10,12 @@ package net.java.otr4j.io.messages;
  * 
  * @author George Politis
  */
-public abstract class MessageBase {
+public abstract class AbstractMessage {
 	// Fields.
 	public int messageType;
 
 	// Ctor.
-	public MessageBase(int messageType) {
+	public AbstractMessage(int messageType) {
 		this.messageType = messageType;
 	}
 
@@ -36,7 +36,7 @@ public abstract class MessageBase {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		MessageBase other = (MessageBase) obj;
+		AbstractMessage other = (AbstractMessage) obj;
 		if (messageType != other.messageType)
 			return false;
 		return true;

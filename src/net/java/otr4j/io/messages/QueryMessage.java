@@ -12,7 +12,7 @@ import java.util.List;
  * 
  * @author George Politis
  */
-public class QueryMessage extends MessageBase {
+public class QueryMessage extends AbstractMessage {
 	// Fields.
 	public List<Integer> versions;
 

@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.PublicKey;
 
-import net.java.otr4j.io.messages.MessageBase;
+import net.java.otr4j.io.messages.AbstractMessage;
 import net.java.otr4j.io.messages.MysteriousT;
 import net.java.otr4j.io.messages.SignatureM;
 import net.java.otr4j.io.messages.SignatureX;
@@ -99,7 +99,7 @@ public class SerializationUtils {
 	}
 
 	// Message IO.
-	public static byte[] toByteArray(MessageBase m) throws IOException {
+	public static byte[] toByteArray(AbstractMessage m) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		OtrOutputStream oos = new OtrOutputStream(out);
 		oos.writeMessage(m);
@@ -108,10 +108,10 @@ public class SerializationUtils {
 		return b;
 	}
 
-	public static MessageBase toMessage(byte[] b) throws IOException {
+	public static AbstractMessage toMessage(byte[] b) throws IOException {
 		ByteArrayInputStream in = new ByteArrayInputStream(b);
 		OtrInputStream ois = new OtrInputStream(in);
-		MessageBase m = ois.readMessage();
+		AbstractMessage m = ois.readMessage();
 		ois.close();
 		return m;
 	}

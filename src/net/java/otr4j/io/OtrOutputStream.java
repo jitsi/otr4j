@@ -14,9 +14,9 @@ import javax.crypto.interfaces.DHPublicKey;
 import net.java.otr4j.io.messages.DHCommitMessage;
 import net.java.otr4j.io.messages.DHKeyMessage;
 import net.java.otr4j.io.messages.DataMessage;
-import net.java.otr4j.io.messages.EncodedMessageBase;
+import net.java.otr4j.io.messages.AbstractEncodedMessage;
 import net.java.otr4j.io.messages.ErrorMessage;
-import net.java.otr4j.io.messages.MessageBase;
+import net.java.otr4j.io.messages.AbstractMessage;
 import net.java.otr4j.io.messages.SignatureM;
 import net.java.otr4j.io.messages.MysteriousT;
 import net.java.otr4j.io.messages.SignatureX;
@@ -130,17 +130,17 @@ public class OtrOutputStream extends FilterOutputStream implements
 		writeSignature(x.signature, x.longTermPublicKey);
 	}
 
-	public void writeMessage(MessageBase m) throws IOException {
+	public void writeMessage(AbstractMessage m) throws IOException {
 		out.write(SerializationConstants.HEAD);
 
 		boolean isEncoded = false;
 		switch (m.messageType) {
-		case MessageBase.MESSAGE_ERROR:
+		case AbstractMessage.MESSAGE_ERROR:
 			ErrorMessage error = (ErrorMessage) m;
 			out.write(SerializationConstants.HEAD_ERROR);
 			out.write(error.error.getBytes());
 			break;
-		case MessageBase.MESSAGE_PLAINTEXT:
+		case AbstractMessage.MESSAGE_PLAINTEXT:
 			PlainTextMessage plaintxt = (PlainTextMessage) m;
 			out.write(plaintxt.cleanText.getBytes());
 			if (plaintxt.versions != null && plaintxt.versions.size() > 0) {
@@ -154,7 +154,7 @@ public class OtrOutputStream extends FilterOutputStream implements
 				}
 			}
 			break;
-		case MessageBase.MESSAGE_QUERY:
+		case AbstractMessage.MESSAGE_QUERY:
 			QueryMessage query = (QueryMessage) m;
 			if (query.versions.size() == 1 && query.versions.get(0) == 1) {
 				out.write(SerializationConstants.HEAD_QUERY_Q);
@@ -166,11 +166,11 @@ public class OtrOutputStream extends FilterOutputStream implements
 				out.write("?".getBytes());
 			}
 			break;
-		case EncodedMessageBase.MESSAGE_DHKEY:
-		case EncodedMessageBase.MESSAGE_REVEALSIG:
-		case EncodedMessageBase.MESSAGE_SIGNATURE:
-		case EncodedMessageBase.MESSAGE_DH_COMMIT:
-		case EncodedMessageBase.MESSAGE_DATA:
+		case AbstractEncodedMessage.MESSAGE_DHKEY:
+		case AbstractEncodedMessage.MESSAGE_REVEALSIG:
+		case AbstractEncodedMessage.MESSAGE_SIGNATURE:
+		case AbstractEncodedMessage.MESSAGE_DH_COMMIT:
+		case AbstractEncodedMessage.MESSAGE_DATA:
 			isEncoded = true;
 			break;
 		default:
@@ -185,13 +185,13 @@ public class OtrOutputStream extends FilterOutputStream implements
 			OtrOutputStream s = new OtrOutputStream(o);
 
 			switch (m.messageType) {
-			case EncodedMessageBase.MESSAGE_DHKEY:
+			case AbstractEncodedMessage.MESSAGE_DHKEY:
 				DHKeyMessage dhkey = (DHKeyMessage) m;
 				s.writeShort(dhkey.protocolVersion);
 				s.writeByte(dhkey.messageType);
 				s.writeDHPublicKey(dhkey.dhPublicKey);
 				break;
-			case EncodedMessageBase.MESSAGE_REVEALSIG:
+			case AbstractEncodedMessage.MESSAGE_REVEALSIG:
 				RevealSignatureMessage revealsig = (RevealSignatureMessage) m;
 				s.writeShort(revealsig.protocolVersion);
 				s.writeByte(revealsig.messageType);
@@ -199,21 +199,21 @@ public class OtrOutputStream extends FilterOutputStream implements
 				s.writeData(revealsig.xEncrypted);
 				s.writeMac(revealsig.xEncryptedMAC);
 				break;
-			case EncodedMessageBase.MESSAGE_SIGNATURE:
+			case AbstractEncodedMessage.MESSAGE_SIGNATURE:
 				SignatureMessage sig = (SignatureMessage) m;
 				s.writeShort(sig.protocolVersion);
 				s.writeByte(sig.messageType);
 				s.writeData(sig.xEncrypted);
 				s.writeMac(sig.xEncryptedMAC);
 				break;
-			case EncodedMessageBase.MESSAGE_DH_COMMIT:
+			case AbstractEncodedMessage.MESSAGE_DH_COMMIT:
 				DHCommitMessage dhcommit = (DHCommitMessage) m;
 				s.writeShort(dhcommit.protocolVersion);
 				s.writeByte(dhcommit.messageType);
 				s.writeData(dhcommit.dhPublicKeyEncrypted);
 				s.writeData(dhcommit.dhPublicKeyHash);
 				break;
-			case EncodedMessageBase.MESSAGE_DATA:
+			case AbstractEncodedMessage.MESSAGE_DATA:
 				DataMessage data = (DataMessage) m;
 				s.writeShort(data.protocolVersion);
 				s.writeByte(data.messageType);

@@ -29,9 +29,9 @@ import net.java.otr4j.io.OtrInputStream;
 import net.java.otr4j.io.OtrOutputStream;
 import net.java.otr4j.io.SerializationUtils;
 import net.java.otr4j.io.messages.DataMessage;
-import net.java.otr4j.io.messages.EncodedMessageBase;
+import net.java.otr4j.io.messages.AbstractEncodedMessage;
 import net.java.otr4j.io.messages.ErrorMessage;
-import net.java.otr4j.io.messages.MessageBase;
+import net.java.otr4j.io.messages.AbstractMessage;
 import net.java.otr4j.io.messages.MysteriousT;
 import net.java.otr4j.io.messages.PlainTextMessage;
 import net.java.otr4j.io.messages.QueryMessage;
@@ -312,7 +312,7 @@ public class SessionImpl implements Session {
 			return msgText;
 		}
 
-		MessageBase m;
+		AbstractMessage m;
 		try {
 			m = SerializationUtils.toMessage(msgText.getBytes());
 		} catch (IOException e) {
@@ -320,20 +320,20 @@ public class SessionImpl implements Session {
 		}
 
 		switch (m.messageType) {
-		case EncodedMessageBase.MESSAGE_DATA:
+		case AbstractEncodedMessage.MESSAGE_DATA:
 			return handleDataMessage((DataMessage) m);
-		case MessageBase.MESSAGE_ERROR:
+		case AbstractMessage.MESSAGE_ERROR:
 			handleErrorMessage((ErrorMessage) m);
 			return null;
-		case MessageBase.MESSAGE_PLAINTEXT:
+		case AbstractMessage.MESSAGE_PLAINTEXT:
 			return handlePlainTextMessage((PlainTextMessage) m);
-		case MessageBase.MESSAGE_QUERY:
+		case AbstractMessage.MESSAGE_QUERY:
 			handleQueryMessage((QueryMessage) m);
 			return null;
-		case EncodedMessageBase.MESSAGE_DH_COMMIT:
-		case EncodedMessageBase.MESSAGE_DHKEY:
-		case EncodedMessageBase.MESSAGE_REVEALSIG:
-		case EncodedMessageBase.MESSAGE_SIGNATURE:
+		case AbstractEncodedMessage.MESSAGE_DH_COMMIT:
+		case AbstractEncodedMessage.MESSAGE_DHKEY:
+		case AbstractEncodedMessage.MESSAGE_REVEALSIG:
+		case AbstractEncodedMessage.MESSAGE_SIGNATURE:
 			AuthContext auth = this.getAuthContext();
 			auth.handleReceivingMessage(m);
 
@@ -501,7 +501,7 @@ public class SessionImpl implements Session {
 			getListener().showWarning(this.getSessionID(),
 					"Unreadable encrypted message was received.");
 
-			injectMessage(new ErrorMessage(MessageBase.MESSAGE_ERROR,
+			injectMessage(new ErrorMessage(AbstractMessage.MESSAGE_ERROR,
 					"You sent me an unreadable encrypted message.."));
 			break;
 		}
@@ -509,7 +509,7 @@ public class SessionImpl implements Session {
 		return null;
 	}
 
-	public void injectMessage(MessageBase m) throws OtrException {
+	public void injectMessage(AbstractMessage m) throws OtrException {
 		String msg;
 		try {
 			msg = new String(SerializationUtils.toByteArray(m));

@@ -12,7 +12,7 @@ import java.util.Arrays;
  * 
  * @author George Politis
  */
-public class DHCommitMessage extends EncodedMessageBase {
+public class DHCommitMessage extends AbstractEncodedMessage {
 
 	// Fields.
 	public byte[] dhPublicKeyEncrypted;

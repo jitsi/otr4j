@@ -12,7 +12,7 @@ import javax.crypto.interfaces.DHPublicKey;
  * 
  * @author George Politis
  */
-public class DHKeyMessage extends EncodedMessageBase {
+public class DHKeyMessage extends AbstractEncodedMessage {
 
 	// Fields.
 	public DHPublicKey dhPublicKey;

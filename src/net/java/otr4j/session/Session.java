@@ -7,7 +7,7 @@ import java.util.List;
 import net.java.otr4j.OtrEngineListener;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrPolicy;
-import net.java.otr4j.io.messages.MessageBase;
+import net.java.otr4j.io.messages.AbstractMessage;
 import net.java.otr4j.session.SessionImpl.TLV;
 
 public interface Session {
@@ -16,7 +16,7 @@ public interface Session {
 
 	public abstract SessionID getSessionID();
 
-	public abstract void injectMessage(MessageBase m) throws OtrException;
+	public abstract void injectMessage(AbstractMessage m) throws OtrException;
 
 	public abstract KeyPair getLocalKeyPair();
 

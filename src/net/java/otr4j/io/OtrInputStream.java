@@ -28,9 +28,9 @@ import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.io.messages.DHCommitMessage;
 import net.java.otr4j.io.messages.DHKeyMessage;
 import net.java.otr4j.io.messages.DataMessage;
-import net.java.otr4j.io.messages.EncodedMessageBase;
+import net.java.otr4j.io.messages.AbstractEncodedMessage;
 import net.java.otr4j.io.messages.ErrorMessage;
-import net.java.otr4j.io.messages.MessageBase;
+import net.java.otr4j.io.messages.AbstractMessage;
 import net.java.otr4j.io.messages.SignatureX;
 import net.java.otr4j.io.messages.PlainTextMessage;
 import net.java.otr4j.io.messages.QueryMessage;
@@ -153,7 +153,7 @@ public class OtrInputStream extends FilterInputStream implements
 		return new SignatureX(pubKey, dhKeyID, sig);
 	}
 
-	public MessageBase readMessage() throws IOException {
+	public AbstractMessage readMessage() throws IOException {
 		final byte[] headBytes = new byte[SerializationConstants.HEAD.length];
 		in.read(headBytes);
 
@@ -222,7 +222,7 @@ public class OtrInputStream extends FilterInputStream implements
 				int protocolVersion = otr.readShort();
 				int messageType = otr.readByte();
 				switch (messageType) {
-				case EncodedMessageBase.MESSAGE_DATA:
+				case AbstractEncodedMessage.MESSAGE_DATA:
 					int flags = otr.readByte();
 					int senderKeyID = otr.readInt();
 					int recipientKeyID = otr.readInt();
@@ -234,22 +234,22 @@ public class OtrInputStream extends FilterInputStream implements
 					return new DataMessage(protocolVersion, flags, senderKeyID,
 							recipientKeyID, nextDH, ctr, encryptedMessage, mac,
 							oldMacKeys);
-				case EncodedMessageBase.MESSAGE_DH_COMMIT:
+				case AbstractEncodedMessage.MESSAGE_DH_COMMIT:
 					byte[] dhPublicKeyEncrypted = otr.readData();
 					byte[] dhPublicKeyHash = otr.readData();
 					return new DHCommitMessage(protocolVersion,
 							dhPublicKeyHash, dhPublicKeyEncrypted);
-				case EncodedMessageBase.MESSAGE_DHKEY:
+				case AbstractEncodedMessage.MESSAGE_DHKEY:
 					DHPublicKey dhPublicKey = otr.readDHPublicKey();
 					return new DHKeyMessage(protocolVersion, dhPublicKey);
-				case EncodedMessageBase.MESSAGE_REVEALSIG: {
+				case AbstractEncodedMessage.MESSAGE_REVEALSIG: {
 					byte[] revealedKey = otr.readData();
 					byte[] xEncrypted = otr.readData();
 					byte[] xEncryptedMac = otr.readMac();
 					return new RevealSignatureMessage(protocolVersion,
 							xEncrypted, xEncryptedMac, revealedKey);
 				}
-				case EncodedMessageBase.MESSAGE_SIGNATURE: {
+				case AbstractEncodedMessage.MESSAGE_SIGNATURE: {
 					byte[] xEncryted = otr.readData();
 					byte[] xEncryptedMac = otr.readMac();
 					return new SignatureMessage(protocolVersion, xEncryted,
@@ -273,7 +273,7 @@ public class OtrInputStream extends FilterInputStream implements
 				String text = new String(out.toByteArray());
 				out.close();
 
-				return new ErrorMessage(MessageBase.MESSAGE_ERROR, text);
+				return new ErrorMessage(AbstractMessage.MESSAGE_ERROR, text);
 			} else if (Arrays.equals(SerializationConstants.HEAD_QUERY_Q,
 					typeHead)) {
 				InputStreamReader isr = new InputStreamReader(in);

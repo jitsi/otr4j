@@ -17,7 +17,7 @@ import net.java.otr4j.io.SerializationUtils;
  * 
  * @author George Politis
  */
-public class SignatureMessage extends EncodedMessageBase {
+public class SignatureMessage extends AbstractEncodedMessage {
 	// Fields.
 	public byte[] xEncrypted;
 	public byte[] xEncryptedMAC;

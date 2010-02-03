@@ -14,7 +14,7 @@ import javax.crypto.interfaces.DHPublicKey;
  * 
  * @author George Politis
  */
-public class DataMessage extends EncodedMessageBase {
+public class DataMessage extends AbstractEncodedMessage {
 
 	// Fields.
 	public byte[] mac;
