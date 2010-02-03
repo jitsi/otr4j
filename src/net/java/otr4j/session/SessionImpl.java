@@ -10,6 +10,7 @@ package net.java.otr4j.session;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PublicKey;
@@ -27,6 +28,7 @@ import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.io.OtrInputStream;
 import net.java.otr4j.io.OtrOutputStream;
+import net.java.otr4j.io.SerializationConstants;
 import net.java.otr4j.io.SerializationUtils;
 import net.java.otr4j.io.messages.DataMessage;
 import net.java.otr4j.io.messages.AbstractEncodedMessage;
@@ -314,7 +316,7 @@ public class SessionImpl implements Session {
 
 		AbstractMessage m;
 		try {
-			m = SerializationUtils.toMessage(msgText.getBytes());
+			m = SerializationUtils.toMessage(msgText);
 		} catch (IOException e) {
 			throw new OtrException(e);
 		}
@@ -426,7 +428,7 @@ public class SessionImpl implements Session {
 
 			byte[] computedMAC = otrCryptoEngine.sha1Hmac(serializedT,
 					matchingKeys.getReceivingMACKey(),
-					OtrOutputStream.TYPE_LEN_MAC);
+					SerializationConstants.TYPE_LEN_MAC);
 
 			if (!Arrays.equals(computedMAC, data.mac)) {
 				logger.finest("MAC verification failed, ignoring message");
@@ -440,9 +442,16 @@ public class SessionImpl implements Session {
 
 			matchingKeys.setReceivingCtr(data.ctr);
 
-			String decryptedMsgContent = new String(otrCryptoEngine.aesDecrypt(
-					matchingKeys.getReceivingAESKey(), matchingKeys
-							.getReceivingCtr(), data.encryptedMessage));
+			byte[] dmc = otrCryptoEngine.aesDecrypt(matchingKeys
+					.getReceivingAESKey(), matchingKeys.getReceivingCtr(),
+					data.encryptedMessage);
+			String decryptedMsgContent;
+			try {
+				// Expect bytes to be text encoded in UTF-8.
+				decryptedMsgContent = new String(dmc, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				throw new OtrException(e);
+			}
 
 			logger.finest("Decrypted message: \"" + decryptedMsgContent + "\"");
 
@@ -458,12 +467,11 @@ public class SessionImpl implements Session {
 			List<TLV> tlvs = null;
 			int tlvIndex = decryptedMsgContent.indexOf((char) 0x0);
 			if (tlvIndex > -1) {
-				byte[] mb = decryptedMsgContent.getBytes();
 				decryptedMsgContent = decryptedMsgContent
 						.substring(0, tlvIndex);
 				tlvIndex++;
-				byte[] tlvsb = new byte[mb.length - tlvIndex];
-				System.arraycopy(mb, tlvIndex, tlvsb, 0, tlvsb.length);
+				byte[] tlvsb = new byte[dmc.length - tlvIndex];
+				System.arraycopy(dmc, tlvIndex, tlvsb, 0, tlvsb.length);
 
 				tlvs = new Vector<TLV>();
 				ByteArrayInputStream tin = new ByteArrayInputStream(tlvsb);
@@ -512,7 +520,7 @@ public class SessionImpl implements Session {
 	public void injectMessage(AbstractMessage m) throws OtrException {
 		String msg;
 		try {
-			msg = new String(SerializationUtils.toByteArray(m));
+			msg = SerializationUtils.toString(m);
 		} catch (IOException e) {
 			throw new OtrException(e);
 		}
@@ -528,7 +536,7 @@ public class SessionImpl implements Session {
 
 		OtrPolicy policy = getSessionPolicy();
 		List<Integer> versions = plainTextMessage.versions;
-		if (versions.size() < 1) {
+		if (versions == null || versions.size() < 1) {
 			logger
 					.finest("Received plaintext message without the whitespace tag.");
 			switch (this.getSessionStatus()) {
@@ -623,7 +631,7 @@ public class SessionImpl implements Session {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			if (msgText != null && msgText.length() > 0)
 				try {
-					out.write(msgText.getBytes());
+					out.write(msgText.getBytes("UTF8"));
 				} catch (IOException e) {
 					throw new OtrException(e);
 				}
@@ -675,14 +683,14 @@ public class SessionImpl implements Session {
 			}
 
 			byte[] mac = otrCryptoEngine.sha1Hmac(serializedT, sendingMACKey,
-					OtrOutputStream.TYPE_LEN_MAC);
+					SerializationConstants.TYPE_LEN_MAC);
 
 			// Get old MAC keys to be revealed.
 			byte[] oldKeys = this.collectOldMacKeys();
 			DataMessage m = new DataMessage(t, mac, oldKeys);
 
 			try {
-				return new String(SerializationUtils.toByteArray(m));
+				return SerializationUtils.toString(m);
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}

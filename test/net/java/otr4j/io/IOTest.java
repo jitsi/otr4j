@@ -110,18 +110,9 @@ public class IOTest extends junit.framework.TestCase {
 		DHKeyMessage source = new DHKeyMessage(0, (DHPublicKey) pair
 				.getPublic());
 
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		OtrOutputStream oos = new OtrOutputStream(out);
-		oos.writeMessage(source);
-
-		byte[] converted = out.toByteArray();
-
-		@SuppressWarnings("unused")
-		String base64 = new String(converted);
-
-		ByteArrayInputStream bin = new ByteArrayInputStream(converted);
-		OtrInputStream ois = new OtrInputStream(bin);
-		DHKeyMessage result = (DHKeyMessage) ois.readMessage();
+		String base64 = SerializationUtils.toString(source);
+		DHKeyMessage result = (DHKeyMessage) SerializationUtils
+				.toMessage(base64);
 
 		assertTrue(source.equals(result));
 	}
@@ -138,19 +129,9 @@ public class IOTest extends junit.framework.TestCase {
 		RevealSignatureMessage source = new RevealSignatureMessage(
 				protocolVersion, xEncrypted, xEncryptedMAC, revealedKey);
 
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		OtrOutputStream oos = new OtrOutputStream(out);
-		oos.writeMessage(source);
-
-		byte[] converted = out.toByteArray();
-
-		@SuppressWarnings("unused")
-		String base64 = new String(converted);
-
-		ByteArrayInputStream bin = new ByteArrayInputStream(converted);
-		OtrInputStream ois = new OtrInputStream(bin);
-		RevealSignatureMessage result = (RevealSignatureMessage) ois
-				.readMessage();
+		String base64 = SerializationUtils.toString(source);
+		RevealSignatureMessage result = (RevealSignatureMessage) SerializationUtils
+				.toMessage(base64);
 
 		assertTrue(source.equals(result));
 	}

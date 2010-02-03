@@ -21,6 +21,7 @@ public class MysteriousT {
 			byte[] encryptedMessage) {
 
 		this.protocolVersion = protocolVersion;
+		this.messageType = AbstractEncodedMessage.MESSAGE_DATA;
 		this.flags = flags;
 		this.senderKeyID = senderKeyID;
 		this.recipientKeyID = recipientKeyID;

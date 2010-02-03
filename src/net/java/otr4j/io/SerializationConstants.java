@@ -11,11 +11,12 @@ package net.java.otr4j.io;
  * @author George Politis
  */
 public interface SerializationConstants {
-	public static final byte[] HEAD = "?OTR".getBytes();
-	public static final byte[] HEAD_ENCODED = ":".getBytes();
-	public static final byte[] HEAD_ERROR = " ".getBytes();
-	public static final byte[] HEAD_QUERY_Q = "?".getBytes();
-	public static final byte[] HEAD_QUERY_V = "v".getBytes();
+
+	public static final String HEAD = "?OTR";
+	public static final char HEAD_ENCODED = ':';
+	public static final char HEAD_ERROR = ' ';
+	public static final char HEAD_QUERY_Q = '?';
+	public static final char HEAD_QUERY_V = 'v';
 
 	public static final int TYPE_LEN_BYTE = 1;
 	public static final int TYPE_LEN_SHORT = 2;
