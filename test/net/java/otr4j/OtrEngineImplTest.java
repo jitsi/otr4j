@@ -67,7 +67,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 
 	}
 
-	public void testReceivingMessage() throws Exception {
+	public void testSession() throws Exception {
 
 		this.startSession();
 		this.exchageMessages();
@@ -78,7 +78,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 	private OtrEngineImpl usBob;
 	private DummyOtrEngineHost host;
 
-	private void startSession() {
+	private void startSession() throws OtrException {
 		host = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2
 				| OtrPolicy.ERROR_START_AKE));
 
@@ -112,7 +112,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			fail("Could not establish a secure session.");
 	}
 
-	private void exchageMessages() {
+	private void exchageMessages() throws OtrException {
 		// We are both secure, send encrypted message.
 		String clearTextMessage = "Hello Bob, this new IM software you installed on my PC the other day says we are talking Off-the-Record, what is that supposed to mean?";
 		String sentMessage = usAlice.transformSending(aliceSessionID,
@@ -166,7 +166,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			fail();
 	}
 
-	private void endSession() {
+	private void endSession() throws OtrException {
 		usBob.endSession(bobSessionID);
 		usAlice.endSession(aliceSessionID);
 

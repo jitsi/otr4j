@@ -44,11 +44,6 @@ import net.java.otr4j.io.messages.QueryMessage;
  */
 public class SessionImpl implements Session {
 
-	/**
-	 * 
-	 * @author George Politis
-	 * 
-	 */
 	class TLV {
 		public TLV(int type, byte[] value) {
 			this.setType(type);
@@ -76,7 +71,7 @@ public class SessionImpl implements Session {
 	}
 
 	private SessionID sessionID;
-	private OtrEngineHost listener;
+	private OtrEngineHost host;
 	private SessionStatus sessionStatus;
 	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
@@ -87,7 +82,7 @@ public class SessionImpl implements Session {
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
 
 		this.setSessionID(sessionID);
-		this.setListener(listener);
+		this.setHost(listener);
 
 		// client application calls OtrEngine.getSessionStatus()
 		// -> create new session if it does not exist, end up here
@@ -274,12 +269,12 @@ public class SessionImpl implements Session {
 		return sessionID;
 	}
 
-	private void setListener(OtrEngineHost listener) {
-		this.listener = listener;
+	private void setHost(OtrEngineHost host) {
+		this.host = host;
 	}
 
-	private OtrEngineHost getListener() {
-		return listener;
+	private OtrEngineHost getHost() {
+		return host;
 	}
 
 	private SessionKeys[][] getSessionKeys() {
@@ -375,7 +370,7 @@ public class SessionImpl implements Session {
 				+ getSessionID().getUserID() + " throught "
 				+ getSessionID().getUserID() + ".");
 
-		getListener().showError(this.getSessionID(), errorMessage.error);
+		getHost().showError(this.getSessionID(), errorMessage.error);
 
 		OtrPolicy policy = getSessionPolicy();
 		if (policy.getErrorStartAKE()) {
@@ -506,7 +501,7 @@ public class SessionImpl implements Session {
 
 		case FINISHED:
 		case PLAINTEXT:
-			getListener().showWarning(this.getSessionID(),
+			getHost().showWarning(this.getSessionID(),
 					"Unreadable encrypted message was received.");
 
 			injectMessage(new ErrorMessage(AbstractMessage.MESSAGE_ERROR,
@@ -524,7 +519,7 @@ public class SessionImpl implements Session {
 		} catch (IOException e) {
 			throw new OtrException(e);
 		}
-		getListener().injectMessage(getSessionID(), msg);
+		getHost().injectMessage(getSessionID(), msg);
 	}
 
 	private String handlePlainTextMessage(PlainTextMessage plainTextMessage)
@@ -544,7 +539,7 @@ public class SessionImpl implements Session {
 			case FINISHED:
 				// Display the message to the user, but warn him that the
 				// message was received unencrypted.
-				getListener().showWarning(this.getSessionID(),
+				getHost().showWarning(this.getSessionID(),
 						"The message was received unencrypted.");
 				return plainTextMessage.cleanText;
 			case PLAINTEXT:
@@ -553,7 +548,7 @@ public class SessionImpl implements Session {
 				// is set, warn him that the message was received
 				// unencrypted.
 				if (policy.getRequireEncryption()) {
-					getListener().showWarning(this.getSessionID(),
+					getHost().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 				}
 				return plainTextMessage.cleanText;
@@ -567,7 +562,7 @@ public class SessionImpl implements Session {
 				// Remove the whitespace tag and display the message to the
 				// user, but warn him that the message was received
 				// unencrypted.
-				getListener().showWarning(this.getSessionID(),
+				getHost().showWarning(this.getSessionID(),
 						"The message was received unencrypted.");
 			case PLAINTEXT:
 				// Remove the whitespace tag and display the message to the
@@ -575,7 +570,7 @@ public class SessionImpl implements Session {
 				// message
 				// was received unencrypted.
 				if (policy.getRequireEncryption())
-					getListener().showWarning(this.getSessionID(),
+					getHost().showWarning(this.getSessionID(),
 							"The message was received unencrypted.");
 			}
 
@@ -696,7 +691,7 @@ public class SessionImpl implements Session {
 			}
 		case FINISHED:
 			this.lastSentMessage = msgText;
-			getListener()
+			getHost()
 					.showError(
 							sessionID,
 							"Your message to "
@@ -737,7 +732,7 @@ public class SessionImpl implements Session {
 			tlvs.add(new TLV(1, null));
 
 			String msg = this.transformSending(null, tlvs);
-			getListener().injectMessage(getSessionID(), msg);
+			getHost().injectMessage(getSessionID(), msg);
 			this.setSessionStatus(SessionStatus.PLAINTEXT);
 			break;
 		case FINISHED:
@@ -776,7 +771,6 @@ public class SessionImpl implements Session {
 			if (!listeners.contains(l))
 				listeners.add(l);
 		}
-
 	}
 
 	public void removeOtrEngineListener(OtrEngineListener l) {
@@ -786,10 +780,10 @@ public class SessionImpl implements Session {
 	}
 
 	public OtrPolicy getSessionPolicy() {
-		return getListener().getSessionPolicy(getSessionID());
+		return getHost().getSessionPolicy(getSessionID());
 	}
 
 	public KeyPair getLocalKeyPair() {
-		return getListener().getKeyPair(this.getSessionID());
+		return getHost().getKeyPair(this.getSessionID());
 	}
 }

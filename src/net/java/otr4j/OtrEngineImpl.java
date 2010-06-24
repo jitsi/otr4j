@@ -25,14 +25,14 @@ import net.java.otr4j.session.SessionStatus;
  */
 public class OtrEngineImpl implements OtrEngine {
 
-	public OtrEngineImpl(OtrEngineHost listener) {
-		if (listener == null)
+	public OtrEngineImpl(OtrEngineHost host) {
+		if (host == null)
 			throw new IllegalArgumentException("OtrEgineHost is required.");
 
-		this.setListener(listener);
+		this.setHost(host);
 	}
 
-	private OtrEngineHost listener;
+	private OtrEngineHost host;
 	private Map<SessionID, Session> sessions;
 
 	private Session getSession(SessionID sessionID) {
@@ -44,7 +44,7 @@ public class OtrEngineImpl implements OtrEngine {
 			sessions = new Hashtable<SessionID, Session>();
 
 		if (!sessions.containsKey(sessionID)) {
-			Session session = new SessionImpl(sessionID, getListener());
+			Session session = new SessionImpl(sessionID, getHost());
 			sessions.put(sessionID, session);
 
 			session.addOtrEngineListener(new OtrEngineListener() {
@@ -54,64 +54,43 @@ public class OtrEngineImpl implements OtrEngine {
 						l.sessionStatusChanged(sessionID);
 				}
 			});
-
-		}
-
-		return sessions.get(sessionID);
+			return session;
+		} else
+			return sessions.get(sessionID);
 	}
 
 	public SessionStatus getSessionStatus(SessionID sessionID) {
 		return this.getSession(sessionID).getSessionStatus();
 	}
 
-	public String transformReceiving(SessionID sessionID, String msgText) {
-		try {
-			return this.getSession(sessionID).transformReceiving(msgText);
-		} catch (OtrException e) {
-			listener.showError(sessionID, e.getMessage());
-			return null;
-		}
+	public String transformReceiving(SessionID sessionID, String msgText)
+			throws OtrException {
+		return this.getSession(sessionID).transformReceiving(msgText);
 	}
 
-	public String transformSending(SessionID sessionID, String msgText) {
-		try {
-			return this.getSession(sessionID).transformSending(msgText, null);
-		} catch (OtrException e) {
-			listener.showError(sessionID, e.getMessage());
-			return null;
-		}
+	public String transformSending(SessionID sessionID, String msgText)
+			throws OtrException {
+		return this.getSession(sessionID).transformSending(msgText, null);
 	}
 
-	public void endSession(SessionID sessionID) {
-		try {
-			this.getSession(sessionID).endSession();
-		} catch (OtrException e) {
-			listener.showError(sessionID, e.getMessage());
-		}
+	public void endSession(SessionID sessionID) throws OtrException {
+		this.getSession(sessionID).endSession();
 	}
 
-	public void startSession(SessionID sessionID) {
-		try {
-			this.getSession(sessionID).startSession();
-		} catch (OtrException e) {
-			listener.showError(sessionID, e.getMessage());
-		}
+	public void startSession(SessionID sessionID) throws OtrException {
+		this.getSession(sessionID).startSession();
 	}
 
-	private void setListener(OtrEngineHost listener) {
-		this.listener = listener;
+	private void setHost(OtrEngineHost host) {
+		this.host = host;
 	}
 
-	private OtrEngineHost getListener() {
-		return listener;
+	private OtrEngineHost getHost() {
+		return host;
 	}
 
-	public void refreshSession(SessionID sessionID) {
-		try {
-			this.getSession(sessionID).refreshSession();
-		} catch (OtrException e) {
-			listener.showError(sessionID, e.getMessage());
-		}
+	public void refreshSession(SessionID sessionID) throws OtrException {
+		this.getSession(sessionID).refreshSession();
 	}
 
 	public PublicKey getRemotePublicKey(SessionID sessionID) {
@@ -125,7 +104,6 @@ public class OtrEngineImpl implements OtrEngine {
 			if (!listeners.contains(l))
 				listeners.add(l);
 		}
-
 	}
 
 	public void removeOtrEngineListener(OtrEngineListener l) {

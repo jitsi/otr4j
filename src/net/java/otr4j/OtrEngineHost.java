@@ -26,6 +26,6 @@ public abstract interface OtrEngineHost {
 	public abstract void showError(SessionID sessionID, String error);
 
 	public abstract OtrPolicy getSessionPolicy(SessionID sessionID);
-	
+
 	public abstract KeyPair getKeyPair(SessionID sessionID);
 }
