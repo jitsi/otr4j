@@ -315,6 +315,9 @@ public class SessionImpl implements Session {
 		} catch (IOException e) {
 			throw new OtrException(e);
 		}
+		
+		if (m == null)
+			return msgText; // Propably null or empty.
 
 		switch (m.messageType) {
 		case AbstractEncodedMessage.MESSAGE_DATA:
