@@ -222,7 +222,7 @@ public class SerializationUtils {
 			.compile("( \\t  \\t\\t\\t\\t \\t \\t \\t  )(  \\t\\t  \\t )?( \\t \\t  \\t )?");
 
 	public static AbstractMessage toMessage(String s) throws IOException {
-		if (s == null || s.length() <= 1)
+		if (s == null || s.length() == 0)
 			return null;
 
 		if (s.indexOf(SerializationConstants.HEAD) != 0
