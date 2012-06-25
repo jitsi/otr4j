@@ -50,4 +50,6 @@ public abstract interface OtrEngineHost {
 	public abstract void unverify(SessionID sessionID);
 
 	public abstract String getReplyForUnreadableMessage();
+
+	public abstract String getFallbackMessage();
 }

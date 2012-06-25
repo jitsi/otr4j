@@ -116,6 +116,11 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			return null;
 		}
 
+		@Override
+		public String getFallbackMessage() {
+			return "Off-the-Record private conversation has been requested. However, you do not have a plugin to support that.";
+		}
+
 	}
 
 	public void testSession() throws Exception {

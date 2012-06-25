@@ -523,6 +523,8 @@ public class SessionImpl implements Session {
 		} catch (IOException e) {
 			throw new OtrException(e);
 		}
+		if (m instanceof QueryMessage)
+			msg += getHost().getFallbackMessage();
 		getHost().injectMessage(getSessionID(), msg);
 	}
 
