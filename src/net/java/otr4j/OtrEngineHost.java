@@ -38,4 +38,6 @@ public abstract interface OtrEngineHost {
 	public abstract void verify(SessionID sessionID);
 
 	public abstract void unverify(SessionID sessionID);
+
+	public abstract String getReplyForUnreadableMessage();
 }

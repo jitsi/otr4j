@@ -52,6 +52,10 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			logger.warning("IM shows warning to user: " + warning);
 		}
 
+		public String getReplyForUnreadableMessage() {
+			return "You sent me an unreadable encrypted message.";
+		}
+
 		public void sessionStatusChanged(SessionID sessionID) {
 			// don't care.
 		}
