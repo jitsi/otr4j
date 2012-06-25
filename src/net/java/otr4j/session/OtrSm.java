@@ -188,12 +188,12 @@ public class OtrSm {
 			if (smstate.smProgState != SM.PROG_CHEATED){
 			    engineHost.askForSecret(session.getSessionID(), new String(plainq));
 			} else {
-			    engineHost.showError(session.getSessionID(), "Peer attempted to cheat during verification");
+			    engineHost.smpError(session.getSessionID(), tlvType, true);
 				smstate.nextExpected = SM.EXPECT1;
 				smstate.smProgState = SM.PROG_OK;
 			}
 		} else if (tlvType == TLV.SMP1Q) {
-            engineHost.showError(session.getSessionID(), "Error during verification (step 1q)");
+		    engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP1 && nextMsg == SM.EXPECT1) {
 			/* We can only do the verification half now.
 			 * We must wait for the secret to be entered
@@ -206,12 +206,12 @@ public class OtrSm {
 			if (smstate.smProgState!=SM.PROG_CHEATED) {
                 engineHost.askForSecret(session.getSessionID(), null);
 			} else {
-                engineHost.showError(session.getSessionID(), "Peer attempted to cheat during verification");
+			    engineHost.smpError(session.getSessionID(), tlvType, true);
 				smstate.nextExpected = SM.EXPECT1;
 				smstate.smProgState = SM.PROG_OK;
 			}
 		} else if (tlvType == TLV.SMP1) {
-            engineHost.showError(session.getSessionID(), "Error during verification (step 1)");
+		    engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP2 && nextMsg == SM.EXPECT2) {
 			byte[] nextmsg;
 			try {
@@ -226,12 +226,12 @@ public class OtrSm {
 				engineHost.injectMessage(session.getSessionID(),
 						session.transformSending("", makeTlvList(sendtlv)));
 			} else {
-                engineHost.showError(session.getSessionID(), "Peer attempted to cheat during verification");
+			    engineHost.smpError(session.getSessionID(), tlvType, true);
 				smstate.nextExpected = SM.EXPECT1;
 				smstate.smProgState = SM.PROG_OK;
 			}
 		} else if (tlvType == TLV.SMP2){
-            engineHost.showError(session.getSessionID(), "Error during verification (step 2)");
+		    engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP3 && nextMsg == SM.EXPECT3) {
 			byte[] nextmsg;
 			try {
@@ -252,12 +252,12 @@ public class OtrSm {
 				engineHost.injectMessage(session.getSessionID(),
 						session.transformSending("", makeTlvList(sendtlv)));
 			} else {
-                engineHost.showError(session.getSessionID(), "Peer attempted to cheat during verification");
+			    engineHost.smpError(session.getSessionID(), tlvType, true);
 				smstate.nextExpected = SM.EXPECT1;
 				smstate.smProgState = SM.PROG_OK;
 			}
 		} else if (tlvType == TLV.SMP3){
-            engineHost.showError(session.getSessionID(), "Error during verification (step 3)");
+		    engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP4 && nextMsg == SM.EXPECT4) {
 
 			try {
@@ -273,13 +273,13 @@ public class OtrSm {
 			if (smstate.smProgState != SM.PROG_CHEATED){
 				smstate.nextExpected = SM.EXPECT1;
 			} else {
-                engineHost.showError(session.getSessionID(), "Peer attempted to cheat during verification");
+			    engineHost.smpError(session.getSessionID(), tlvType, true);
 				smstate.nextExpected = SM.EXPECT1;
 				smstate.smProgState = SM.PROG_OK;
 			}
 
 		} else if (tlvType == TLV.SMP4){
-            engineHost.showError(session.getSessionID(), "Error during verification (step 4)");
+		    engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP_ABORT){
 			smstate.nextExpected = SM.EXPECT1;
 		} else

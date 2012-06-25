@@ -44,6 +44,11 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			logger.finest("IM injects message: " + msgDisplay);
 		}
 
+		public void smpError(SessionID sessionID, int tlvType, boolean cheated)
+				throws OtrException{
+			logger.severe("SM verification error with user: " + sessionID);
+		}
+
 		public void unreadableMessageReceived(SessionID sessionID)
 				throws OtrException {
 			logger.warning("Unreadable message received from: " + sessionID);
