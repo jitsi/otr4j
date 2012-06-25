@@ -54,6 +54,12 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 					+ sessionID);
 		}
 
+		public void requireEncryptedMessage(SessionID sessionID, String msgText)
+				throws OtrException {
+			logger.severe("Message can't be sent while encrypted session is not established: "
+					+ sessionID);
+		}
+
 		public void unreadableMessageReceived(SessionID sessionID)
 				throws OtrException {
 			logger.warning("Unreadable message received from: " + sessionID);

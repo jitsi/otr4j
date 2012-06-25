@@ -36,6 +36,9 @@ public abstract interface OtrEngineHost {
 	public abstract void finishedSessionMessage(SessionID sessionID)
 			throws OtrException;
 
+	public abstract void requireEncryptedMessage(SessionID sessionID,
+			String msgText) throws OtrException;
+
 	public abstract OtrPolicy getSessionPolicy(SessionID sessionID);
 
 	public abstract KeyPair getLocalKeyPair(SessionID sessionID)
