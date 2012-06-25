@@ -30,6 +30,7 @@ import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.crypto.OtrTlvHandler;
+import net.java.otr4j.crypto.SM.SMException;
 import net.java.otr4j.io.OtrInputStream;
 import net.java.otr4j.io.OtrOutputStream;
 import net.java.otr4j.io.SerializationConstants;
@@ -57,6 +58,7 @@ public class SessionImpl implements Session {
 	private static Logger logger = Logger
 			.getLogger(SessionImpl.class.getName());
 	private static List<OtrTlvHandler> tlvHandlers = new ArrayList<OtrTlvHandler>();
+	private final OtrSm otrSm;
 	private BigInteger ess;
 
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
@@ -69,6 +71,8 @@ public class SessionImpl implements Session {
 		// -> setSessionStatus() fires statusChangedEvent
 		// -> client application calls OtrEngine.getSessionStatus()
 		this.sessionStatus = SessionStatus.PLAINTEXT;
+
+		otrSm = new OtrSm(this, listener);
 	}
 	
 	@Override
@@ -490,6 +494,17 @@ public class SessionImpl implements Session {
 						this.setSessionStatus(SessionStatus.FINISHED);
 						return null;
 					default:
+						List<TLV> send;
+						try {
+							send = otrSm.doProcessTlv(tlv);
+						} catch (SMException ex) {
+							throw new OtrException(ex);
+						}
+						if (send != null) {
+							host.injectMessage(sessionID,
+									transformSending("", send));
+							return null;
+						}
 					    for (OtrTlvHandler handler : tlvHandlers) {
 					    	handler.processTlv(tlv);
 					    }
@@ -787,4 +802,29 @@ public class SessionImpl implements Session {
 	public KeyPair getLocalKeyPair() {
 		return getHost().getLocalKeyPair(this.getSessionID());
 	}
+
+	public void initSmp(String question, String secret) throws OtrException {
+		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
+			return;
+		List<TLV> tlvs = otrSm.initRespondSmp(question, secret, true);
+		String msg = transformSending("", tlvs);
+		getHost().injectMessage(getSessionID(), msg);
+	}
+
+	public void respondSmp(String secret) throws OtrException {
+		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
+			return;
+		List<TLV> tlvs = otrSm.initRespondSmp(null, secret, false);
+		String msg = transformSending("", tlvs);
+		getHost().injectMessage(getSessionID(), msg);
+	}
+
+	public void abortSmp() throws OtrException {
+		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
+			return;
+		List<TLV> tlvs = otrSm.abortSmp();
+		String msg = transformSending("", tlvs);
+		getHost().injectMessage(getSessionID(), msg);
+	}
+
 }

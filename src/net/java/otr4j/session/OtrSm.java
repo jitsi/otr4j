@@ -19,12 +19,11 @@ import net.java.otr4j.crypto.SM.SMException;
 import net.java.otr4j.crypto.SM.SMState;
 import net.java.otr4j.io.OtrOutputStream;
 
-public class OtrSm implements OtrTlvHandler {
+public class OtrSm {
     
 	SMState smstate;
     private OtrEngineHost engineHost;
 	private Session session;
-	private List<TLV> pendingTlvs;
 
 	/**
 	 * Construct an OTR Socialist Millionaire handler object.
@@ -160,19 +159,7 @@ public class OtrSm implements OtrTlvHandler {
         return makeTlvList(sendtlv);
 	}
 
-	public List<TLV> getPendingTlvs() {
-		return pendingTlvs;
-	}
-	/** Process an incoming TLV and optionally send back TLVs to peer. */
-	public void processTlv(TLV tlv) throws OtrException {
-		try {
-			pendingTlvs = doProcessTlv(tlv);
-		} catch (SMException ex) {
-			throw new OtrException(ex);
-		}
-	}
-	
-	private List<TLV> doProcessTlv(TLV tlv) throws SMException {
+	public List<TLV> doProcessTlv(TLV tlv) throws SMException {
 		/* If TLVs contain SMP data, process it */
 		int nextMsg = smstate.nextExpected;
 

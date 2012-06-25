@@ -45,5 +45,12 @@ public interface Session {
 
 	public abstract void removeTlvHandler(OtrTlvHandler handler);
 
+	public abstract void initSmp(String question, String secret)
+			throws OtrException;
+
+	public abstract void respondSmp(String secret) throws OtrException;
+
+	public abstract void abortSmp() throws OtrException;
+
 	public abstract BigInteger getS();
 }
