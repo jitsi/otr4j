@@ -92,7 +92,7 @@ public class OtrSm implements OtrTlvHandler {
 		 * Version byte (0x01), Initiator fingerprint (20 bytes),
 		 * responder fingerprint (20 bytes), secure session id, input secret
 		 */
-		byte[] our_fp = keyManager.getLocalFingerprintRaw(sessionID);
+		byte[] our_fp = engineHost.getLocalFingerprintRaw(sessionID);
 		byte[] their_fp;
 		PublicKey remotePublicKey = session.getRemotePublicKey();
 		try {

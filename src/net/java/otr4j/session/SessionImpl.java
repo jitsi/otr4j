@@ -785,6 +785,6 @@ public class SessionImpl implements Session {
 	}
 
 	public KeyPair getLocalKeyPair() {
-		return getHost().getKeyPair(this.getSessionID());
+		return getHost().getLocalKeyPair(this.getSessionID());
 	}
 }

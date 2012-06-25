@@ -8,6 +8,8 @@ import java.util.logging.Logger;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.OtrEngineImpl;
 import net.java.otr4j.OtrPolicyImpl;
+import net.java.otr4j.crypto.OtrCryptoEngineImpl;
+import net.java.otr4j.crypto.OtrCryptoException;
 import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionStatus;
 
@@ -54,7 +56,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			// don't care.
 		}
 
-		public KeyPair getKeyPair(SessionID paramSessionID) {
+		public KeyPair getLocalKeyPair(SessionID paramSessionID) {
 			KeyPairGenerator kg;
 			try {
 				kg = KeyPairGenerator.getInstance("DSA");
@@ -79,6 +81,18 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 		@Override
 		public void unverify(SessionID sessionID) {
 			logger.finest("Session was not verified: " + sessionID);
+		}
+
+		@Override
+		public byte[] getLocalFingerprintRaw(SessionID sessionID) {
+			try {
+				return new OtrCryptoEngineImpl()
+						.getFingerprintRaw(getLocalKeyPair(sessionID)
+								.getPublic());
+			} catch (OtrCryptoException e) {
+				e.printStackTrace();
+			}
+			return null;
 		}
 
 	}

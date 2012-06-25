@@ -27,7 +27,9 @@ public abstract interface OtrEngineHost {
 
 	public abstract OtrPolicy getSessionPolicy(SessionID sessionID);
 
-	public abstract KeyPair getKeyPair(SessionID sessionID);
+	public abstract KeyPair getLocalKeyPair(SessionID sessionID);
+
+	public abstract byte[] getLocalFingerprintRaw(SessionID sessionID);
 
 	public abstract void askForSecret(SessionID sessionID, String question);
 
