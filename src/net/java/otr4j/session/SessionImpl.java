@@ -495,11 +495,7 @@ public class SessionImpl implements Session {
 						return null;
 					default:
 						List<TLV> send;
-						try {
-							send = otrSm.doProcessTlv(tlv);
-						} catch (SMException ex) {
-							throw new OtrException(ex);
-						}
+						send = otrSm.doProcessTlv(tlv);
 						if (send != null) {
 							host.injectMessage(sessionID,
 									transformSending("", send));

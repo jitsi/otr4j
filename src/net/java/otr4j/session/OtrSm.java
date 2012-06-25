@@ -159,7 +159,7 @@ public class OtrSm {
         return makeTlvList(sendtlv);
 	}
 
-	public List<TLV> doProcessTlv(TLV tlv) throws SMException {
+	public List<TLV> doProcessTlv(TLV tlv) throws OtrException {
 		/* If TLVs contain SMP data, process it */
 		int nextMsg = smstate.nextExpected;
 
@@ -177,7 +177,11 @@ public class OtrSm {
 			else qlen++;
 			byte[] input = new byte[question.length-qlen];
 			System.arraycopy(question, qlen, input, 0, question.length-qlen);
-			SM.step2a(smstate, input, 1);
+			try {
+				SM.step2a(smstate, input, 1);
+			} catch (SMException e) {
+				throw new OtrException(e);
+			}
 			if (qlen != 0) qlen--;
 			byte[] plainq = new byte[qlen];
 			System.arraycopy(question, 0, plainq, 0, qlen);
@@ -194,7 +198,11 @@ public class OtrSm {
 			/* We can only do the verification half now.
 			 * We must wait for the secret to be entered
 			 * to continue. */
-			SM.step2a(smstate, tlv.getValue(), 0);
+			try {
+				SM.step2a(smstate, tlv.getValue(), 0);
+			} catch (SMException e) {
+				throw new OtrException(e);
+			}
 			if (smstate.smProgState!=SM.PROG_CHEATED) {
                 engineHost.askForSecret(session.getSessionID(), null);
 			} else {
@@ -205,7 +213,12 @@ public class OtrSm {
 		} else if (tlvType == TLV.SMP1) {
             engineHost.showError(session.getSessionID(), "Error during verification (step 1)");
 		} else if (tlvType == TLV.SMP2 && nextMsg == SM.EXPECT2) {
-			byte[] nextmsg = SM.step3(smstate, tlv.getValue());
+			byte[] nextmsg;
+			try {
+				nextmsg = SM.step3(smstate, tlv.getValue());
+			} catch (SMException e) {
+				throw new OtrException(e);
+			}
 			if (smstate.smProgState != SM.PROG_CHEATED){
 				/* Send msg with next smp msg content */
 				TLV sendtlv = new TLV(TLV.SMP3, nextmsg);
@@ -219,7 +232,12 @@ public class OtrSm {
 		} else if (tlvType == TLV.SMP2){
             engineHost.showError(session.getSessionID(), "Error during verification (step 2)");
 		} else if (tlvType == TLV.SMP3 && nextMsg == SM.EXPECT3) {
-			byte[] nextmsg = SM.step4(smstate, tlv.getValue());
+			byte[] nextmsg;
+			try {
+				nextmsg = SM.step4(smstate, tlv.getValue());
+			} catch (SMException e) {
+				throw new OtrException(e);
+			}
 			/* Set trust level based on result */
 			if (smstate.smProgState == SM.PROG_SUCCEEDED){
 				engineHost.verify(session.getSessionID());
@@ -240,7 +258,11 @@ public class OtrSm {
             engineHost.showError(session.getSessionID(), "Error during verification (step 3)");
 		} else if (tlvType == TLV.SMP4 && nextMsg == SM.EXPECT4) {
 
-			SM.step5(smstate, tlv.getValue());
+			try {
+				SM.step5(smstate, tlv.getValue());
+			} catch (SMException e) {
+				throw new OtrException(e);
+			}
 			if (smstate.smProgState == SM.PROG_SUCCEEDED){
 				engineHost.verify(session.getSessionID());
 			} else {
