@@ -507,9 +507,7 @@ public class SessionImpl implements Session {
 
 		case FINISHED:
 		case PLAINTEXT:
-			getHost().showWarning(this.getSessionID(),
-					"Unreadable encrypted message was received.");
-
+			getHost().unreadableMessageReceived(this.getSessionID());
 			injectMessage(new ErrorMessage(AbstractMessage.MESSAGE_ERROR,
 					getHost().getReplyForUnreadableMessage()));
 			break;
@@ -545,8 +543,8 @@ public class SessionImpl implements Session {
 			case FINISHED:
 				// Display the message to the user, but warn him that the
 				// message was received unencrypted.
-				getHost().showWarning(this.getSessionID(),
-						"The message was received unencrypted.");
+				getHost().unencryptedMessageReceived(sessionID,
+						plainTextMessage.cleanText);
 				return plainTextMessage.cleanText;
 			case PLAINTEXT:
 				// Simply display the message to the user. If
@@ -554,8 +552,8 @@ public class SessionImpl implements Session {
 				// is set, warn him that the message was received
 				// unencrypted.
 				if (policy.getRequireEncryption()) {
-					getHost().showWarning(this.getSessionID(),
-							"The message was received unencrypted.");
+					getHost().unencryptedMessageReceived(sessionID,
+							plainTextMessage.cleanText);
 				}
 				return plainTextMessage.cleanText;
 			}
@@ -568,16 +566,16 @@ public class SessionImpl implements Session {
 				// Remove the whitespace tag and display the message to the
 				// user, but warn him that the message was received
 				// unencrypted.
-				getHost().showWarning(this.getSessionID(),
-						"The message was received unencrypted.");
+				getHost().unencryptedMessageReceived(sessionID,
+						plainTextMessage.cleanText);
 			case PLAINTEXT:
 				// Remove the whitespace tag and display the message to the
 				// user. If REQUIRE_ENCRYPTION is set, warn him that the
 				// message
 				// was received unencrypted.
 				if (policy.getRequireEncryption())
-					getHost().showWarning(this.getSessionID(),
-							"The message was received unencrypted.");
+					getHost().unencryptedMessageReceived(sessionID,
+							plainTextMessage.cleanText);
 			}
 
 			if (policy.getWhitespaceStartAKE()) {

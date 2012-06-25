@@ -22,7 +22,11 @@ public abstract interface OtrEngineHost {
 	public abstract void injectMessage(SessionID sessionID, String msg)
 			throws OtrException;
 
-	public abstract void showWarning(SessionID sessionID, String warning);
+	public abstract void unreadableMessageReceived(SessionID sessionID)
+			throws OtrException;
+
+	public abstract void unencryptedMessageReceived(SessionID sessionID,
+			String msg) throws OtrException;
 
 	public abstract void showError(SessionID sessionID, String error);
 

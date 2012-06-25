@@ -44,12 +44,19 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			logger.finest("IM injects message: " + msgDisplay);
 		}
 
-		public void showError(SessionID sessionID, String error) {
-			logger.severe("IM shows error to user: " + error);
+		public void unreadableMessageReceived(SessionID sessionID)
+				throws OtrException {
+			logger.warning("Unreadable message received from: " + sessionID);
 		}
 
-		public void showWarning(SessionID sessionID, String warning) {
-			logger.warning("IM shows warning to user: " + warning);
+		public void unencryptedMessageReceived(SessionID sessionID, String msg)
+				throws OtrException {
+			logger.warning("Unencrypted message received: " + msg + " from "
+					+ sessionID);
+		}
+
+		public void showError(SessionID sessionID, String error) {
+			logger.severe("IM shows error to user: " + error);
 		}
 
 		public String getReplyForUnreadableMessage() {
