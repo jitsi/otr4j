@@ -65,6 +65,12 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			return kg.genKeyPair();
 		}
 
+		@Override
+		public void askForSecret(SessionID sessionID, String question) {
+			logger.finest("Ask for secret from: " + sessionID + ", question: "
+					+ question);
+		}
+
 	}
 
 	public void testSession() throws Exception {

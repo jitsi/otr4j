@@ -28,4 +28,6 @@ public abstract interface OtrEngineHost {
 	public abstract OtrPolicy getSessionPolicy(SessionID sessionID);
 
 	public abstract KeyPair getKeyPair(SessionID sessionID);
+
+	public abstract void askForSecret(SessionID sessionID, String question);
 }

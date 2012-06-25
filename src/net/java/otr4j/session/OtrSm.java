@@ -21,14 +21,11 @@ import net.java.otr4j.crypto.SM.SMState;
 import net.java.otr4j.io.OtrOutputStream;
 
 public class OtrSm implements OtrTlvHandler {
-    public static interface OtrSmEngineHost extends OtrEngineHost {
-        void askForSecret(SessionID sessionID, String question);
-    }
     
 	SMState smstate;
 	private SessionID sessionID;
     private OtrKeyManager keyManager;
-    private OtrSmEngineHost engineHost;
+    private OtrEngineHost engineHost;
 	private Session session;
 	private List<TLV> pendingTlvs;
 
@@ -41,7 +38,7 @@ public class OtrSm implements OtrTlvHandler {
 	 * @param engineHost The host where we can present messages or ask for the shared secret.
 	 */
 	public OtrSm(Session session, OtrKeyManager keyManager, SessionID sessionId,
-	        OtrSmEngineHost engineHost) {
+	        OtrEngineHost engineHost) {
 		smstate = new SMState();
 		this.session = session;
 		this.sessionID = sessionId;
