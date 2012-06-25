@@ -13,7 +13,6 @@ import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.crypto.OtrCryptoException;
-import net.java.otr4j.crypto.OtrTlvHandler;
 import net.java.otr4j.crypto.SM;
 import net.java.otr4j.crypto.SM.SMException;
 import net.java.otr4j.crypto.SM.SMState;

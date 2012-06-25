@@ -15,7 +15,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PublicKey;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
@@ -29,7 +28,6 @@ import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
-import net.java.otr4j.crypto.OtrTlvHandler;
 import net.java.otr4j.crypto.SM.SMException;
 import net.java.otr4j.io.OtrInputStream;
 import net.java.otr4j.io.OtrOutputStream;
@@ -57,7 +55,6 @@ public class SessionImpl implements Session {
 	private Vector<byte[]> oldMacKeys;
 	private static Logger logger = Logger
 			.getLogger(SessionImpl.class.getName());
-	private static List<OtrTlvHandler> tlvHandlers = new ArrayList<OtrTlvHandler>();
 	private final OtrSm otrSm;
 	private BigInteger ess;
 
@@ -75,16 +72,6 @@ public class SessionImpl implements Session {
 		otrSm = new OtrSm(this, listener);
 	}
 	
-	@Override
-	public void addTlvHandler(OtrTlvHandler handler) {
-	    tlvHandlers.add(handler);
-	}
-	
-	@Override
-	public void removeTlvHandler(OtrTlvHandler handler) {
-	    tlvHandlers.remove(handler);
-	}
-
 	public BigInteger getS() {
 		return ess;
 	}
@@ -496,9 +483,6 @@ public class SessionImpl implements Session {
 					default:
 						if (otrSm.doProcessTlv(tlv))
 							return null;
-					    for (OtrTlvHandler handler : tlvHandlers) {
-					    	handler.processTlv(tlv);
-					    }
 					}
 				}
 			}
