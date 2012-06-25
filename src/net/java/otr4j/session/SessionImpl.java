@@ -57,6 +57,7 @@ public class SessionImpl implements Session {
 			.getLogger(SessionImpl.class.getName());
 	private final OtrSm otrSm;
 	private BigInteger ess;
+	private OfferStatus offerStatus;
 
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
 
@@ -68,6 +69,7 @@ public class SessionImpl implements Session {
 		// -> setSessionStatus() fires statusChangedEvent
 		// -> client application calls OtrEngine.getSessionStatus()
 		this.sessionStatus = SessionStatus.PLAINTEXT;
+		this.offerStatus = OfferStatus.idle;
 
 		otrSm = new OtrSm(this, listener);
 	}
@@ -304,6 +306,11 @@ public class SessionImpl implements Session {
 		
 		if (m == null)
 			return msgText; // Propably null or empty.
+
+		if (m.messageType != AbstractMessage.MESSAGE_PLAINTEXT)
+			offerStatus = OfferStatus.accepted;
+		else if (offerStatus == OfferStatus.sent)
+			offerStatus = OfferStatus.rejected;
 
 		switch (m.messageType) {
 		case AbstractEncodedMessage.MESSAGE_DATA:
@@ -593,13 +600,32 @@ public class SessionImpl implements Session {
 
 		switch (this.getSessionStatus()) {
 		case PLAINTEXT:
-			if (getSessionPolicy().getRequireEncryption()) {
+			OtrPolicy otrPolicy = getSessionPolicy();
+			if (otrPolicy.getRequireEncryption()) {
 				this.lastSentMessage = msgText;
 				this.startSession();
-			} else
-				// TODO this does not precisly behave according to
-				// specification.
-				return msgText;
+			} else {
+				if (otrPolicy.getSendWhitespaceTag()
+						&& offerStatus != OfferStatus.rejected) {
+					offerStatus = OfferStatus.sent;
+					List<Integer> versions = new Vector<Integer>();
+					if (otrPolicy.getAllowV1())
+						versions.add(1);
+					if (otrPolicy.getAllowV2())
+						versions.add(2);
+					if (versions.isEmpty())
+						versions = null;
+					AbstractMessage abstractMessage = new PlainTextMessage(
+							versions, msgText);
+					try {
+						return SerializationUtils.toString(abstractMessage);
+					} catch (IOException e) {
+						throw new OtrException(e);
+					}
+				} else {
+					return msgText;
+				}
+			}
 		case ENCRYPTED:
 			this.lastSentMessage = msgText;
 			logger.finest(getSessionID().getAccountID()
