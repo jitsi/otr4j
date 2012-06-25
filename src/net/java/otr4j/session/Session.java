@@ -19,7 +19,7 @@ public interface Session {
 
 	public abstract void injectMessage(AbstractMessage m) throws OtrException;
 
-	public abstract KeyPair getLocalKeyPair();
+	public abstract KeyPair getLocalKeyPair() throws OtrException;
 
 	public abstract OtrPolicy getSessionPolicy();
 

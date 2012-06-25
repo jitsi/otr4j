@@ -27,7 +27,8 @@ public abstract interface OtrEngineHost {
 
 	public abstract OtrPolicy getSessionPolicy(SessionID sessionID);
 
-	public abstract KeyPair getLocalKeyPair(SessionID sessionID);
+	public abstract KeyPair getLocalKeyPair(SessionID sessionID)
+			throws OtrException;
 
 	public abstract byte[] getLocalFingerprintRaw(SessionID sessionID);
 

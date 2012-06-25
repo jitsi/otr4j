@@ -790,7 +790,7 @@ public class SessionImpl implements Session {
 		return getHost().getSessionPolicy(getSessionID());
 	}
 
-	public KeyPair getLocalKeyPair() {
+	public KeyPair getLocalKeyPair() throws OtrException {
 		return getHost().getLocalKeyPair(this.getSessionID());
 	}
 

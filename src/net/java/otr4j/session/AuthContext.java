@@ -51,5 +51,5 @@ interface AuthContext {
 
 	public abstract PublicKey getRemoteLongTermPublicKey();
 
-	public abstract KeyPair getLocalLongTermKeyPair();
+	public abstract KeyPair getLocalLongTermKeyPair() throws OtrException;
 }

@@ -371,7 +371,7 @@ class AuthContextImpl implements AuthContext {
 		return m2p;
 	}
 
-	public KeyPair getLocalLongTermKeyPair() {
+	public KeyPair getLocalLongTermKeyPair() throws OtrException {
 		if (localLongTermKeyPair == null) {
 			localLongTermKeyPair = getSession().getLocalKeyPair();
 		}
