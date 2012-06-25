@@ -587,7 +587,10 @@ public class SessionImpl implements Session {
 				if (plainTextMessage.versions.contains(2)
 						&& policy.getAllowV2()) {
 					logger.finest("V2 tag found.");
-					getAuthContext().respondV2Auth();
+					try {
+						getAuthContext().respondV2Auth();
+					} catch (OtrException e) {
+					}
 				} else if (plainTextMessage.versions.contains(1)
 						&& policy.getAllowV1()) {
 					throw new UnsupportedOperationException();

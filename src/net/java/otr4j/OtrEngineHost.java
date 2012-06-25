@@ -19,7 +19,8 @@ import net.java.otr4j.session.SessionID;
  * 
  */
 public abstract interface OtrEngineHost {
-	public abstract void injectMessage(SessionID sessionID, String msg);
+	public abstract void injectMessage(SessionID sessionID, String msg)
+			throws OtrException;
 
 	public abstract void showWarning(SessionID sessionID, String warning);
 
