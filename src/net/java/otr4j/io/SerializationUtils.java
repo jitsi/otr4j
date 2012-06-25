@@ -126,6 +126,7 @@ public class SerializationUtils {
 		case AbstractMessage.MESSAGE_ERROR:
 			ErrorMessage error = (ErrorMessage) m;
 			writer.write(SerializationConstants.HEAD_ERROR);
+			writer.write(SerializationConstants.ERROR_PREFIX);
 			writer.write(error.error);
 			break;
 		case AbstractMessage.MESSAGE_PLAINTEXT:
@@ -262,6 +263,12 @@ public class SerializationUtils {
 			char contentType = s.charAt(SerializationConstants.HEAD.length());
 			String content = s
 					.substring(SerializationConstants.HEAD.length() + 1);
+			if (contentType == SerializationConstants.HEAD_ERROR
+					&& content.startsWith(SerializationConstants.ERROR_PREFIX)) {
+				content = content.substring(SerializationConstants.ERROR_PREFIX
+						.length());
+				return new ErrorMessage(AbstractMessage.MESSAGE_ERROR, content);
+			}
 			switch (contentType) {
 			case SerializationConstants.HEAD_ENCODED:
 				ByteArrayInputStream bin = new ByteArrayInputStream(Base64
@@ -307,8 +314,6 @@ public class SerializationUtils {
 				default:
 					throw new IOException("Illegal message type.");
 				}
-			case SerializationConstants.HEAD_ERROR:
-				return new ErrorMessage(AbstractMessage.MESSAGE_ERROR, content);
 			case SerializationConstants.HEAD_QUERY_V:
 			case SerializationConstants.HEAD_QUERY_Q:
 				List<Integer> versions = new Vector<Integer>();
