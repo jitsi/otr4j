@@ -698,12 +698,7 @@ public class SessionImpl implements Session {
 			}
 		case FINISHED:
 			this.lastSentMessage = msgText;
-			getHost()
-					.showError(
-							sessionID,
-							"Your message to "
-									+ sessionID.getUserID()
-									+ " was not sent.  Either end your private conversation, or restart it.");
+			getHost().finishedSessionMessage(sessionID);
 			return null;
 		default:
 			logger.finest("Uknown message state, not processing.");

@@ -33,6 +33,9 @@ public abstract interface OtrEngineHost {
 	public abstract void smpError(SessionID sessionID, int tlvType,
 			boolean cheated) throws OtrException;
 
+	public abstract void finishedSessionMessage(SessionID sessionID)
+			throws OtrException;
+
 	public abstract OtrPolicy getSessionPolicy(SessionID sessionID);
 
 	public abstract KeyPair getLocalKeyPair(SessionID sessionID)
