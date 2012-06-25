@@ -71,6 +71,16 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 					+ question);
 		}
 
+		@Override
+		public void verify(SessionID sessionID) {
+			logger.finest("Session was verified: " + sessionID);
+		}
+
+		@Override
+		public void unverify(SessionID sessionID) {
+			logger.finest("Session was not verified: " + sessionID);
+		}
+
 	}
 
 	public void testSession() throws Exception {

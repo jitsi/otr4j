@@ -30,4 +30,8 @@ public abstract interface OtrEngineHost {
 	public abstract KeyPair getKeyPair(SessionID sessionID);
 
 	public abstract void askForSecret(SessionID sessionID, String question);
+
+	public abstract void verify(SessionID sessionID);
+
+	public abstract void unverify(SessionID sessionID);
 }

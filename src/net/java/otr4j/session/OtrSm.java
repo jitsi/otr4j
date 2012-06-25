@@ -242,9 +242,9 @@ public class OtrSm implements OtrTlvHandler {
 			byte[] nextmsg = SM.step4(smstate, tlv.getValue());
 			/* Set trust level based on result */
 			if (smstate.smProgState == SM.PROG_SUCCEEDED){
-				keyManager.verify(sessionID);
+				engineHost.verify(sessionID);
 			} else {
-				keyManager.unverify(sessionID);
+				engineHost.unverify(sessionID);
 			}
 			if (smstate.smProgState != SM.PROG_CHEATED){
 				/* Send msg with next smp msg content */
@@ -262,9 +262,9 @@ public class OtrSm implements OtrTlvHandler {
 
 			SM.step5(smstate, tlv.getValue());
 			if (smstate.smProgState == SM.PROG_SUCCEEDED){
-				keyManager.verify(sessionID);
+				engineHost.verify(sessionID);
 			} else {
-				keyManager.unverify(sessionID);
+				engineHost.unverify(sessionID);
 			}
 			if (smstate.smProgState != SM.PROG_CHEATED){
 				smstate.nextExpected = SM.EXPECT1;
