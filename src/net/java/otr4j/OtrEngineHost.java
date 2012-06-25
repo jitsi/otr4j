@@ -28,7 +28,8 @@ public abstract interface OtrEngineHost {
 	public abstract void unencryptedMessageReceived(SessionID sessionID,
 			String msg) throws OtrException;
 
-	public abstract void showError(SessionID sessionID, String error);
+	public abstract void showError(SessionID sessionID, String error)
+			throws OtrException;
 
 	public abstract void smpError(SessionID sessionID, int tlvType,
 			boolean cheated) throws OtrException;

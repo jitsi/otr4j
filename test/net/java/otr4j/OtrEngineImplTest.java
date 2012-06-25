@@ -71,7 +71,8 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 					+ sessionID);
 		}
 
-		public void showError(SessionID sessionID, String error) {
+		public void showError(SessionID sessionID, String error)
+				throws OtrException {
 			logger.severe("IM shows error to user: " + error);
 		}
 
