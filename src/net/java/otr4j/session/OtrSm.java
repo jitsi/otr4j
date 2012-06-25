@@ -159,7 +159,7 @@ public class OtrSm {
         return makeTlvList(sendtlv);
 	}
 
-	public List<TLV> doProcessTlv(TLV tlv) throws OtrException {
+	public boolean doProcessTlv(TLV tlv) throws OtrException {
 		/* If TLVs contain SMP data, process it */
 		int nextMsg = smstate.nextExpected;
 
@@ -223,7 +223,8 @@ public class OtrSm {
 				/* Send msg with next smp msg content */
 				TLV sendtlv = new TLV(TLV.SMP3, nextmsg);
 				smstate.nextExpected = SM.EXPECT4;
-				return makeTlvList(sendtlv);
+				engineHost.injectMessage(session.getSessionID(),
+						session.transformSending("", makeTlvList(sendtlv)));
 			} else {
                 engineHost.showError(session.getSessionID(), "Peer attempted to cheat during verification");
 				smstate.nextExpected = SM.EXPECT1;
@@ -248,7 +249,8 @@ public class OtrSm {
 				/* Send msg with next smp msg content */
 				TLV sendtlv = new TLV(TLV.SMP4, nextmsg);
 				smstate.nextExpected = SM.EXPECT1;
-                return makeTlvList(sendtlv);
+				engineHost.injectMessage(session.getSessionID(),
+						session.transformSending("", makeTlvList(sendtlv)));
 			} else {
                 engineHost.showError(session.getSessionID(), "Peer attempted to cheat during verification");
 				smstate.nextExpected = SM.EXPECT1;
@@ -280,10 +282,10 @@ public class OtrSm {
             engineHost.showError(session.getSessionID(), "Error during verification (step 4)");
 		} else if (tlvType == TLV.SMP_ABORT){
 			smstate.nextExpected = SM.EXPECT1;
-		}
+		} else
+			return false;
 
-		// Nothing to send
-		return null;
+		return true;
 	}
 
     private List<TLV> makeTlvList(TLV sendtlv) {

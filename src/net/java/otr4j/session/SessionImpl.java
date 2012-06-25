@@ -494,13 +494,8 @@ public class SessionImpl implements Session {
 						this.setSessionStatus(SessionStatus.FINISHED);
 						return null;
 					default:
-						List<TLV> send;
-						send = otrSm.doProcessTlv(tlv);
-						if (send != null) {
-							host.injectMessage(sessionID,
-									transformSending("", send));
+						if (otrSm.doProcessTlv(tlv))
 							return null;
-						}
 					    for (OtrTlvHandler handler : tlvHandlers) {
 					    	handler.processTlv(tlv);
 					    }
