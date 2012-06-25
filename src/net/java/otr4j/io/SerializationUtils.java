@@ -120,7 +120,8 @@ public class SerializationUtils {
 	// Message IO.
 	public static String toString(AbstractMessage m) throws IOException {
 		StringWriter writer = new StringWriter();
-		writer.write(SerializationConstants.HEAD);
+		if (m.messageType != AbstractMessage.MESSAGE_PLAINTEXT)
+			writer.write(SerializationConstants.HEAD);
 
 		switch (m.messageType) {
 		case AbstractMessage.MESSAGE_ERROR:
@@ -133,13 +134,13 @@ public class SerializationUtils {
 			PlainTextMessage plaintxt = (PlainTextMessage) m;
 			writer.write(plaintxt.cleanText);
 			if (plaintxt.versions != null && plaintxt.versions.size() > 0) {
-				writer.write(" \\t  \\t\\t\\t\\t \\t \\t \\t  ");
+				writer.write(" \t  \t\t\t\t \t \t \t  ");
 				for (int version : plaintxt.versions) {
 					if (version == 1)
-						writer.write("  \\t\\t  \\t ");
+						writer.write(" \t \t  \t ");
 
 					if (version == 2)
-						writer.write(" \\t \\t  \\t ");
+						writer.write("  \t\t  \t ");
 				}
 			}
 			break;
@@ -225,8 +226,7 @@ public class SerializationUtils {
 		if (s == null || s.length() == 0)
 			return null;
 
-		if (s.indexOf(SerializationConstants.HEAD) != 0
-				|| s.length() <= SerializationConstants.HEAD.length()) {
+		if (s.indexOf(SerializationConstants.HEAD) != 0) {
 			// Try to detect whitespace tag.
 			final Matcher matcher = patternWhitespace.matcher(s);
 
