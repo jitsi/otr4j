@@ -608,6 +608,7 @@ class AuthContextImpl implements AuthContext {
 		}
 
 		switch (this.getAuthenticationState()) {
+		case NONE:
 		case AWAITING_DHKEY:
 			// Reply with a Reveal Signature Message and transition
 			// authstate to
