@@ -730,7 +730,7 @@ public class SessionImpl implements Session {
 		switch (status) {
 		case ENCRYPTED:
 			Vector<TLV> tlvs = new Vector<TLV>();
-			tlvs.add(new TLV(1, null));
+			tlvs.add(new TLV(TLV.DISCONNECTED, null));
 
 			String msg = this.transformSending(null, tlvs);
 			getHost().injectMessage(getSessionID(), msg);
