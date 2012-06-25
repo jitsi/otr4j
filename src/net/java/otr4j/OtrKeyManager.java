@@ -21,6 +21,8 @@ public abstract interface OtrKeyManager {
 
 	public abstract String getLocalFingerprint(SessionID sessionID);
 
+	public abstract byte[] getLocalFingerprintRaw(SessionID sessionID);
+
 	public abstract void savePublicKey(SessionID sessionID, PublicKey pubKey);
 
 	public abstract PublicKey loadRemotePublicKey(SessionID sessionID);

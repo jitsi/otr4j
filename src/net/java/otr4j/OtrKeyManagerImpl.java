@@ -169,6 +169,22 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		}
 	}
 
+	public byte[] getLocalFingerprintRaw(SessionID sessionID) {
+		KeyPair keyPair = loadLocalKeyPair(sessionID);
+
+		if (keyPair == null)
+			return null;
+
+		PublicKey pubKey = keyPair.getPublic();
+
+		try {
+			return new OtrCryptoEngineImpl().getFingerprintRaw(pubKey);
+		} catch (OtrCryptoException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	public String getRemoteFingerprint(SessionID sessionID) {
 		PublicKey remotePublicKey = loadRemotePublicKey(sessionID);
 		if (remotePublicKey == null)

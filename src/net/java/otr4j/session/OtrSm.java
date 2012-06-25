@@ -5,15 +5,15 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.bouncycastle.util.encoders.Hex;
 
 import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrKeyManager;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
+import net.java.otr4j.crypto.OtrCryptoException;
 import net.java.otr4j.crypto.OtrTlvHandler;
 import net.java.otr4j.crypto.SM;
 import net.java.otr4j.crypto.SM.SMException;
@@ -95,8 +95,15 @@ public class OtrSm implements OtrTlvHandler {
 		 * Version byte (0x01), Initiator fingerprint (20 bytes),
 		 * responder fingerprint (20 bytes), secure session id, input secret
 		 */
-		byte[] our_fp = Hex.decode(keyManager.getLocalFingerprint(sessionID));
-		byte[] their_fp = Hex.decode(keyManager.getRemoteFingerprint(sessionID));
+		byte[] our_fp = keyManager.getLocalFingerprintRaw(sessionID);
+		byte[] their_fp;
+		PublicKey remotePublicKey = session.getRemotePublicKey();
+		try {
+			their_fp = new OtrCryptoEngineImpl()
+					.getFingerprintRaw(remotePublicKey);
+		} catch (OtrCryptoException e) {
+			throw new OtrException(e);
+		}
 
 		byte[] sessionId;
 		try {
