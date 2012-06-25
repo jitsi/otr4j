@@ -604,6 +604,7 @@ public class SessionImpl implements Session {
 			if (otrPolicy.getRequireEncryption()) {
 				this.lastSentMessage = msgText;
 				this.startSession();
+				return null;
 			} else {
 				if (otrPolicy.getSendWhitespaceTag()
 						&& offerStatus != OfferStatus.rejected) {
