@@ -14,57 +14,71 @@ package net.java.otr4j.session;
 public final class SessionID {
 
 	public SessionID(String accountID, String userID, String protocolName) {
-		this.setAccountID(accountID);
-		this.setUserID(userID);
-		this.setProtocolName(protocolName);
-	}
-
-	private String accountID;
-	private String userID;
-	private String protocolName;
-	public static final SessionID Empty = new SessionID(null, null, null);
-
-	public void setAccountID(String accountID) {
 		this.accountID = accountID;
+		this.userID = userID;
+		this.protocolName = protocolName;
 	}
+
+	private final String accountID;
+	private final String userID;
+	private final String protocolName;
+
+	public static final SessionID Empty = new SessionID(null, null, null);
 
 	public String getAccountID() {
 		return accountID;
-	}
-
-	private void setUserID(String userID) {
-		this.userID = userID;
 	}
 
 	public String getUserID() {
 		return userID;
 	}
 
-	private void setProtocolName(String protocolName) {
-		this.protocolName = protocolName;
-	}
-
 	public String getProtocolName() {
 		return protocolName;
 	}
 
+	@Override
 	public String toString() {
-		return this.getAccountID() + "_" + this.getProtocolName() + "_"
-				+ this.getUserID();
+		return accountID + '_' + protocolName + '_' + userID;
 	}
 
-	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (obj == null || obj.getClass() != this.getClass())
-			return false;
-
-		SessionID sessionID = (SessionID) obj;
-
-		return this.toString().equals(sessionID.toString());
-	}
-
+	@Override
 	public int hashCode() {
-		return this.toString().hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((accountID == null) ? 0 : accountID.hashCode());
+		result = prime * result
+				+ ((protocolName == null) ? 0 : protocolName.hashCode());
+		result = prime * result + ((userID == null) ? 0 : userID.hashCode());
+		return result;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SessionID other = (SessionID) obj;
+		if (accountID == null) {
+			if (other.accountID != null)
+				return false;
+		} else if (!accountID.equals(other.accountID))
+			return false;
+		if (protocolName == null) {
+			if (other.protocolName != null)
+				return false;
+		} else if (!protocolName.equals(other.protocolName))
+			return false;
+		if (userID == null) {
+			if (other.userID != null)
+				return false;
+		} else if (!userID.equals(other.userID))
+			return false;
+		return true;
+	}
+
 }
