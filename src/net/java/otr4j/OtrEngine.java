@@ -60,7 +60,7 @@ public interface OtrEngine {
 	public abstract void startSession(SessionID sessionID) throws OtrException;
 
 	/** Get an OTR session. */
-	public abstract Session getSession(SessionID sessionID) throws OtrException;
+	public abstract Session getSession(SessionID sessionID);
 	
 	/**
 	 * Ends the Off-the-Record session, if exists.
