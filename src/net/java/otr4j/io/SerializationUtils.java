@@ -343,4 +343,34 @@ public class SerializationUtils {
 			}
 		}
 	}
+
+	private static final char HEX_ENCODER[] = { '0', '1', '2', '3', '4', '5',
+			'6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
+	public static String byteArrayToHexString(byte in[]) {
+		int i = 0;
+		if (in == null || in.length <= 0)
+			return null;
+		StringBuffer out = new StringBuffer(in.length * 2);
+		while (i < in.length) {
+			out.append(HEX_ENCODER[(in[i] >>> 4) & 0x0F]);
+			out.append(HEX_ENCODER[in[i] & 0x0F]);
+			i++;
+		}
+		return out.toString();
+	}
+
+	private static final String HEX_DECODER = "0123456789ABCDEF";
+
+	public static byte[] hexStringToByteArray(String value) {
+		value = value.toUpperCase();
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		for (int index = 0; index < value.length(); index += 2) {
+			int high = HEX_DECODER.indexOf(value.charAt(index));
+			int low = HEX_DECODER.indexOf(value.charAt(index + 1));
+			out.write((high << 4) + low);
+		}
+		return out.toByteArray();
+	}
+
 }
