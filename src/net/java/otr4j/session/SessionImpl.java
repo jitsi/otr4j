@@ -28,7 +28,6 @@ import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
-import net.java.otr4j.crypto.SM.SMException;
 import net.java.otr4j.io.OtrInputStream;
 import net.java.otr4j.io.OtrOutputStream;
 import net.java.otr4j.io.SerializationConstants;
@@ -591,10 +590,6 @@ public class SessionImpl implements Session {
 		return plainTextMessage.cleanText;
 	}
 
-	// Retransmit last sent message. Spec document does not mention where or
-	// when that should happen, must check libotr code.
-	private String lastSentMessage;
-
 	public String transformSending(String msgText, List<TLV> tlvs)
 			throws OtrException {
 
@@ -602,7 +597,6 @@ public class SessionImpl implements Session {
 		case PLAINTEXT:
 			OtrPolicy otrPolicy = getSessionPolicy();
 			if (otrPolicy.getRequireEncryption()) {
-				this.lastSentMessage = msgText;
 				this.startSession();
 				getHost().requireEncryptedMessage(sessionID, msgText);
 				return null;
@@ -629,7 +623,6 @@ public class SessionImpl implements Session {
 				}
 			}
 		case ENCRYPTED:
-			this.lastSentMessage = msgText;
 			logger.finest(getSessionID().getAccountID()
 					+ " sends an encrypted message to "
 					+ getSessionID().getUserID() + " throught "
@@ -711,7 +704,6 @@ public class SessionImpl implements Session {
 				throw new OtrException(e);
 			}
 		case FINISHED:
-			this.lastSentMessage = msgText;
 			getHost().finishedSessionMessage(sessionID);
 			return null;
 		default:
