@@ -30,22 +30,22 @@ import javax.crypto.spec.SecretKeySpec;
 
 import net.java.otr4j.io.SerializationUtils;
 
-import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.crypto.BufferedBlockCipher;
-import org.bouncycastle.crypto.engines.AESFastEngine;
-import org.bouncycastle.crypto.generators.DHKeyPairGenerator;
-import org.bouncycastle.crypto.modes.SICBlockCipher;
-import org.bouncycastle.crypto.params.DHKeyGenerationParameters;
-import org.bouncycastle.crypto.params.DHParameters;
-import org.bouncycastle.crypto.params.DHPrivateKeyParameters;
-import org.bouncycastle.crypto.params.DHPublicKeyParameters;
-import org.bouncycastle.crypto.params.DSAParameters;
-import org.bouncycastle.crypto.params.DSAPrivateKeyParameters;
-import org.bouncycastle.crypto.params.DSAPublicKeyParameters;
-import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.bouncycastle.crypto.signers.DSASigner;
-import org.bouncycastle.util.BigIntegers;
+import net.java.otr4j.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import net.java.otr4j.bouncycastle.crypto.BufferedBlockCipher;
+import net.java.otr4j.bouncycastle.crypto.engines.AESFastEngine;
+import net.java.otr4j.bouncycastle.crypto.generators.DHKeyPairGenerator;
+import net.java.otr4j.bouncycastle.crypto.modes.SICBlockCipher;
+import net.java.otr4j.bouncycastle.crypto.params.DHKeyGenerationParameters;
+import net.java.otr4j.bouncycastle.crypto.params.DHParameters;
+import net.java.otr4j.bouncycastle.crypto.params.DHPrivateKeyParameters;
+import net.java.otr4j.bouncycastle.crypto.params.DHPublicKeyParameters;
+import net.java.otr4j.bouncycastle.crypto.params.DSAParameters;
+import net.java.otr4j.bouncycastle.crypto.params.DSAPrivateKeyParameters;
+import net.java.otr4j.bouncycastle.crypto.params.DSAPublicKeyParameters;
+import net.java.otr4j.bouncycastle.crypto.params.KeyParameter;
+import net.java.otr4j.bouncycastle.crypto.params.ParametersWithIV;
+import net.java.otr4j.bouncycastle.crypto.signers.DSASigner;
+import net.java.otr4j.bouncycastle.util.BigIntegers;
 
 /**
  * 
