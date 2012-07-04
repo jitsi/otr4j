@@ -49,6 +49,11 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			logger.severe("SM verification error with user: " + sessionID);
 		}
 
+		public void smpAborted(SessionID sessionID) throws OtrException {
+			logger.severe("SM verification has been aborted by user: "
+					+ sessionID);
+		}
+
 		public void finishedSessionMessage(SessionID sessionID) throws OtrException {
 			logger.severe("SM session was finished. You shouldn't send messages to: "
 					+ sessionID);

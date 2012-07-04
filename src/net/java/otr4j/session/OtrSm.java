@@ -284,6 +284,7 @@ public class OtrSm {
 		} else if (tlvType == TLV.SMP4){
 		    engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP_ABORT){
+			engineHost.smpAborted(session.getSessionID());
 			smstate.nextExpected = SM.EXPECT1;
 		} else
 			return false;
