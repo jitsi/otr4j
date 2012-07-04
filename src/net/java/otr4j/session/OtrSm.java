@@ -20,7 +20,7 @@ import net.java.otr4j.io.OtrOutputStream;
 
 public class OtrSm {
     
-	SMState smstate;
+	private SMState smstate;
     private OtrEngineHost engineHost;
 	private Session session;
 
@@ -31,9 +31,13 @@ public class OtrSm {
 	 * @param engineHost The host where we can present messages or ask for the shared secret.
 	 */
 	public OtrSm(Session session, OtrEngineHost engineHost) {
-		smstate = new SMState();
 		this.session = session;
 		this.engineHost = engineHost;
+		reset();
+	}
+
+	public void reset() {
+		smstate = new SMState();
 	}
 
 	/* Compute secret session ID as hash of agreed secret */

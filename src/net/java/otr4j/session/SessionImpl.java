@@ -224,6 +224,7 @@ public class SessionImpl implements Session {
 			this.setRemotePublicKey(auth.getRemoteLongTermPublicKey());
 
 			auth.reset();
+			otrSm.reset();
 			break;
 		}
 
