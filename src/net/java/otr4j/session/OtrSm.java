@@ -71,16 +71,17 @@ public class OtrSm {
 	/**
 	 *  Respond to or initiate an SMP negotiation
 	 *  
-	 *  @param question The question to present to the peer, if initiating.  May be null for no question.
+	 *  @param question
+	 *  	The question to present to the peer, if initiating.
+	 *  	May be <code>null</code> for no question.
+	 *      If not initiating, then it should be received question
+	 *      in order to clarify whether this is shared secret verification.
 	 *  @param secret The secret.
 	 *  @param initiating Whether we are initiating or responding to an initial request.
 	 *  
 	 *  @return TLVs to send to the peer
 	 */
 	public List<TLV> initRespondSmp(String question, String secret, boolean initiating) throws OtrException {
-		if (question != null && !initiating)
-			throw new IllegalArgumentException("Only supply a question if initiating");
-
 		/*
 		 * Construct the combined secret as a SHA256 hash of:
 		 * Version byte (0x01), Initiator fingerprint (20 bytes),
@@ -138,7 +139,7 @@ public class OtrSm {
 		}
 
 		// If we've got a question, attach it to the smpmsg 
-		if (question != null){
+		if (question != null && initiating){
 			byte[] qsmpmsg = new byte[question.length() + 1 + smpmsg.length];
 			System.arraycopy(question.getBytes(), 0, qsmpmsg, 0, question.length());
 			System.arraycopy(smpmsg, 0, qsmpmsg, question.length() + 1, smpmsg.length);
@@ -148,6 +149,7 @@ public class OtrSm {
 		TLV sendtlv = new TLV(initiating? 
 				(question != null ? TLV.SMP1Q:TLV.SMP1) : TLV.SMP2, smpmsg);
 		smstate.nextExpected = initiating? SM.EXPECT2 : SM.EXPECT3;
+		smstate.approved = initiating || question == null;
         return makeTlvList(sendtlv);
 	}
 
@@ -192,8 +194,7 @@ public class OtrSm {
 			    engineHost.askForSecret(session.getSessionID(), new String(plainq));
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
-				smstate.nextExpected = SM.EXPECT1;
-				smstate.smProgState = SM.PROG_OK;
+			    reset();
 			}
 		} else if (tlvType == TLV.SMP1Q) {
 		    engineHost.smpError(session.getSessionID(), tlvType, false);
@@ -210,8 +211,7 @@ public class OtrSm {
                 engineHost.askForSecret(session.getSessionID(), null);
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
-				smstate.nextExpected = SM.EXPECT1;
-				smstate.smProgState = SM.PROG_OK;
+			    reset();
 			}
 		} else if (tlvType == TLV.SMP1) {
 		    engineHost.smpError(session.getSessionID(), tlvType, false);
@@ -230,8 +230,7 @@ public class OtrSm {
 						session.transformSending("", makeTlvList(sendtlv)));
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
-				smstate.nextExpected = SM.EXPECT1;
-				smstate.smProgState = SM.PROG_OK;
+			    reset();
 			}
 		} else if (tlvType == TLV.SMP2){
 		    engineHost.smpError(session.getSessionID(), tlvType, false);
@@ -244,21 +243,19 @@ public class OtrSm {
 			}
 			/* Set trust level based on result */
 			if (smstate.smProgState == SM.PROG_SUCCEEDED){
-				engineHost.verify(session.getSessionID());
+				engineHost.verify(session.getSessionID(), smstate.approved);
 			} else {
 				engineHost.unverify(session.getSessionID());
 			}
 			if (smstate.smProgState != SM.PROG_CHEATED){
 				/* Send msg with next smp msg content */
 				TLV sendtlv = new TLV(TLV.SMP4, nextmsg);
-				smstate.nextExpected = SM.EXPECT1;
 				engineHost.injectMessage(session.getSessionID(),
 						session.transformSending("", makeTlvList(sendtlv)));
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
-				smstate.nextExpected = SM.EXPECT1;
-				smstate.smProgState = SM.PROG_OK;
 			}
+			reset();
 		} else if (tlvType == TLV.SMP3){
 		    engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP4 && nextMsg == SM.EXPECT4) {
@@ -269,23 +266,21 @@ public class OtrSm {
 				throw new OtrException(e);
 			}
 			if (smstate.smProgState == SM.PROG_SUCCEEDED){
-				engineHost.verify(session.getSessionID());
+				engineHost.verify(session.getSessionID(), smstate.approved);
 			} else {
 				engineHost.unverify(session.getSessionID());
 			}
 			if (smstate.smProgState != SM.PROG_CHEATED){
-				smstate.nextExpected = SM.EXPECT1;
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
-				smstate.nextExpected = SM.EXPECT1;
-				smstate.smProgState = SM.PROG_OK;
 			}
+			reset();
 
 		} else if (tlvType == TLV.SMP4){
 		    engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP_ABORT){
 			engineHost.smpAborted(session.getSessionID());
-			smstate.nextExpected = SM.EXPECT1;
+			reset();
 		} else
 			return false;
 

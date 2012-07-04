@@ -804,10 +804,10 @@ public class SessionImpl implements Session {
 		getHost().injectMessage(getSessionID(), msg);
 	}
 
-	public void respondSmp(String secret) throws OtrException {
+	public void respondSmp(String question, String secret) throws OtrException {
 		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
 			return;
-		List<TLV> tlvs = otrSm.initRespondSmp(null, secret, false);
+		List<TLV> tlvs = otrSm.initRespondSmp(question, secret, false);
 		String msg = transformSending("", tlvs);
 		getHost().injectMessage(getSessionID(), msg);
 	}

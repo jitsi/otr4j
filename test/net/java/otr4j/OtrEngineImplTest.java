@@ -107,8 +107,11 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 		}
 
 		@Override
-		public void verify(SessionID sessionID) {
+		public void verify(SessionID sessionID, boolean approved) {
 			logger.finest("Session was verified: " + sessionID);
+			if (!approved)
+				logger.finest("Your answer for the question was verified."
+						+ "You should ask your opponent too or check shared secret.");
 		}
 
 		@Override

@@ -41,10 +41,12 @@ public class SM {
         public int nextExpected;
         int receivedQuestion;
         public int smProgState;
+		public boolean approved;
         
         public SMState(){
             g1 = new BigInteger(1, SM.GENERATOR_S);
             smProgState = SM.PROG_OK;
+            approved = false;
         }
     }
 

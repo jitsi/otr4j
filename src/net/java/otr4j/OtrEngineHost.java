@@ -51,7 +51,7 @@ public abstract interface OtrEngineHost {
 
 	public abstract void askForSecret(SessionID sessionID, String question);
 
-	public abstract void verify(SessionID sessionID);
+	public abstract void verify(SessionID sessionID, boolean approved);
 
 	public abstract void unverify(SessionID sessionID);
 
