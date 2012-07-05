@@ -82,6 +82,10 @@ public class OtrSm {
 	 *  @return TLVs to send to the peer
 	 */
 	public List<TLV> initRespondSmp(String question, String secret, boolean initiating) throws OtrException {
+		if (!initiating && !smstate.asked)
+			throw new OtrException(new IllegalStateException(
+					"There is no question to be answered."));
+
 		/*
 		 * Construct the combined secret as a SHA256 hash of:
 		 * Version byte (0x01), Initiator fingerprint (20 bytes),
@@ -191,6 +195,7 @@ public class OtrSm {
 			byte[] plainq = new byte[qlen];
 			System.arraycopy(question, 0, plainq, 0, qlen);
 			if (smstate.smProgState != SM.PROG_CHEATED){
+				smstate.asked = true;
 			    engineHost.askForSecret(session.getSessionID(), new String(plainq));
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
@@ -208,6 +213,7 @@ public class OtrSm {
 				throw new OtrException(e);
 			}
 			if (smstate.smProgState!=SM.PROG_CHEATED) {
+				smstate.asked = true;
                 engineHost.askForSecret(session.getSessionID(), null);
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);

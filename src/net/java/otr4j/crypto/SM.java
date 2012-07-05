@@ -42,11 +42,13 @@ public class SM {
         int receivedQuestion;
         public int smProgState;
 		public boolean approved;
+		public boolean asked;
         
         public SMState(){
             g1 = new BigInteger(1, SM.GENERATOR_S);
             smProgState = SM.PROG_OK;
             approved = false;
+            asked = false;
         }
     }
 
