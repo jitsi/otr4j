@@ -144,9 +144,10 @@ public class OtrSm {
 
 		// If we've got a question, attach it to the smpmsg 
 		if (question != null && initiating){
-			byte[] qsmpmsg = new byte[question.length() + 1 + smpmsg.length];
-			System.arraycopy(question.getBytes(), 0, qsmpmsg, 0, question.length());
-			System.arraycopy(smpmsg, 0, qsmpmsg, question.length() + 1, smpmsg.length);
+			byte[] bytes = question.getBytes();
+			byte[] qsmpmsg = new byte[bytes.length + 1 + smpmsg.length];
+			System.arraycopy(bytes, 0, qsmpmsg, 0, bytes.length);
+			System.arraycopy(smpmsg, 0, qsmpmsg, bytes.length + 1, smpmsg.length);
 			smpmsg = qsmpmsg;
 		}
 
