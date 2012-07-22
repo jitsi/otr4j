@@ -1,3 +1,5 @@
+## Synopsis
+
 otr4j is an implementation of the [OTR (Off The Record) protocol][1]
 in java.
 
@@ -7,6 +9,8 @@ Diffie-Hellman key exchange, and the SHA hash functions. In addition
 to authentication and encryption, OTR provides perfect forward secrecy
 and malleable encryption. The OTR protocol was designed by [Ian
 Goldberg and the OTR Development Team][2].
+
+## History
 
 otr4j development started during the Google Summer of Code 2009 where
 the goal was to add support for OTR in SIP Communicator (now called
@@ -19,6 +23,20 @@ to github and did various fixes.
 Other people might have added features to otr4j too so I move upstream
 here to github in an effort to facilitate people contributing back to
 the project.
+
+## Maven
+
+If you use maven for managing your project lifecycle and you want to
+use otr4j in your project, just add the following repository entry to
+the pom.xml:
+
+```xml
+<repository>
+  <id>otr4j-repo</id>
+  <name>otr4j repository on GitHub</name>
+  <url>http://gpolitis.github.com/otr4j/repository/</url>
+</repository>
+```
 
   [1]: http://www.cypherpunks.ca/otr/
   [2]: http://www.cypherpunks.ca/otr/people.php
