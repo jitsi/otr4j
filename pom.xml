@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>otr4j</groupId>
+    <artifactId>otr4j</artifactId>
+    <version>0.9</version>
+    <packaging>jar</packaging>
+    <name>otr4j library</name>
+    <url>http://github.com/gpolitis/otr4j</url>
+    <description>
+      otr4j is an implementation of the OTR (Off The Record) protocol in java.
+
+      Off-the-Record Messaging, is a cryptographic protocol that uses a combination of 
+      the Advanced Encryption Standard (AES), the Diffie-Hellman key exchange, and the
+      SHA hash functions. In addition to authentication and encryption, OTR provides perfect
+      forward secrecy and malleable encryption.
+
+      The OTR protocol was designed by Ian Goldberg and the OTR Development Team.
+    </description>
+    <licenses>
+        <license>
+            <name>GNU Lesser GPL</name>
+            <url>www.gnu.org/licenses/lgpl.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <scm>
+        <connection>scm:git:git@github.com:gpolitis/otr4j.git</connection>
+        <developerConnection>scm:git:git@github.com:gpolitis/otr4j.git</developerConnection>
+        <url>git@github.com:gpolitis/otr4j.git</url>
+    </scm>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.9</version>
+            <scope>test</scope>
+        </dependency>
+	<dependency>
+	  <groupId>com.madgag</groupId>
+	  <artifactId>sc-light-jdk15on</artifactId>
+	  <version>1.47.0.2</version>
+	</dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>

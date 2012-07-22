@@ -100,13 +100,11 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			return kg.genKeyPair();
 		}
 
-		@Override
 		public void askForSecret(SessionID sessionID, String question) {
 			logger.finest("Ask for secret from: " + sessionID + ", question: "
 					+ question);
 		}
 
-		@Override
 		public void verify(SessionID sessionID, boolean approved) {
 			logger.finest("Session was verified: " + sessionID);
 			if (!approved)
@@ -114,12 +112,10 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 						+ "You should ask your opponent too or check shared secret.");
 		}
 
-		@Override
 		public void unverify(SessionID sessionID) {
 			logger.finest("Session was not verified: " + sessionID);
 		}
 
-		@Override
 		public byte[] getLocalFingerprintRaw(SessionID sessionID) {
 			try {
 				return new OtrCryptoEngineImpl()
@@ -131,7 +127,6 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			return null;
 		}
 
-		@Override
 		public String getFallbackMessage() {
 			return "Off-the-Record private conversation has been requested. However, you do not have a plugin to support that.";
 		}
