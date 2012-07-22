@@ -30,22 +30,22 @@ import javax.crypto.spec.SecretKeySpec;
 
 import net.java.otr4j.io.SerializationUtils;
 
-import net.java.otr4j.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import net.java.otr4j.bouncycastle.crypto.BufferedBlockCipher;
-import net.java.otr4j.bouncycastle.crypto.engines.AESFastEngine;
-import net.java.otr4j.bouncycastle.crypto.generators.DHKeyPairGenerator;
-import net.java.otr4j.bouncycastle.crypto.modes.SICBlockCipher;
-import net.java.otr4j.bouncycastle.crypto.params.DHKeyGenerationParameters;
-import net.java.otr4j.bouncycastle.crypto.params.DHParameters;
-import net.java.otr4j.bouncycastle.crypto.params.DHPrivateKeyParameters;
-import net.java.otr4j.bouncycastle.crypto.params.DHPublicKeyParameters;
-import net.java.otr4j.bouncycastle.crypto.params.DSAParameters;
-import net.java.otr4j.bouncycastle.crypto.params.DSAPrivateKeyParameters;
-import net.java.otr4j.bouncycastle.crypto.params.DSAPublicKeyParameters;
-import net.java.otr4j.bouncycastle.crypto.params.KeyParameter;
-import net.java.otr4j.bouncycastle.crypto.params.ParametersWithIV;
-import net.java.otr4j.bouncycastle.crypto.signers.DSASigner;
-import net.java.otr4j.bouncycastle.util.BigIntegers;
+import org.spongycastle.crypto.AsymmetricCipherKeyPair;
+import org.spongycastle.crypto.BufferedBlockCipher;
+import org.spongycastle.crypto.engines.AESFastEngine;
+import org.spongycastle.crypto.generators.DHKeyPairGenerator;
+import org.spongycastle.crypto.modes.SICBlockCipher;
+import org.spongycastle.crypto.params.DHKeyGenerationParameters;
+import org.spongycastle.crypto.params.DHParameters;
+import org.spongycastle.crypto.params.DHPrivateKeyParameters;
+import org.spongycastle.crypto.params.DHPublicKeyParameters;
+import org.spongycastle.crypto.params.DSAParameters;
+import org.spongycastle.crypto.params.DSAPrivateKeyParameters;
+import org.spongycastle.crypto.params.DSAPublicKeyParameters;
+import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.crypto.params.ParametersWithIV;
+import org.spongycastle.crypto.signers.DSASigner;
+import org.spongycastle.util.BigIntegers;
 
 /**
  * 

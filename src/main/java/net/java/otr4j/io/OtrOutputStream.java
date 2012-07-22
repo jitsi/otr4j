@@ -14,7 +14,7 @@ import net.java.otr4j.io.messages.SignatureM;
 import net.java.otr4j.io.messages.MysteriousT;
 import net.java.otr4j.io.messages.SignatureX;
 
-import net.java.otr4j.bouncycastle.util.BigIntegers;
+import org.spongycastle.util.BigIntegers;
 
 public class OtrOutputStream extends FilterOutputStream implements
 		SerializationConstants {

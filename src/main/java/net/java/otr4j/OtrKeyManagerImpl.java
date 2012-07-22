@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 
-import net.java.otr4j.bouncycastle.util.encoders.Base64;
+import org.spongycastle.util.encoders.Base64;
 
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.crypto.OtrCryptoException;
