@@ -287,12 +287,12 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 			if (i < rslen) {
 				if (!writeR)
 					writeR = rb.length >= rslen - i;
-				sig[i] = (writeR) ? rb[i] : (byte) 0x0;
+				sig[i] = (writeR) ? rb[i - rslen + rb.length] : (byte) 0x0;
 			} else {
 				int j = i - rslen; // Rebase.
 				if (!writeS)
 					writeS = sb.length >= rslen - j;
-				sig[i] = (writeS) ? sb[j] : (byte) 0x0;
+				sig[i] = (writeS) ? sb[j - rslen + sb.length] : (byte) 0x0;
 			}
 		}
 		return sig;
