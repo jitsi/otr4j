@@ -133,9 +133,16 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 
 	}
 
-	public void testSession() throws Exception {
+	public void testSession1() throws Exception {
 
 		this.startSession();
+		this.exchageMessages();
+		this.endSession();
+	}
+
+	public void testSession2() throws Exception {
+
+		this.startSessionWithQuery();
 		this.exchageMessages();
 		this.endSession();
 	}
@@ -152,6 +159,42 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 		usBob = new OtrEngineImpl(host);
 
 		usAlice.startSession(aliceSessionID);
+
+		// Bob receives query, sends D-H commit.
+
+		usBob.transformReceiving(bobSessionID, host.lastInjectedMessage);
+
+		// Alice received D-H Commit, sends D-H key.
+		usAlice
+				.transformReceiving(aliceSessionID,
+						host.lastInjectedMessage);
+
+		// Bob receives D-H Key, sends reveal signature.
+		usBob.transformReceiving(bobSessionID, host.lastInjectedMessage);
+
+		// Alice receives Reveal Signature, sends signature and goes secure.
+		usAlice
+				.transformReceiving(aliceSessionID,
+						host.lastInjectedMessage);
+
+		// Bobs receives Signature, goes secure.
+		usBob.transformReceiving(bobSessionID, host.lastInjectedMessage);
+
+		if (usBob.getSessionStatus(bobSessionID) != SessionStatus.ENCRYPTED
+				|| usAlice.getSessionStatus(aliceSessionID) != SessionStatus.ENCRYPTED)
+			fail("Could not establish a secure session.");
+	}
+
+	private void startSessionWithQuery() throws OtrException {
+		host = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2
+				| OtrPolicy.ERROR_START_AKE));
+
+		usAlice = new OtrEngineImpl(host);
+		usBob = new OtrEngineImpl(host);
+
+		usAlice.transformReceiving(aliceSessionID, "<p>?OTRv23?\n" +
+				"<span style=\"font-weight: bold;\">Bob@Wonderland/</span> has requested an <a href=\"http://otr.cypherpunks.ca/\">Off-the-Record private conversation</a>.  However, you do not have a plugin to support that.\n" +
+				"See <a href=\"http://otr.cypherpunks.ca/\">http://otr.cypherpunks.ca/</a> for more information.</p>");
 
 		// Bob receives query, sends D-H commit.
 
