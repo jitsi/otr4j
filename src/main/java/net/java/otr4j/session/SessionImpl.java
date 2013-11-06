@@ -501,7 +501,7 @@ public class SessionImpl implements Session {
 		case PLAINTEXT:
 			getHost().unreadableMessageReceived(this.getSessionID());
 			injectMessage(new ErrorMessage(AbstractMessage.MESSAGE_ERROR,
-					getHost().getReplyForUnreadableMessage()));
+					getHost().getReplyForUnreadableMessage(getSessionID())));
 			break;
 		}
 
@@ -516,7 +516,7 @@ public class SessionImpl implements Session {
 			throw new OtrException(e);
 		}
 		if (m instanceof QueryMessage)
-			msg += getHost().getFallbackMessage();
+			msg += getHost().getFallbackMessage(getSessionID());
 		getHost().injectMessage(getSessionID(), msg);
 	}
 
@@ -821,4 +821,7 @@ public class SessionImpl implements Session {
 		getHost().injectMessage(getSessionID(), msg);
 	}
 
+	public boolean isSmpInProgress() {
+	    return otrSm.isSmpInProgress();
+	}
 }
