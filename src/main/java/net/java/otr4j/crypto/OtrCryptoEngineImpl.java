@@ -30,22 +30,22 @@ import javax.crypto.spec.SecretKeySpec;
 
 import net.java.otr4j.io.SerializationUtils;
 
-import org.spongycastle.crypto.AsymmetricCipherKeyPair;
-import org.spongycastle.crypto.BufferedBlockCipher;
-import org.spongycastle.crypto.engines.AESFastEngine;
-import org.spongycastle.crypto.generators.DHKeyPairGenerator;
-import org.spongycastle.crypto.modes.SICBlockCipher;
-import org.spongycastle.crypto.params.DHKeyGenerationParameters;
-import org.spongycastle.crypto.params.DHParameters;
-import org.spongycastle.crypto.params.DHPrivateKeyParameters;
-import org.spongycastle.crypto.params.DHPublicKeyParameters;
-import org.spongycastle.crypto.params.DSAParameters;
-import org.spongycastle.crypto.params.DSAPrivateKeyParameters;
-import org.spongycastle.crypto.params.DSAPublicKeyParameters;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.crypto.params.ParametersWithIV;
-import org.spongycastle.crypto.signers.DSASigner;
-import org.spongycastle.util.BigIntegers;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.BufferedBlockCipher;
+import org.bouncycastle.crypto.engines.AESFastEngine;
+import org.bouncycastle.crypto.generators.DHKeyPairGenerator;
+import org.bouncycastle.crypto.modes.SICBlockCipher;
+import org.bouncycastle.crypto.params.DHKeyGenerationParameters;
+import org.bouncycastle.crypto.params.DHParameters;
+import org.bouncycastle.crypto.params.DHPrivateKeyParameters;
+import org.bouncycastle.crypto.params.DHPublicKeyParameters;
+import org.bouncycastle.crypto.params.DSAParameters;
+import org.bouncycastle.crypto.params.DSAPrivateKeyParameters;
+import org.bouncycastle.crypto.params.DSAPublicKeyParameters;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.bouncycastle.crypto.signers.DSASigner;
+import org.bouncycastle.util.BigIntegers;
 
 /**
  * 

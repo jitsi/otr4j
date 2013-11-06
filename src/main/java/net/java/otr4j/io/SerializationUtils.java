@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 
 import javax.crypto.interfaces.DHPublicKey;
 
-import org.spongycastle.util.encoders.Base64;
+import org.bouncycastle.util.encoders.Base64;
 
 import net.java.otr4j.io.messages.AbstractEncodedMessage;
 import net.java.otr4j.io.messages.AbstractMessage;
@@ -271,7 +271,7 @@ public class SerializationUtils {
 				// Data message found.
 
 				ByteArrayInputStream bin = new ByteArrayInputStream(Base64
-						.decode(content.getBytes()));
+						.decode(content.substring(0, content.length() - 1).getBytes()));
 				OtrInputStream otr = new OtrInputStream(bin);
 				// We have an encoded message.
 				int protocolVersion = otr.readShort();

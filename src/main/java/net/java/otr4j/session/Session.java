@@ -47,6 +47,8 @@ public interface Session {
 			throws OtrException;
 
 	public abstract void abortSmp() throws OtrException;
+	
+	public abstract boolean isSmpInProgress();
 
 	public abstract BigInteger getS();
 }

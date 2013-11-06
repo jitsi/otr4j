@@ -81,7 +81,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			logger.severe("IM shows error to user: " + error);
 		}
 
-		public String getReplyForUnreadableMessage() {
+		public String getReplyForUnreadableMessage(SessionID sessionID) {
 			return "You sent me an unreadable encrypted message.";
 		}
 
@@ -127,7 +127,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			return null;
 		}
 
-		public String getFallbackMessage() {
+		public String getFallbackMessage(SessionID sessionID) {
 			return "Off-the-Record private conversation has been requested. However, you do not have a plugin to support that.";
 		}
 

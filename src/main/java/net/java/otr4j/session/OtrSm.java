@@ -169,6 +169,10 @@ public class OtrSm {
         return makeTlvList(sendtlv);
 	}
 
+	public boolean isSmpInProgress() {
+	    return smstate.nextExpected > SM.EXPECT1;
+	}
+	
 	public boolean doProcessTlv(TLV tlv) throws OtrException {
 		/* If TLVs contain SMP data, process it */
 		int nextMsg = smstate.nextExpected;

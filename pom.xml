@@ -8,14 +8,14 @@
     <name>otr4j library</name>
     <url>http://github.com/gpolitis/otr4j</url>
     <description>
-      otr4j is an implementation of the OTR (Off The Record) protocol in java.
+        otr4j is an implementation of the OTR (Off The Record) protocol in java.
 
-      Off-the-Record Messaging, is a cryptographic protocol that uses a combination of 
-      the Advanced Encryption Standard (AES), the Diffie-Hellman key exchange, and the
-      SHA hash functions. In addition to authentication and encryption, OTR provides perfect
-      forward secrecy and malleable encryption.
+        Off-the-Record Messaging, is a cryptographic protocol that uses a combination of
+        the Advanced Encryption Standard (AES), the Diffie-Hellman key exchange, and the
+        SHA hash functions. In addition to authentication and encryption, OTR provides perfect
+        forward secrecy and malleable encryption.
 
-      The OTR protocol was designed by Ian Goldberg and the OTR Development Team.
+        The OTR protocol was designed by Ian Goldberg and the OTR Development Team.
     </description>
     <licenses>
         <license>
@@ -39,11 +39,11 @@
             <version>4.9</version>
             <scope>test</scope>
         </dependency>
-	<dependency>
-	  <groupId>com.madgag</groupId>
-	  <artifactId>sc-light-jdk15on</artifactId>
-	  <version>1.47.0.2</version>
-	</dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.49</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -60,9 +60,9 @@
         </plugins>
     </build>
     <distributionManagement>
-      <repository>
-	<id>gh-pages</id>
-	<url>file:///${basedir}/../gh-pages/repository/</url>
-      </repository>
+        <repository>
+            <id>gh-pages</id>
+            <url>file:///${basedir}/../gh-pages/repository/</url>
+        </repository>
     </distributionManagement>
 </project>
