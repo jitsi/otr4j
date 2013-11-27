@@ -2,6 +2,7 @@ package net.java.otr4j.session;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -144,7 +145,13 @@ public class OtrSm {
 
 		// If we've got a question, attach it to the smpmsg 
 		if (question != null && initiating){
-			byte[] bytes = question.getBytes();
+			byte[] bytes = null;
+			try {
+				bytes = question.getBytes("UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// Never thrown - all JRE's support UTF-8
+				e.printStackTrace();
+			}
 			byte[] qsmpmsg = new byte[bytes.length + 1 + smpmsg.length];
 			System.arraycopy(bytes, 0, qsmpmsg, 0, bytes.length);
 			System.arraycopy(smpmsg, 0, qsmpmsg, bytes.length + 1, smpmsg.length);
@@ -201,7 +208,14 @@ public class OtrSm {
 			System.arraycopy(question, 0, plainq, 0, qlen);
 			if (smstate.smProgState != SM.PROG_CHEATED){
 				smstate.asked = true;
-			    engineHost.askForSecret(session.getSessionID(), new String(plainq));
+				String questionUTF = null;
+				try {
+					questionUTF = new String(plainq, "UTF-8");
+				} catch (UnsupportedEncodingException e) {
+					// Never thrown - all JRE's support UTF-8
+					e.printStackTrace();
+				}
+			    engineHost.askForSecret(session.getSessionID(), questionUTF);
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
 			    reset();
