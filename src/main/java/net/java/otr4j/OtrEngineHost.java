@@ -7,7 +7,9 @@
 package net.java.otr4j;
 
 import java.security.KeyPair;
+import java.util.List;
 
+import net.java.otr4j.session.InstanceTag;
 import net.java.otr4j.session.SessionID;
 
 /**
@@ -51,11 +53,15 @@ public abstract interface OtrEngineHost {
 
 	public abstract void askForSecret(SessionID sessionID, String question);
 
-	public abstract void verify(SessionID sessionID, boolean approved);
+	public abstract void verify(SessionID sessionID, String fingerprint, boolean approved);
 
-	public abstract void unverify(SessionID sessionID);
+	public abstract void unverify(SessionID sessionID, String fingerprint);
 
 	public abstract String getReplyForUnreadableMessage(SessionID sessionID);
 
 	public abstract String getFallbackMessage(SessionID sessionID);
+
+	public abstract void messageFromAnotherInstanceReceived(SessionID sessionID);
+
+	public abstract void multipleInstancesDetected(SessionID sessionID);
 }

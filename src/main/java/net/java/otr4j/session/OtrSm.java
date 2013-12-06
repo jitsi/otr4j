@@ -186,6 +186,14 @@ public class OtrSm {
 
 		int tlvType = tlv.getType();
 
+		PublicKey pubKey = session.getRemotePublicKey();
+		String fingerprint = null;
+		try {
+			fingerprint = new OtrCryptoEngineImpl().getFingerprint(pubKey);
+        } catch (OtrCryptoException e) {
+            e.printStackTrace();
+        }
+
 		if (tlvType == TLV.SMP1Q && nextMsg == SM.EXPECT1) {
 			/* We can only do the verification half now.
 			 * We must wait for the secret to be entered
@@ -266,11 +274,13 @@ public class OtrSm {
 			} catch (SMException e) {
 				throw new OtrException(e);
 			}
+			
 			/* Set trust level based on result */
 			if (smstate.smProgState == SM.PROG_SUCCEEDED){
-				engineHost.verify(session.getSessionID(), smstate.approved);
+				
+				engineHost.verify(session.getSessionID(), fingerprint, smstate.approved);
 			} else {
-				engineHost.unverify(session.getSessionID());
+				engineHost.unverify(session.getSessionID(), fingerprint);
 			}
 			if (smstate.smProgState != SM.PROG_CHEATED){
 				/* Send msg with next smp msg content */
@@ -291,9 +301,9 @@ public class OtrSm {
 				throw new OtrException(e);
 			}
 			if (smstate.smProgState == SM.PROG_SUCCEEDED){
-				engineHost.verify(session.getSessionID(), smstate.approved);
+				engineHost.verify(session.getSessionID(), fingerprint, smstate.approved);
 			} else {
-				engineHost.unverify(session.getSessionID());
+				engineHost.unverify(session.getSessionID(), fingerprint);
 			}
 			if (smstate.smProgState != SM.PROG_CHEATED){
 			} else {

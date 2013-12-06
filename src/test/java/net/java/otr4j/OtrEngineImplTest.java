@@ -3,6 +3,7 @@ package net.java.otr4j;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.logging.Logger;
 
 import net.java.otr4j.OtrPolicy;
@@ -10,6 +11,7 @@ import net.java.otr4j.OtrEngineImpl;
 import net.java.otr4j.OtrPolicyImpl;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.crypto.OtrCryptoException;
+import net.java.otr4j.session.InstanceTag;
 import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionStatus;
 
@@ -105,14 +107,14 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 					+ question);
 		}
 
-		public void verify(SessionID sessionID, boolean approved) {
+		public void verify(SessionID sessionID, String fingerprint, boolean approved) {
 			logger.finest("Session was verified: " + sessionID);
 			if (!approved)
 				logger.finest("Your answer for the question was verified."
 						+ "You should ask your opponent too or check shared secret.");
 		}
 
-		public void unverify(SessionID sessionID) {
+		public void unverify(SessionID sessionID, String fingerprint) {
 			logger.finest("Session was not verified: " + sessionID);
 		}
 
@@ -131,6 +133,15 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			return "Off-the-Record private conversation has been requested. However, you do not have a plugin to support that.";
 		}
 
+		public void messageFromAnotherInstanceReceived(SessionID sessionID) {
+			logger.warning("You received an encrypted message that was intended for another session. If you're logged in " +
+					"from multiple locations, another session may have received this message");
+		}
+
+		public void multipleInstancesDetected(SessionID sessionID) {
+			logger.warning("Your buddy is logged in multiple times and OTR has established multiple sessions. You can select an outgoing " +
+					"session from the menu above");
+		}
 	}
 
 	public void testSession1() throws Exception {
@@ -152,7 +163,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 	private DummyOtrEngineHost host;
 
 	private void startSession() throws OtrException {
-		host = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2
+		host = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2 | OtrPolicy.ALLOW_V3
 				| OtrPolicy.ERROR_START_AKE));
 
 		usAlice = new OtrEngineImpl(host);
@@ -186,7 +197,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 	}
 
 	private void startSessionWithQuery() throws OtrException {
-		host = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2
+		host = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2 | OtrPolicy.ALLOW_V3
 				| OtrPolicy.ERROR_START_AKE));
 
 		usAlice = new OtrEngineImpl(host);
@@ -195,26 +206,22 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 		usAlice.transformReceiving(aliceSessionID, "<p>?OTRv23?\n" +
 				"<span style=\"font-weight: bold;\">Bob@Wonderland/</span> has requested an <a href=\"http://otr.cypherpunks.ca/\">Off-the-Record private conversation</a>.  However, you do not have a plugin to support that.\n" +
 				"See <a href=\"http://otr.cypherpunks.ca/\">http://otr.cypherpunks.ca/</a> for more information.</p>");
-
-		// Bob receives query, sends D-H commit.
-
+		
+		// Bob receives D-H commit, sends D-H key.
 		usBob.transformReceiving(bobSessionID, host.lastInjectedMessage);
 
-		// Alice received D-H Commit, sends D-H key.
+		// Alice received D-H Key, sends reveal signature.
 		usAlice
 				.transformReceiving(aliceSessionID,
 						host.lastInjectedMessage);
 
-		// Bob receives D-H Key, sends reveal signature.
+		// Bob receives reveal signature, sends signature.
 		usBob.transformReceiving(bobSessionID, host.lastInjectedMessage);
 
-		// Alice receives Reveal Signature, sends signature and goes secure.
+		// Alice receives signature, goes secure
 		usAlice
 				.transformReceiving(aliceSessionID,
 						host.lastInjectedMessage);
-
-		// Bobs receives Signature, goes secure.
-		usBob.transformReceiving(bobSessionID, host.lastInjectedMessage);
 
 		if (usBob.getSessionStatus(bobSessionID) != SessionStatus.ENCRYPTED
 				|| usAlice.getSessionStatus(aliceSessionID) != SessionStatus.ENCRYPTED)
@@ -224,8 +231,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 	private void exchageMessages() throws OtrException {
 		// We are both secure, send encrypted message.
 		String clearTextMessage = "Hello Bob, this new IM software you installed on my PC the other day says we are talking Off-the-Record, what is that supposed to mean?";
-		String sentMessage = usAlice.transformSending(aliceSessionID,
-				clearTextMessage);
+		String sentMessage = usAlice.transformSending(aliceSessionID, clearTextMessage);
 
 		// Receive encrypted message.
 		String receivedMessage = usBob.transformReceiving(bobSessionID,

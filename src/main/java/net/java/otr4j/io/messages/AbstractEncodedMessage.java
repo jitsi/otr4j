@@ -14,10 +14,29 @@ public abstract class AbstractEncodedMessage extends AbstractMessage {
 	// Fields.
 	public int protocolVersion;
 
+	public int senderInstanceTag;
+
+	public int receiverInstanceTag;
+
 	// Ctor.
 	public AbstractEncodedMessage(int messageType, int protocolVersion) {
 		super(messageType);
 		this.protocolVersion = protocolVersion;
+	}
+
+	public AbstractEncodedMessage(
+			int messageType, int protocolVersion, int senderInstanceTag) {
+		this(messageType, protocolVersion, senderInstanceTag, 0);
+	}
+
+	public AbstractEncodedMessage(  int messageType,
+									int protocolVersion,
+									int senderInstanceTag,
+									int recipientInstanceTag) {
+		super(messageType);
+		this.protocolVersion = protocolVersion;
+		this.senderInstanceTag = senderInstanceTag;
+		this.receiverInstanceTag = recipientInstanceTag;
 	}
 
 	// Methods.
@@ -26,6 +45,8 @@ public abstract class AbstractEncodedMessage extends AbstractMessage {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + protocolVersion;
+		result = prime * result + senderInstanceTag;
+		result = prime * result + receiverInstanceTag;
 		return result;
 	}
 
@@ -39,6 +60,10 @@ public abstract class AbstractEncodedMessage extends AbstractMessage {
 			return false;
 		AbstractEncodedMessage other = (AbstractEncodedMessage) obj;
 		if (protocolVersion != other.protocolVersion)
+			return false;
+		if (senderInstanceTag != other.senderInstanceTag)
+			return false;
+		if (receiverInstanceTag != other.receiverInstanceTag)
 			return false;
 		return true;
 	}

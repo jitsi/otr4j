@@ -12,6 +12,14 @@ import net.java.otr4j.io.messages.AbstractMessage;
 
 public interface Session {
 
+	public static interface OTRv {
+		public static final int ONE = 1;
+
+		public static final int TWO = 2;
+
+		public static final int THREE = 3;
+	}
+
 	public abstract SessionStatus getSessionStatus();
 
 	public abstract SessionID getSessionID();
@@ -51,4 +59,23 @@ public interface Session {
 	public abstract boolean isSmpInProgress();
 
 	public abstract BigInteger getS();
+
+	// OTRv3 methods
+	public abstract List<Session> getInstances();
+
+	public abstract boolean setOutgoingInstance(InstanceTag tag);
+
+	public abstract InstanceTag getSenderInstanceTag();
+
+	public abstract InstanceTag getReceiverInstanceTag();
+
+	public abstract void setReceiverInstanceTag(InstanceTag tag);
+
+	public abstract void setProtocolVersion(int protocolVersion);
+
+	public abstract int getProtocolVersion();
+
+	public abstract SessionStatus getSessionStatus(InstanceTag tag);
+
+	public abstract PublicKey getRemotePublicKey(InstanceTag tag);
 }

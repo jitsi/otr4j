@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import net.java.otr4j.session.InstanceTag;
 import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionImpl;
@@ -53,6 +54,16 @@ public class OtrEngineImpl implements OtrEngine {
 				public void sessionStatusChanged(SessionID sessionID) {
 					for (OtrEngineListener l : listeners)
 						l.sessionStatusChanged(sessionID);
+				}
+
+				public void multipleInstancesDetected(SessionID sessionID) {
+					for (OtrEngineListener l : listeners)
+						l.multipleInstancesDetected(sessionID);
+				}
+				
+				public void outgoingSessionChanged(SessionID sessionID) {
+					for (OtrEngineListener l : listeners)
+						l.outgoingSessionChanged(sessionID);
 				}
 			});
 			return session;
@@ -116,5 +127,21 @@ public class OtrEngineImpl implements OtrEngine {
 		synchronized (listeners) {
 			listeners.remove(l);
 		}
+	}
+
+	public List<Session> getSessionInstances(SessionID sessionID) {
+		return this.getSession(sessionID).getInstances();
+	}
+
+	public boolean setOutgoingInstance(SessionID sessionID, InstanceTag tag) {
+		return this.getSession(sessionID).setOutgoingInstance(tag);
+	}
+
+	public SessionStatus getSessionStatus(SessionID sessionID, InstanceTag tag) {
+		return this.getSession(sessionID).getSessionStatus(tag);
+	}
+
+	public PublicKey getRemotePublicKey(SessionID sessionID, InstanceTag tag) {
+		return this.getSession(sessionID).getRemotePublicKey(tag);
 	}
 }
