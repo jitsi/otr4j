@@ -63,6 +63,8 @@ public interface Session {
 	// OTRv3 methods
 	public abstract List<Session> getInstances();
 
+	public abstract Session getOutgoingInstance();
+
 	public abstract boolean setOutgoingInstance(InstanceTag tag);
 
 	public abstract InstanceTag getSenderInstanceTag();

@@ -1104,5 +1104,9 @@ public class SessionImpl implements Session {
 			Session slave = slaveSessions.get(tag);
 			return slave != null ? slave.getRemotePublicKey() : remotePublicKey;
 		}
+	}
+
+	public Session getOutgoingInstance() {
+		return outgoingSession;
 	}		
 }
