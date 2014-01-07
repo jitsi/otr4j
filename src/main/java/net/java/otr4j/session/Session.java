@@ -77,6 +77,10 @@ public interface Session {
 
 	public abstract int getProtocolVersion();
 
+	public abstract void respondSmp(
+			InstanceTag receiverTag, String question, String secret)
+					throws OtrException;
+
 	public abstract SessionStatus getSessionStatus(InstanceTag tag);
 
 	public abstract PublicKey getRemotePublicKey(InstanceTag tag);

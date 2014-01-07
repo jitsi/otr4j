@@ -223,7 +223,7 @@ public class OtrSm {
 					// Never thrown - all JRE's support UTF-8
 					e.printStackTrace();
 				}
-			    engineHost.askForSecret(session.getSessionID(), questionUTF);
+			    engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), questionUTF);
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
 			    reset();
@@ -241,7 +241,7 @@ public class OtrSm {
 			}
 			if (smstate.smProgState!=SM.PROG_CHEATED) {
 				smstate.asked = true;
-                engineHost.askForSecret(session.getSessionID(), null);
+                engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), null);
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
 			    reset();

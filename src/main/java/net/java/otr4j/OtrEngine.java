@@ -63,7 +63,7 @@ public interface OtrEngine {
 	/** Get an OTR session. */
 	public abstract Session getSession(SessionID sessionID);
 
-	/** Get the outgoing OTRv3 session */
+	/** Get the outgoing OTRv3 session. It could be the master session as well as a slave session */
 	public abstract Session getOutgoingSession(SessionID sessionID);
 
 	/**

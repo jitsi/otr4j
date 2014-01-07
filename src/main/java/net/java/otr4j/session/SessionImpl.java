@@ -1086,6 +1086,24 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	public void respondSmp(InstanceTag receiverTag, String question, String secret)
+		throws OtrException
+	{
+		if (receiverTag.equals(getReceiverInstanceTag()))
+		{
+			respondSmp(question, secret);
+			return;
+		}
+		else
+		{
+			Session slave = slaveSessions.get(receiverTag);
+			if (slave != null)
+				slave.respondSmp(question, secret);
+			else
+				respondSmp(question, secret);
+		}
+	}
+
 	public SessionStatus getSessionStatus(InstanceTag tag) {
 		if (tag.equals(getReceiverInstanceTag()))
 			return sessionStatus;

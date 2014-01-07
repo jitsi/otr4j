@@ -51,7 +51,7 @@ public abstract interface OtrEngineHost {
 
 	public abstract byte[] getLocalFingerprintRaw(SessionID sessionID);
 
-	public abstract void askForSecret(SessionID sessionID, String question);
+	public abstract void askForSecret(SessionID sessionID, InstanceTag receiverTag, String question);
 
 	public abstract void verify(SessionID sessionID, String fingerprint, boolean approved);
 
