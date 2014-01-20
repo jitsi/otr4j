@@ -36,8 +36,8 @@ public abstract interface OtrEngineHost {
 
 	public abstract void smpAborted(SessionID sessionID) throws OtrException;
 
-	public abstract void finishedSessionMessage(SessionID sessionID)
-			throws OtrException;
+	public abstract void finishedSessionMessage(SessionID sessionID,
+			String msgText) throws OtrException;
 
 	public abstract void requireEncryptedMessage(SessionID sessionID,
 			String msgText) throws OtrException;
