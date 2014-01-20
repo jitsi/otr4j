@@ -887,7 +887,7 @@ public class SessionImpl implements Session {
 				throw new OtrException(e);
 			}
 		case FINISHED:
-			getHost().finishedSessionMessage(sessionID);
+			getHost().finishedSessionMessage(sessionID, msgText);
 			return null;
 		default:
 			logger.finest("Uknown message state, not processing.");
