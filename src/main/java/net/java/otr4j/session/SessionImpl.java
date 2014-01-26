@@ -70,6 +70,7 @@ public class SessionImpl implements Session {
 	private final InstanceTag senderTag;
 	private InstanceTag receiverTag;
 	private int protocolVersion;
+	private OtrAssembler assembler;
 
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
 
@@ -90,6 +91,8 @@ public class SessionImpl implements Session {
 		slaveSessions = new HashMap<InstanceTag, SessionImpl>();
 		outgoingSession = this;
 		isMasterSession = true;
+
+		assembler = new OtrAssembler(getSenderInstanceTag());
 	}
 	
 	// A private constructor for instantiating 'slave' sessions.
@@ -111,6 +114,8 @@ public class SessionImpl implements Session {
 		outgoingSession = this;
 		isMasterSession = false;
 		protocolVersion = OTRv.THREE;
+
+		assembler = new OtrAssembler(getSenderInstanceTag());
 	}
 
 	public BigInteger getS() {
@@ -342,6 +347,10 @@ public class SessionImpl implements Session {
 					.finest("Policy does not allow neither V1 nor V2 & V3, ignoring message.");
 			return msgText;
 		}
+
+		msgText = this.assembler.accumulate(msgText);
+		if (msgText == null)
+			return null; // Not a complete message (yet).
 
 		AbstractMessage m;
 		try {
