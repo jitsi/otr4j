@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.ProtocolException;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PublicKey;
@@ -348,7 +349,18 @@ public class SessionImpl implements Session {
 			return msgText;
 		}
 
-		msgText = this.assembler.accumulate(msgText);
+		try {
+			msgText = assembler.accumulate(msgText);
+		} catch (UnknownInstanceException e) {
+			// The fragment is not intended for us
+			logger.finest(e.getMessage());
+			getHost().messageFromAnotherInstanceReceived(getSessionID());
+			return null;
+		} catch (ProtocolException e) {
+			logger.warning("An invalid message fragment was discarded.");
+			return null;
+		}
+
 		if (msgText == null)
 			return null; // Not a complete message (yet).
 

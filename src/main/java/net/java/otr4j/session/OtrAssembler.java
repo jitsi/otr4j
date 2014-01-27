@@ -6,6 +6,8 @@
  */
 package net.java.otr4j.session;
 
+import java.net.ProtocolException;
+
 /**
  *
  * @author Felix Eckhofer
@@ -60,7 +62,8 @@ public final class OtrAssembler {
 	 * @return String with the accumulated message or
 	 *         null if the message was incomplete or malformed
 	 */
-	public String accumulate(String msgText) {
+	public String accumulate(String msgText)
+		throws ProtocolException, UnknownInstanceException {
 		// if it's a fragment, remove everything before "k,n,piece-k"
 		if (msgText.startsWith(HEAD_FRAGMENT_V2)) {
 			// v2
@@ -76,16 +79,25 @@ public final class OtrAssembler {
 			// split the two instance ids
 			String[] instances = instancePart[0].split("\\|", 2);
 
-			if (instancePart.length < 2 || instances.length < 2) {
-				// discard invalid message
-				return null;
+			if (instancePart.length != 2 || instances.length != 2) {
+				discard();
+				throw new ProtocolException();
 			}
 
-			int receiverInstance = Integer.parseInt(instances[1], 16);
+			int receiverInstance;
+			try {
+				receiverInstance = Integer.parseInt(instances[1], 16);
+			} catch (NumberFormatException e) {
+				discard();
+				throw new ProtocolException();
+			}
 			if (receiverInstance != 0 &&
 					receiverInstance != ownInstance.getValue()) {
 				// discard message for different instance id
-				return null;
+				throw new UnknownInstanceException(
+						"Message for unknown instance tag " +
+						String.valueOf(receiverInstance) +
+						" received: " + msgText);
 			}
 
 			// continue with v2 part of fragment
@@ -98,14 +110,24 @@ public final class OtrAssembler {
 
 		String[] params = msgText.split(",", 4);
 
-		int k = Integer.parseInt(params[0]);
-		int n = Integer.parseInt(params[1]);
-		msgText = params[2];
-
-		if (k == 0 || n == 0 || k > n) {
-			// discard invalid message
-			return null;
+		int k, n;
+		try {
+			k = Integer.parseInt(params[0]);
+			n = Integer.parseInt(params[1]);
+		} catch (NumberFormatException e) {
+			discard();
+			throw new ProtocolException();
+		} catch (ArrayIndexOutOfBoundsException e) {
+			discard();
+			throw new ProtocolException();
 		}
+
+		if (k == 0 || n == 0 || k > n || params.length != 4 || params[3].length() != 0) {
+			discard();
+			throw new ProtocolException();
+		}
+
+		msgText = params[2];
 
 		if (k == 1) {
 			// first fragment
@@ -118,8 +140,9 @@ public final class OtrAssembler {
 			fragmentCur++;
 			fragment.append(msgText);
 		} else {
-			// malformed fragment
+			// out-of-order fragment
 			discard();
+			throw new ProtocolException();
 		}
 
 		if (n == k && n > 0) {
