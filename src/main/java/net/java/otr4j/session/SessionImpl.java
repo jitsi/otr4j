@@ -346,7 +346,7 @@ public class SessionImpl implements Session {
 			throws OtrException {
 		logger.finest(getSessionID().getAccountID()
 				+ " received a query message from "
-				+ getSessionID().getUserID() + " throught "
+				+ getSessionID().getUserID() + " through "
 				+ getSessionID().getProtocolName() + ".");
 
 		setSessionStatus(SessionStatus.PLAINTEXT);
@@ -364,7 +364,7 @@ public class SessionImpl implements Session {
 			throws OtrException {
 		logger.finest(getSessionID().getAccountID()
 				+ " received an error message from "
-				+ getSessionID().getUserID() + " throught "
+				+ getSessionID().getUserID() + " through "
 				+ getSessionID().getUserID() + ".");
 
 		getHost().showError(this.getSessionID(), errorMessage.error);
@@ -524,7 +524,7 @@ public class SessionImpl implements Session {
 			throws OtrException {
 		logger.finest(getSessionID().getAccountID()
 				+ " received a plaintext message from "
-				+ getSessionID().getUserID() + " throught "
+				+ getSessionID().getUserID() + " through "
 				+ getSessionID().getProtocolName() + ".");
 
 		OtrPolicy policy = getSessionPolicy();
@@ -627,7 +627,7 @@ public class SessionImpl implements Session {
 		case ENCRYPTED:
 			logger.finest(getSessionID().getAccountID()
 					+ " sends an encrypted message to "
-					+ getSessionID().getUserID() + " throught "
+					+ getSessionID().getUserID() + " through "
 					+ getSessionID().getProtocolName() + ".");
 
 			// Get encryption keys.

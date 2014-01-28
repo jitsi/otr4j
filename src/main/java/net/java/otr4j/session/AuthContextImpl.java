@@ -434,7 +434,7 @@ class AuthContextImpl implements AuthContext {
 		SessionID sessionID = session.getSessionID();
 		logger.finest(sessionID.getAccountID()
 				+ " received a signature message from " + sessionID.getUserID()
-				+ " throught " + sessionID.getProtocolName() + ".");
+				+ " through " + sessionID.getProtocolName() + ".");
 		if (!session.getSessionPolicy().getAllowV2()) {
 			logger.finest("Policy does not allow OTRv2, ignoring message.");
 			return;
@@ -493,7 +493,7 @@ class AuthContextImpl implements AuthContext {
 		SessionID sessionID = session.getSessionID();
 		logger.finest(sessionID.getAccountID()
 				+ " received a reveal signature message from "
-				+ sessionID.getUserID() + " throught "
+				+ sessionID.getUserID() + " through "
 				+ sessionID.getProtocolName() + ".");
 
 		if (!session.getSessionPolicy().getAllowV2()) {
@@ -600,7 +600,7 @@ class AuthContextImpl implements AuthContext {
 		SessionID sessionID = session.getSessionID();
 		logger.finest(sessionID.getAccountID()
 				+ " received a D-H key message from " + sessionID.getUserID()
-				+ " throught " + sessionID.getProtocolName() + ".");
+				+ " through " + sessionID.getProtocolName() + ".");
 
 		if (!session.getSessionPolicy().getAllowV2()) {
 			logger.finest("If ALLOW_V2 is not set, ignore this message.");
@@ -645,7 +645,7 @@ class AuthContextImpl implements AuthContext {
 		SessionID sessionID = session.getSessionID();
 		logger.finest(sessionID.getAccountID()
 				+ " received a D-H commit message from "
-				+ sessionID.getUserID() + " throught "
+				+ sessionID.getUserID() + " through "
 				+ sessionID.getProtocolName() + ".");
 
 		if (!session.getSessionPolicy().getAllowV2()) {
