@@ -63,6 +63,8 @@ public interface Session {
 	// OTRv3 methods
 	public abstract List<Session> getInstances();
 
+	public abstract Session getOutgoingInstance();
+
 	public abstract boolean setOutgoingInstance(InstanceTag tag);
 
 	public abstract InstanceTag getSenderInstanceTag();
@@ -74,6 +76,10 @@ public interface Session {
 	public abstract void setProtocolVersion(int protocolVersion);
 
 	public abstract int getProtocolVersion();
+
+	public abstract void respondSmp(
+			InstanceTag receiverTag, String question, String secret)
+					throws OtrException;
 
 	public abstract SessionStatus getSessionStatus(InstanceTag tag);
 

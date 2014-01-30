@@ -71,6 +71,9 @@ public class OtrEngineImpl implements OtrEngine {
 			return sessions.get(sessionID);
 	}
 
+	public Session getOutgoingSession(SessionID sessionID) {
+		return this.getSession(sessionID).getOutgoingInstance();
+	}
 	public SessionStatus getSessionStatus(SessionID sessionID) {
 		return this.getSession(sessionID).getSessionStatus();
 	}

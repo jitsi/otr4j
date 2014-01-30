@@ -56,7 +56,8 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 					+ sessionID);
 		}
 
-		public void finishedSessionMessage(SessionID sessionID) throws OtrException {
+		public void finishedSessionMessage(SessionID sessionID, String msgText)
+				throws OtrException {
 			logger.severe("SM session was finished. You shouldn't send messages to: "
 					+ sessionID);
 		}
@@ -102,7 +103,7 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 			return kg.genKeyPair();
 		}
 
-		public void askForSecret(SessionID sessionID, String question) {
+		public void askForSecret(SessionID sessionID, InstanceTag tag, String question) {
 			logger.finest("Ask for secret from: " + sessionID + ", question: "
 					+ question);
 		}

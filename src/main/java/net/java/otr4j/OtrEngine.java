@@ -63,6 +63,9 @@ public interface OtrEngine {
 	/** Get an OTR session. */
 	public abstract Session getSession(SessionID sessionID);
 
+	/** Get the outgoing OTRv3 session. It could be the master session as well as a slave session */
+	public abstract Session getOutgoingSession(SessionID sessionID);
+
 	/**
 	 * Get all instances of an OTR session. If our buddy is logged in multiple times
 	 * we will have multiple instances.

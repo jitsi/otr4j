@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.ProtocolException;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PublicKey;
@@ -70,6 +71,7 @@ public class SessionImpl implements Session {
 	private final InstanceTag senderTag;
 	private InstanceTag receiverTag;
 	private int protocolVersion;
+	private OtrAssembler assembler;
 
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
 
@@ -90,6 +92,8 @@ public class SessionImpl implements Session {
 		slaveSessions = new HashMap<InstanceTag, SessionImpl>();
 		outgoingSession = this;
 		isMasterSession = true;
+
+		assembler = new OtrAssembler(getSenderInstanceTag());
 	}
 	
 	// A private constructor for instantiating 'slave' sessions.
@@ -111,6 +115,8 @@ public class SessionImpl implements Session {
 		outgoingSession = this;
 		isMasterSession = false;
 		protocolVersion = OTRv.THREE;
+
+		assembler = new OtrAssembler(getSenderInstanceTag());
 	}
 
 	public BigInteger getS() {
@@ -342,6 +348,21 @@ public class SessionImpl implements Session {
 					.finest("Policy does not allow neither V1 nor V2 & V3, ignoring message.");
 			return msgText;
 		}
+
+		try {
+			msgText = assembler.accumulate(msgText);
+		} catch (UnknownInstanceException e) {
+			// The fragment is not intended for us
+			logger.finest(e.getMessage());
+			getHost().messageFromAnotherInstanceReceived(getSessionID());
+			return null;
+		} catch (ProtocolException e) {
+			logger.warning("An invalid message fragment was discarded.");
+			return null;
+		}
+
+		if (msgText == null)
+			return null; // Not a complete message (yet).
 
 		AbstractMessage m;
 		try {
@@ -887,7 +908,7 @@ public class SessionImpl implements Session {
 				throw new OtrException(e);
 			}
 		case FINISHED:
-			getHost().finishedSessionMessage(sessionID);
+			getHost().finishedSessionMessage(sessionID, msgText);
 			return null;
 		default:
 			logger.finest("Uknown message state, not processing.");
@@ -1086,6 +1107,24 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	public void respondSmp(InstanceTag receiverTag, String question, String secret)
+		throws OtrException
+	{
+		if (receiverTag.equals(getReceiverInstanceTag()))
+		{
+			respondSmp(question, secret);
+			return;
+		}
+		else
+		{
+			Session slave = slaveSessions.get(receiverTag);
+			if (slave != null)
+				slave.respondSmp(question, secret);
+			else
+				respondSmp(question, secret);
+		}
+	}
+
 	public SessionStatus getSessionStatus(InstanceTag tag) {
 		if (tag.equals(getReceiverInstanceTag()))
 			return sessionStatus;
@@ -1104,5 +1143,9 @@ public class SessionImpl implements Session {
 			Session slave = slaveSessions.get(tag);
 			return slave != null ? slave.getRemotePublicKey() : remotePublicKey;
 		}
+	}
+
+	public Session getOutgoingInstance() {
+		return outgoingSession;
 	}		
 }
