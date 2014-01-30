@@ -1,8 +1,11 @@
 ## Synopsis
 
 otr4j is an implementation of the [OTR (Off The Record) protocol][1]
-in java. Its development started during the Google Summer of Code 2009 where the
-goal was to add support for OTR in SIP Communicator (now called [jitsi][2]).
+in java. Its development started during the Google Summer of Code 2009
+where the goal was to add support for OTR in SIP Communicator (now
+called [jitsi][2]).
+
+It currently supports OTRv1, [OTRv2][] and [OTRv3][].
 
 ## Maven
 
@@ -18,5 +21,7 @@ the pom.xml:
 </repository>
 ```
 
-  [1]: http://www.cypherpunks.ca/otr/
-  [2]: http://www.jitsi.org/
+  [1]: https://otr.cypherpunks.ca/
+  [2]: https://jitsi.org/
+  [OTRv2]: https://otr.cypherpunks.ca/Protocol-v2-3.1.0.html
+  [OTRv3]: https://otr.cypherpunks.ca/Protocol-v3-4.0.0.html
