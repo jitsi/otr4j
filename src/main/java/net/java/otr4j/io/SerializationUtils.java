@@ -13,6 +13,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -35,6 +36,7 @@ import net.java.otr4j.io.messages.RevealSignatureMessage;
 import net.java.otr4j.io.messages.SignatureM;
 import net.java.otr4j.io.messages.SignatureMessage;
 import net.java.otr4j.io.messages.SignatureX;
+import net.java.otr4j.session.Session.OTRv;
 
 /**
  * @author George Politis
@@ -74,7 +76,7 @@ public class SerializationUtils {
 		OtrOutputStream oos = new OtrOutputStream(out);
 		oos.writeMysteriousT(t);
 		byte[] b = out.toByteArray();
-		out.close();
+		oos.close();
 		return b;
 	}
 
@@ -84,7 +86,7 @@ public class SerializationUtils {
 		OtrOutputStream oos = new OtrOutputStream(out);
 		oos.writeData(b);
 		byte[] otrb = out.toByteArray();
-		out.close();
+		oos.close();
 		return otrb;
 	}
 
@@ -135,11 +137,14 @@ public class SerializationUtils {
 				if (plaintxt.versions != null && plaintxt.versions.size() > 0) {
 					writer.write(" \t  \t\t\t\t \t \t \t  ");
 					for (int version : plaintxt.versions) {
-						if (version == 1)
+						if (version == OTRv.ONE)
 							writer.write(" \t \t  \t ");
 
-						if (version == 2)
+						if (version == OTRv.TWO)
 							writer.write("  \t\t  \t ");
+
+						if (version == OTRv.THREE)
+							writer.write("  \t\t  \t\t");
 					}
 				}
 				break;
@@ -168,12 +173,20 @@ public class SerializationUtils {
 						DHKeyMessage dhkey = (DHKeyMessage) m;
 						s.writeShort(dhkey.protocolVersion);
 						s.writeByte(dhkey.messageType);
+						if (dhkey.protocolVersion == OTRv.THREE) {
+							s.writeInt(dhkey.senderInstanceTag);
+							s.writeInt(dhkey.receiverInstanceTag);
+						}
 						s.writeDHPublicKey(dhkey.dhPublicKey);
 						break;
 					case AbstractEncodedMessage.MESSAGE_REVEALSIG:
 						RevealSignatureMessage revealsig = (RevealSignatureMessage) m;
 						s.writeShort(revealsig.protocolVersion);
 						s.writeByte(revealsig.messageType);
+						if (revealsig.protocolVersion == OTRv.THREE) {
+							s.writeInt(revealsig.senderInstanceTag);
+							s.writeInt(revealsig.receiverInstanceTag);
+						}
 						s.writeData(revealsig.revealedKey);
 						s.writeData(revealsig.xEncrypted);
 						s.writeMac(revealsig.xEncryptedMAC);
@@ -182,6 +195,10 @@ public class SerializationUtils {
 						SignatureMessage sig = (SignatureMessage) m;
 						s.writeShort(sig.protocolVersion);
 						s.writeByte(sig.messageType);
+						if (sig.protocolVersion == OTRv.THREE) {
+							s.writeInt(sig.senderInstanceTag);
+							s.writeInt(sig.receiverInstanceTag);
+						}
 						s.writeData(sig.xEncrypted);
 						s.writeMac(sig.xEncryptedMAC);
 						break;
@@ -189,6 +206,10 @@ public class SerializationUtils {
 						DHCommitMessage dhcommit = (DHCommitMessage) m;
 						s.writeShort(dhcommit.protocolVersion);
 						s.writeByte(dhcommit.messageType);
+						if (dhcommit.protocolVersion == OTRv.THREE) {
+							s.writeInt(dhcommit.senderInstanceTag);
+							s.writeInt(dhcommit.receiverInstanceTag);
+						}
 						s.writeData(dhcommit.dhPublicKeyEncrypted);
 						s.writeData(dhcommit.dhPublicKeyHash);
 						break;
@@ -196,6 +217,10 @@ public class SerializationUtils {
 						DataMessage data = (DataMessage) m;
 						s.writeShort(data.protocolVersion);
 						s.writeByte(data.messageType);
+						if (data.protocolVersion == OTRv.THREE) {
+							s.writeInt(data.senderInstanceTag);
+							s.writeInt(data.receiverInstanceTag);
+						}
 						s.writeByte(data.flags);
 						s.writeInt(data.senderKeyID);
 						s.writeInt(data.recipientKeyID);
@@ -219,7 +244,7 @@ public class SerializationUtils {
 	}
 
 	static final Pattern patternWhitespace = Pattern
-			.compile("( \\t  \\t\\t\\t\\t \\t \\t \\t  )( \\t \\t  \\t )?(  \\t\\t  \\t )?");
+			.compile("( \\t  \\t\\t\\t\\t \\t \\t \\t  )( \\t \\t  \\t )?(  \\t\\t  \\t )?(  \\t\\t  \\t\\t)?");
 
 	public static AbstractMessage toMessage(String s) throws IOException {
 		if (s == null || s.length() == 0)
@@ -248,7 +273,7 @@ public class SerializationUtils {
 				List<Integer> versions = new Vector<Integer>();
 				String versionString = null;
 				if (SerializationConstants.HEAD_QUERY_Q == contentType) {
-					versions.add(1);
+					versions.add(OTRv.ONE);
 					if (content.charAt(0) == 'v') {
 						versionString = content.substring(1, content
 								.indexOf('?'));
@@ -282,6 +307,12 @@ public class SerializationUtils {
 				// We have an encoded message.
 				int protocolVersion = otr.readShort();
 				int messageType = otr.readByte();
+				int senderInstanceTag = 0;
+				int recipientInstanceTag = 0;
+				if (protocolVersion == OTRv.THREE) {
+					senderInstanceTag = otr.readInt();
+					recipientInstanceTag = otr.readInt();
+				}
 				switch (messageType) {
 					case AbstractEncodedMessage.MESSAGE_DATA:
 						int flags = otr.readByte();
@@ -292,33 +323,58 @@ public class SerializationUtils {
 						byte[] encryptedMessage = otr.readData();
 						byte[] mac = otr.readMac();
 						byte[] oldMacKeys = otr.readMac();
-						return new DataMessage(protocolVersion, flags, senderKeyID,
+						DataMessage dataMessage =
+								new DataMessage(protocolVersion, flags, senderKeyID,
 								recipientKeyID, nextDH, ctr, encryptedMessage, mac,
 								oldMacKeys);
+						dataMessage.senderInstanceTag = senderInstanceTag;
+						dataMessage.receiverInstanceTag = recipientInstanceTag;
+						otr.close();
+						return dataMessage;
 					case AbstractEncodedMessage.MESSAGE_DH_COMMIT:
 						byte[] dhPublicKeyEncrypted = otr.readData();
 						byte[] dhPublicKeyHash = otr.readData();
-						return new DHCommitMessage(protocolVersion,
-								dhPublicKeyHash, dhPublicKeyEncrypted);
+						DHCommitMessage dhCommitMessage =
+								new DHCommitMessage(protocolVersion,
+										dhPublicKeyHash, dhPublicKeyEncrypted);
+						dhCommitMessage.senderInstanceTag = senderInstanceTag;
+						dhCommitMessage.receiverInstanceTag = recipientInstanceTag;
+						otr.close();
+						return dhCommitMessage;
 					case AbstractEncodedMessage.MESSAGE_DHKEY:
 						DHPublicKey dhPublicKey = otr.readDHPublicKey();
-						return new DHKeyMessage(protocolVersion, dhPublicKey);
+						DHKeyMessage dhKeyMessage = new DHKeyMessage(protocolVersion, dhPublicKey);
+						dhKeyMessage.senderInstanceTag = senderInstanceTag;
+						dhKeyMessage.receiverInstanceTag = recipientInstanceTag;
+						otr.close();
+						return dhKeyMessage;
 					case AbstractEncodedMessage.MESSAGE_REVEALSIG: {
 						byte[] revealedKey = otr.readData();
 						byte[] xEncrypted = otr.readData();
 						byte[] xEncryptedMac = otr.readMac();
-						return new RevealSignatureMessage(protocolVersion,
-								xEncrypted, xEncryptedMac, revealedKey);
+						RevealSignatureMessage revealSignatureMessage =
+								new RevealSignatureMessage(protocolVersion,
+										xEncrypted, xEncryptedMac, revealedKey);
+						revealSignatureMessage.senderInstanceTag = senderInstanceTag;
+						revealSignatureMessage.receiverInstanceTag = recipientInstanceTag;
+						otr.close();
+						return revealSignatureMessage;
 					}
 					case AbstractEncodedMessage.MESSAGE_SIGNATURE: {
 						byte[] xEncryted = otr.readData();
 						byte[] xEncryptedMac = otr.readMac();
-						return new SignatureMessage(protocolVersion, xEncryted,
-								xEncryptedMac);
+						SignatureMessage signatureMessage =
+								new SignatureMessage(protocolVersion, xEncryted,
+										xEncryptedMac);
+						signatureMessage.senderInstanceTag = senderInstanceTag;
+						signatureMessage.receiverInstanceTag = recipientInstanceTag;
+						otr.close();
+						return signatureMessage;
 					}
 					default:
 						// NOTE by gp: aren't we being a little too harsh here? Passing the message as a plaintext
 						// message to the host application shouldn't hurt anybody.
+						otr.close();
 						throw new IOException("Illegal message type.");
 				}
 			}
@@ -330,6 +386,7 @@ public class SerializationUtils {
 
 		boolean v1 = false;
 		boolean v2 = false;
+		boolean v3 = false;
 		while (matcher.find()) {
 			if (!v1 && matcher.start(2) > -1)
 				v1 = true;
@@ -337,24 +394,24 @@ public class SerializationUtils {
 			if (!v2 && matcher.start(3) > -1)
 				v2 = true;
 
-			if (v1 && v2)
+			if (!v3 && matcher.start(3) > -1)
+				v3 = true;
+
+			if (v1 && v2 && v3)
 				break;
 		}
 
 		String cleanText = matcher.replaceAll("");
-		List<Integer> versions;
-		if (v1 && v2) {
-			versions = new Vector<Integer>(2);
-			versions.add(0, 1);
-			versions.add(0, 2);
-		} else if (v1) {
-			versions = new Vector<Integer>(1);
-			versions.add(0, 1);
-		} else if (v2) {
-			versions = new Vector<Integer>(1);
-			versions.add(2);
-		} else
-			versions = null;
+		List<Integer> versions = null;
+		if (v1 || v2 || v3) {
+			versions = new ArrayList<Integer>();
+			if (v1)
+				versions.add(OTRv.ONE);
+			if (v2) 
+				versions.add(OTRv.TWO);
+			if (v3)
+				versions.add(OTRv.THREE);
+		}
 
 		return new PlainTextMessage(versions, cleanText);
 

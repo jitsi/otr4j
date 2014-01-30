@@ -128,6 +128,10 @@ public class OtrOutputStream extends FilterOutputStream implements
 	public void writeMysteriousT(MysteriousT t) throws IOException {
 		writeShort(t.protocolVersion);
 		writeByte(t.messageType);
+		if (t.protocolVersion == 3) {
+			writeInt(t.senderInstanceTag);
+			writeInt(t.receiverInstanceTag);
+		}
 		writeByte(t.flags);
 
 		writeInt(t.senderKeyID);

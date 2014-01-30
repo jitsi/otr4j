@@ -14,12 +14,17 @@ import javax.crypto.interfaces.DHPublicKey;
 
 import net.java.otr4j.OtrException;
 import net.java.otr4j.io.messages.AbstractMessage;
+import net.java.otr4j.io.messages.DHCommitMessage;
+import net.java.otr4j.io.messages.DHKeyMessage;
+import net.java.otr4j.io.messages.QueryMessage;
+import net.java.otr4j.io.messages.RevealSignatureMessage;
+import net.java.otr4j.io.messages.SignatureMessage;
 
 /**
  * 
  * @author George Politis
  */
-interface AuthContext {
+abstract class AuthContext {
 
 	public static final int NONE = 0;
 	public static final int AWAITING_DHKEY = 1;
@@ -31,6 +36,28 @@ interface AuthContext {
 	public static final byte M2_START = (byte) 0x03;
 	public static final byte M1p_START = (byte) 0x04;
 	public static final byte M2p_START = (byte) 0x05;
+
+	// These parameters are initialized when generating D-H Commit Messages.
+	// If the Session that this AuthContext belongs to is the 'master' session
+	// then these parameters must be replicated to all slave session's auth contexts.
+	byte[] r;
+	KeyPair localDHKeyPair;
+	byte[] localDHPublicKeyBytes;
+	byte[] localDHPublicKeyHash;
+	byte[] localDHPublicKeyEncrypted;
+
+	abstract class MessageFactory {
+		
+		abstract QueryMessage getQueryMessage();
+		
+		abstract DHCommitMessage getDHCommitMessage() throws OtrException;
+		
+		abstract DHKeyMessage getDHKeyMessage() throws OtrException;
+		
+		abstract RevealSignatureMessage getRevealSignatureMessage() throws OtrException;
+		
+		abstract SignatureMessage getSignatureMessage() throws OtrException;
+	}
 
 	public abstract void reset();
 
@@ -45,9 +72,9 @@ interface AuthContext {
 	public abstract void handleReceivingMessage(AbstractMessage m)
 			throws OtrException;
 
-	public abstract void startV2Auth() throws OtrException;
+	public abstract void startAuth() throws OtrException;
 
-	public abstract void respondV2Auth() throws OtrException;
+	public abstract DHCommitMessage respondAuth(Integer version) throws OtrException;
 
 	public abstract PublicKey getRemoteLongTermPublicKey();
 

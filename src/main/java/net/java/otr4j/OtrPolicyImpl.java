@@ -27,6 +27,10 @@ public class OtrPolicyImpl implements OtrPolicy {
 	public boolean getAllowV2() {
 		return (policy & OtrPolicy.ALLOW_V2) != 0;
 	}
+	
+	public boolean getAllowV3() {
+		return (policy & OtrPolicy.ALLOW_V3) != 0;
+	}
 
 	public boolean getErrorStartAKE() {
 		return (policy & OtrPolicy.ERROR_START_AKE) != 0;
@@ -57,6 +61,13 @@ public class OtrPolicyImpl implements OtrPolicy {
 			policy |= ALLOW_V2;
 		else
 			policy &= ~ALLOW_V2;
+	}
+
+	public void setAllowV3(boolean value) {
+		if (value)
+			policy |= ALLOW_V3;
+		else
+			policy &= ~ALLOW_V3;
 	}
 
 	public void setErrorStartAKE(boolean value) {
@@ -103,12 +114,13 @@ public class OtrPolicyImpl implements OtrPolicy {
 	}
 
 	public boolean getEnableManual() {
-		return getAllowV1() && getAllowV2();
+		return getAllowV1() && getAllowV2() && getAllowV3();
 	}
 
 	public void setEnableManual(boolean value) {
 		setAllowV1(value);
 		setAllowV2(value);
+		setAllowV3(value);
 	}
 
 	public boolean equals(Object obj) {

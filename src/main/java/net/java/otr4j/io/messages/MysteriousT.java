@@ -7,6 +7,8 @@ import javax.crypto.interfaces.DHPublicKey;
 public class MysteriousT {
 	// Fields.
 	public int protocolVersion;
+	public int senderInstanceTag;
+	public int receiverInstanceTag;
 	public int messageType;
 	public int flags;
 	public int senderKeyID;
@@ -16,11 +18,14 @@ public class MysteriousT {
 	public byte[] encryptedMessage;
 
 	// Ctor.
-	public MysteriousT(int protocolVersion, int flags, int senderKeyID,
+	public MysteriousT(int protocolVersion, int senderInstanceTag, int receiverInstanceTag,
+			int flags, int senderKeyID,
 			int recipientKeyID, DHPublicKey nextDH, byte[] ctr,
 			byte[] encryptedMessage) {
 
 		this.protocolVersion = protocolVersion;
+		this.senderInstanceTag = senderInstanceTag;
+		this.receiverInstanceTag = receiverInstanceTag;
 		this.messageType = AbstractEncodedMessage.MESSAGE_DATA;
 		this.flags = flags;
 		this.senderKeyID = senderKeyID;
@@ -44,6 +49,8 @@ public class MysteriousT {
 		result = prime * result + protocolVersion;
 		result = prime * result + recipientKeyID;
 		result = prime * result + senderKeyID;
+		result = prime * result + senderInstanceTag;
+		result = prime * result + receiverInstanceTag;
 		return result;
 	}
 
@@ -75,6 +82,10 @@ public class MysteriousT {
 		if (recipientKeyID != other.recipientKeyID)
 			return false;
 		if (senderKeyID != other.senderKeyID)
+			return false;
+		if (senderInstanceTag != other.senderInstanceTag)
+			return false;
+		if (receiverInstanceTag != other.receiverInstanceTag)
 			return false;
 		return true;
 	}
