@@ -13,11 +13,13 @@ If you use maven for managing your project lifecycle and you want to
 use otr4j in your project, just add the following repository entry to
 the pom.xml:
 
+**IMPORTANT** Repository URL changed
+
 ```xml
 <repository>
   <id>otr4j-repo</id>
   <name>otr4j repository on GitHub</name>
-  <url>http://gpolitis.github.com/otr4j/repository/</url>
+  <url>http://jitsi.github.com/otr4j/repository/</url>
 </repository>
 ```
 
