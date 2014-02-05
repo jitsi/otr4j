@@ -3,12 +3,8 @@ package net.java.otr4j;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 import java.util.logging.Logger;
 
-import net.java.otr4j.OtrPolicy;
-import net.java.otr4j.OtrEngineImpl;
-import net.java.otr4j.OtrPolicyImpl;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.crypto.OtrCryptoException;
 import net.java.otr4j.session.InstanceTag;
@@ -159,16 +155,16 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 		this.endSession();
 	}
 
-	private OtrEngineImpl usAlice;
-	private OtrEngineImpl usBob;
+	private OtrSessionManagerImpl usAlice;
+	private OtrSessionManagerImpl usBob;
 	private DummyOtrEngineHost host;
 
 	private void startSession() throws OtrException {
 		host = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2 | OtrPolicy.ALLOW_V3
 				| OtrPolicy.ERROR_START_AKE));
 
-		usAlice = new OtrEngineImpl(host);
-		usBob = new OtrEngineImpl(host);
+		usAlice = new OtrSessionManagerImpl(host);
+		usBob = new OtrSessionManagerImpl(host);
 
 		usAlice.startSession(aliceSessionID);
 
@@ -201,8 +197,8 @@ public class OtrEngineImplTest extends junit.framework.TestCase {
 		host = new DummyOtrEngineHost(new OtrPolicyImpl(OtrPolicy.ALLOW_V2 | OtrPolicy.ALLOW_V3
 				| OtrPolicy.ERROR_START_AKE));
 
-		usAlice = new OtrEngineImpl(host);
-		usBob = new OtrEngineImpl(host);
+		usAlice = new OtrSessionManagerImpl(host);
+		usBob = new OtrSessionManagerImpl(host);
 
 		usAlice.transformReceiving(aliceSessionID, "<p>?OTRv23?\n" +
 				"<span style=\"font-weight: bold;\">Bob@Wonderland/</span> has requested an <a href=\"http://otr.cypherpunks.ca/\">Off-the-Record private conversation</a>.  However, you do not have a plugin to support that.\n" +

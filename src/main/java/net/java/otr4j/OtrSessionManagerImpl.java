@@ -25,9 +25,9 @@ import net.java.otr4j.session.TLV;
  * @author George Politis
  * 
  */
-public class OtrEngineImpl implements OtrEngine {
+public class OtrSessionManagerImpl implements OtrSessionManager {
 
-	public OtrEngineImpl(OtrEngineHost host) {
+	public OtrSessionManagerImpl(OtrEngineHost host) {
 		if (host == null)
 			throw new IllegalArgumentException("OtrEgineHost is required.");
 

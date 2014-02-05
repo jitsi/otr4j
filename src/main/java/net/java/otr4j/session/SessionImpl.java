@@ -78,10 +78,10 @@ public class SessionImpl implements Session {
 		this.setSessionID(sessionID);
 		this.setHost(listener);
 
-		// client application calls OtrEngine.getSessionStatus()
+		// client application calls OtrSessionManager.getSessionStatus()
 		// -> create new session if it does not exist, end up here
 		// -> setSessionStatus() fires statusChangedEvent
-		// -> client application calls OtrEngine.getSessionStatus()
+		// -> client application calls OtrSessionManager.getSessionStatus()
 		this.sessionStatus = SessionStatus.PLAINTEXT;
 		this.offerStatus = OfferStatus.idle;
 
