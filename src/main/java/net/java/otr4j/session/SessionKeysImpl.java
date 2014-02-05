@@ -84,8 +84,7 @@ class SessionKeysImpl implements SessionKeys {
 	}
 
 	public void setReceivingCtr(byte[] ctr) {
-		for (int i = 0; i < ctr.length; i++)
-			receivingCtr[i] = ctr[i];
+		System.arraycopy(ctr, 0, receivingCtr, 0, ctr.length);
 	}
 
 	private void reset() {
