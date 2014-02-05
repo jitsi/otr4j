@@ -784,6 +784,11 @@ public class SessionImpl implements Session {
 		return plainTextMessage.cleanText;
 	}
 
+	public String transformSending(String msgText)
+			throws OtrException {
+		return this.transformSending(msgText, null);
+	}
+
 	public String transformSending(String msgText, List<TLV> tlvs)
 			throws OtrException {
 

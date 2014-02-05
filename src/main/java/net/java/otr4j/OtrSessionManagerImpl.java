@@ -71,50 +71,12 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 			return sessions.get(sessionID);
 	}
 
-	public Session getOutgoingSession(SessionID sessionID) {
-		return this.getSession(sessionID).getOutgoingInstance();
-	}
-	public SessionStatus getSessionStatus(SessionID sessionID) {
-		return this.getSession(sessionID).getSessionStatus();
-	}
-
-	public String transformReceiving(SessionID sessionID, String msgText)
-			throws OtrException {
-		return this.getSession(sessionID).transformReceiving(msgText);
-	}
-
-	public String transformSending(SessionID sessionID, String msgText)
-			throws OtrException {
-		return this.getSession(sessionID).transformSending(msgText, null);
-	}
-
-	public String transformSending(SessionID sessionID, String msgText, List<TLV> tlvs)
-			throws OtrException {
-		return this.getSession(sessionID).transformSending(msgText, tlvs);
-	}
-
-	public void endSession(SessionID sessionID) throws OtrException {
-		this.getSession(sessionID).endSession();
-	}
-
-	public void startSession(SessionID sessionID) throws OtrException {
-		this.getSession(sessionID).startSession();
-	}
-
 	private void setHost(OtrEngineHost host) {
 		this.host = host;
 	}
 
 	private OtrEngineHost getHost() {
 		return host;
-	}
-
-	public void refreshSession(SessionID sessionID) throws OtrException {
-		this.getSession(sessionID).refreshSession();
-	}
-
-	public PublicKey getRemotePublicKey(SessionID sessionID) {
-		return this.getSession(sessionID).getRemotePublicKey();
 	}
 
 	private List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
@@ -130,21 +92,5 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 		synchronized (listeners) {
 			listeners.remove(l);
 		}
-	}
-
-	public List<Session> getSessionInstances(SessionID sessionID) {
-		return this.getSession(sessionID).getInstances();
-	}
-
-	public boolean setOutgoingInstance(SessionID sessionID, InstanceTag tag) {
-		return this.getSession(sessionID).setOutgoingInstance(tag);
-	}
-
-	public SessionStatus getSessionStatus(SessionID sessionID, InstanceTag tag) {
-		return this.getSession(sessionID).getSessionStatus(tag);
-	}
-
-	public PublicKey getRemotePublicKey(SessionID sessionID, InstanceTag tag) {
-		return this.getSession(sessionID).getRemotePublicKey(tag);
 	}
 }
