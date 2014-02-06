@@ -6,7 +6,7 @@ where the goal was to add support for OTR in [jitsi][2]. It currently
 supports OTRv1, [OTRv2][] and [OTRv3][].
 
 For a quick introduction on how to use the library have a look at the
-[DummyClient](src/test/java/net/otr4j/session/DummyClient.java).
+[DummyClient](src/test/java/net/java/otr4j/session/DummyClient.java).
 
 ## Maven
 
