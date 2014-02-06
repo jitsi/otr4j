@@ -5,6 +5,9 @@ in java. Its development started during the Google Summer of Code 2009
 where the goal was to add support for OTR in [jitsi][2]. It currently
 supports OTRv1, [OTRv2][] and [OTRv3][].
 
+For a quick introduction on how to use the library have a look at the
+[DummyClient](src/test/java/net/otr4j/session/DummyClient.java).
+
 ## Maven
 
 If you use maven for managing your project lifecycle and you want to
