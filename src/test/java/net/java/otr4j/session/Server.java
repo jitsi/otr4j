@@ -8,7 +8,5 @@ import net.java.otr4j.OtrException;
 public interface Server {
 	void send(Connection sender, String recipient, String msg) throws OtrException;
 
-	String getLastMessage();
-
 	Connection connect(DummyClient client);
 }

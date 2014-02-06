@@ -11,7 +11,6 @@ import java.util.Map;
 public class PriorityServer implements Server {
 
 	private final Map<String, Connection> clients = new HashMap<String, Connection>();
-	private String lastMessage;
 	private int conCount;
 
 	public void send(Connection sender, String recipient, String msg) throws OtrException {
@@ -22,12 +21,6 @@ public class PriorityServer implements Server {
 		// Dispatch the message.
 		Connection recipientConnection = clients.get(recipient);
 		recipientConnection.receive(sender.getClient().getAccount(), msg);
-
-		this.lastMessage = msg;
-	}
-
-	public String getLastMessage() {
-		return lastMessage;
 	}
 
 	public synchronized Connection connect(DummyClient client) {

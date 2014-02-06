@@ -9,6 +9,8 @@ import net.java.otr4j.crypto.OtrCryptoException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.logging.Logger;
 
 /**
@@ -18,12 +20,12 @@ public class DummyClient {
 
 	private static Logger logger = Logger.getLogger(SessionImplTest.class
 			.getName());
-
+	private final String account;
 	private Session session;
 	private OtrPolicy policy;
-	private String receivedMessage;
-	private final String account;
 	private Connection connection;
+	private MessageProcessor processor;
+	private Queue<ProcessedMessage> processedMsgs = new LinkedList<ProcessedMessage>();
 
 	public DummyClient(String account) {
 		this.account = account;
@@ -41,10 +43,6 @@ public class DummyClient {
 		this.policy = policy;
 	}
 
-	public String getReceivedMessage() {
-		return receivedMessage;
-	}
-
 	public void send(String recipient, String s) throws OtrException {
 		if (session == null) {
 			final SessionID sessionID = new SessionID(account, recipient, "DummyProtocol");
@@ -55,21 +53,19 @@ public class DummyClient {
 		connection.send(recipient, outgoingMessage);
 	}
 
-	public void endSession() throws OtrException {
+	public void exit() throws OtrException {
+		this.processor.stop();
 		if (session != null)
 			session.endSession();
 	}
 
 	public void receive(String sender, String s) throws OtrException {
-		if (session == null) {
-			final SessionID sessionID = new SessionID(account, sender, "DummyProtocol");
-			session = new SessionImpl(sessionID, new DummyOtrEngineHostImpl());
-		}
-
-		receivedMessage = session.transformReceiving(s);
+		this.processor.enqueue(sender, s);
 	}
 
 	public void connect(Server server) {
+		this.processor = new MessageProcessor();
+		new Thread(this.processor).start();
 		this.connection = server.connect(this);
 	}
 
@@ -80,6 +76,83 @@ public class DummyClient {
 		}
 
 		session.startSession();
+	}
+
+	public Connection getConnection() {
+		return connection;
+	}
+
+	public ProcessedMessage pollReceivedMessage() {
+		synchronized (processedMsgs) {
+			ProcessedMessage m;
+			while ((m = processedMsgs.poll()) == null) {
+				try {
+					processedMsgs.wait();
+				} catch (InterruptedException e) {
+				}
+			}
+
+			return m;
+		}
+	}
+
+	class MessageProcessor implements Runnable {
+		private final Queue<Message> messageQueue = new LinkedList<Message>();
+		private boolean stopped;
+
+		private void process(Message m) throws OtrException {
+			if (session == null) {
+				final SessionID sessionID = new SessionID(account, m.getSender(), "DummyProtocol");
+				session = new SessionImpl(sessionID, new DummyOtrEngineHostImpl());
+			}
+
+			String receivedMessage = session.transformReceiving(m.getContent());
+			synchronized (processedMsgs) {
+				processedMsgs.add(new ProcessedMessage(m, receivedMessage));
+				processedMsgs.notify();
+			}
+		}
+
+		public void run() {
+			synchronized (messageQueue) {
+				while (true) {
+
+					Message m = messageQueue.poll();
+
+					if (m == null) {
+						try {
+							messageQueue.wait();
+						} catch (InterruptedException e) {
+
+						}
+					} else {
+						try {
+							process(m);
+						} catch (OtrException e) {
+							e.printStackTrace();
+						}
+					}
+
+					if (stopped)
+						break;
+				}
+			}
+		}
+
+		public void enqueue(String sender, String s) {
+			synchronized (messageQueue) {
+				messageQueue.add(new Message(sender, s));
+				messageQueue.notify();
+			}
+		}
+
+		public void stop() {
+			stopped = true;
+
+			synchronized (messageQueue) {
+				messageQueue.notify();
+			}
+		}
 	}
 
 	class DummyOtrEngineHostImpl implements OtrEngineHost {

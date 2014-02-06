@@ -11,6 +11,12 @@ class Connection {
 	private final String connectionName;
 	private final Server server;
 
+	public String getSentMessage() {
+		return sentMessage;
+	}
+
+	private String sentMessage;
+
 	public Connection(Server server, DummyClient client, String connectionName) {
 		this.client = client;
 		this.server = server;
@@ -29,6 +35,7 @@ class Connection {
 	}
 
 	public void send(String recipient, String msg) throws OtrException {
+		this.sentMessage = msg;
 		server.send(this, recipient, msg);
 	}
 
