@@ -22,8 +22,16 @@ public class DummyClient {
 	private Session session;
 	private OtrPolicy policy;
 	private String receivedMessage;
-	private String account;
-	private DummyConnection connection;
+	private final String account;
+	private Connection connection;
+
+	public DummyClient(String account) {
+		this.account = account;
+	}
+
+	public Session getSession() {
+		return session;
+	}
 
 	public String getAccount() {
 		return account;
@@ -52,7 +60,7 @@ public class DummyClient {
 			session.endSession();
 	}
 
-	public void accept(String sender, String s) throws OtrException {
+	public void receive(String sender, String s) throws OtrException {
 		if (session == null) {
 			final SessionID sessionID = new SessionID(account, sender, "DummyProtocol");
 			session = new SessionImpl(sessionID, new DummyOtrEngineHostImpl());
@@ -61,9 +69,8 @@ public class DummyClient {
 		receivedMessage = session.transformReceiving(s);
 	}
 
-	public void connect(String account, DummyServer server) {
-		this.connection = server.connect(account, this);
-		this.account = account;
+	public void connect(Server server) {
+		this.connection = server.connect(this);
 	}
 
 	public void secureSession(String recipient) throws OtrException {
@@ -97,7 +104,8 @@ public class DummyClient {
 		}
 
 		public void finishedSessionMessage(SessionID sessionID, String msgText) throws OtrException {
-
+			logger.severe("SM session was finished. You shouldn't send messages to: "
+					+ sessionID);
 		}
 
 		public void finishedSessionMessage(SessionID sessionID) throws OtrException {
