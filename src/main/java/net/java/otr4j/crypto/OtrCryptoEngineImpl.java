@@ -281,20 +281,8 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 
 		// Create the final signature array, padded with zeros if necessary.
 		byte[] sig = new byte[siglen];
-		Boolean writeR = false;
-		Boolean writeS = false;
-		for (int i = 0; i < siglen; i++) {
-			if (i < rslen) {
-				if (!writeR)
-					writeR = rb.length >= rslen - i;
-				sig[i] = (writeR) ? rb[i] : (byte) 0x0;
-			} else {
-				int j = i - rslen; // Rebase.
-				if (!writeS)
-					writeS = sb.length >= rslen - j;
-				sig[i] = (writeS) ? sb[j] : (byte) 0x0;
-			}
-		}
+		System.arraycopy(rb, 0, sig, rslen - rb.length, rb.length);
+		System.arraycopy(sb, 0, sig, sig.length - sb.length, sb.length);
 		return sig;
 	}
 
