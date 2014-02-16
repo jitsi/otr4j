@@ -6,7 +6,7 @@
     <version>0.10</version>
     <packaging>jar</packaging>
     <name>otr4j library</name>
-    <url>http://github.com/gpolitis/otr4j</url>
+    <url>http://github.com/jitsi/otr4j</url>
     <description>
         otr4j is an implementation of the OTR (Off The Record) protocol in java.
 
@@ -25,9 +25,9 @@
         </license>
     </licenses>
     <scm>
-        <connection>scm:git:git@github.com:gpolitis/otr4j.git</connection>
-        <developerConnection>scm:git:git@github.com:gpolitis/otr4j.git</developerConnection>
-        <url>git@github.com:gpolitis/otr4j.git</url>
+        <connection>scm:git:git@github.com:jitsi/otr4j.git</connection>
+        <developerConnection>scm:git:git@github.com:jitsi/otr4j.git</developerConnection>
+        <url>git@github.com:jitsi/otr4j.git</url>
     </scm>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
