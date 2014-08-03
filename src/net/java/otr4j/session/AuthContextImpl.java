@@ -216,14 +216,15 @@ class AuthContextImpl implements AuthContext {
 		return r;
 	}
 
-	private void setRemoteDHPublicKey(DHPublicKey dhPublicKey) {
+	private void setRemoteDHPublicKey(DHPublicKey dhPublicKey)
+			throws OtrException {
 		// Verifies that Alice's gy is a legal value (2 <= gy <= modulus-2)
 		if (dhPublicKey.getY().compareTo(OtrCryptoEngine.MODULUS_MINUS_TWO) > 0) {
-			throw new IllegalArgumentException(
-					"Illegal D-H Public Key value, Ignoring message.");
+			throw new OtrException(new IllegalArgumentException(
+					"Illegal D-H Public Key value, Ignoring message."));
 		} else if (dhPublicKey.getY().compareTo(OtrCryptoEngine.BIGINTEGER_TWO) < 0) {
-			throw new IllegalArgumentException(
-					"Illegal D-H Public Key value, Ignoring message.");
+			throw new OtrException(new IllegalArgumentException(
+					"Illegal D-H Public Key value, Ignoring message."));
 		}
 		logger.finest("Received D-H Public Key is a legal value.");
 
