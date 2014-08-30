@@ -259,8 +259,10 @@ public class OtrSm {
 				/* Send msg with next smp msg content */
 				TLV sendtlv = new TLV(TLV.SMP3, nextmsg);
 				smstate.nextExpected = SM.EXPECT4;
-				engineHost.injectMessage(session.getSessionID(),
-						session.transformSending("", makeTlvList(sendtlv)));
+				String[] msg = session.transformSending("", makeTlvList(sendtlv));
+				for (String part : msg) {
+					engineHost.injectMessage(session.getSessionID(), part);
+				}
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
 			    reset();
@@ -285,8 +287,10 @@ public class OtrSm {
 			if (smstate.smProgState != SM.PROG_CHEATED){
 				/* Send msg with next smp msg content */
 				TLV sendtlv = new TLV(TLV.SMP4, nextmsg);
-				engineHost.injectMessage(session.getSessionID(),
-						session.transformSending("", makeTlvList(sendtlv)));
+				String[] msg = session.transformSending("", makeTlvList(sendtlv));
+				for (String part : msg) {
+					engineHost.injectMessage(session.getSessionID(), part);
+				}
 			} else {
 			    engineHost.smpError(session.getSessionID(), tlvType, true);
 			}

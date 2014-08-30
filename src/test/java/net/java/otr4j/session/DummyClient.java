@@ -1,17 +1,18 @@
 package net.java.otr4j.session;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.logging.Logger;
+
 import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.OtrPolicy;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.crypto.OtrCryptoException;
-
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.logging.Logger;
 
 /**
  * Created by gp on 2/5/14.
@@ -49,8 +50,10 @@ public class DummyClient {
 			session = new SessionImpl(sessionID, new DummyOtrEngineHostImpl());
 		}
 
-		String outgoingMessage = session.transformSending(s);
-		connection.send(recipient, outgoingMessage);
+		String[] outgoingMessage = session.transformSending(s, (List<TLV>) null);
+		for (String part : outgoingMessage) {
+			connection.send(recipient, part);
+		}
 	}
 
 	public void exit() throws OtrException {
@@ -288,6 +291,11 @@ public class DummyClient {
 
 		public String getFallbackMessage() {
 			return "Off-the-Record private conversation has been requested. However, you do not have a plugin to support that.";
+		}
+		
+		public FragmenterInstructions getFragmenterInstructions(SessionID sessionID) {
+			return new FragmenterInstructions(FragmenterInstructions.UNLIMITED,
+					new int[] { FragmenterInstructions.UNLIMITED });
 		}
 	}
 }

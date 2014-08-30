@@ -72,6 +72,7 @@ public class SessionImpl implements Session {
 	private InstanceTag receiverTag;
 	private int protocolVersion;
 	private OtrAssembler assembler;
+	private final OtrFragmenter fragmenter;
 
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
 
@@ -94,6 +95,8 @@ public class SessionImpl implements Session {
 		isMasterSession = true;
 
 		assembler = new OtrAssembler(getSenderInstanceTag());
+		fragmenter = new OtrFragmenter(outgoingSession,
+				listener.getFragmenterInstructions(this.getSessionID()));
 	}
 	
 	// A private constructor for instantiating 'slave' sessions.
@@ -117,6 +120,11 @@ public class SessionImpl implements Session {
 		protocolVersion = OTRv.THREE;
 
 		assembler = new OtrAssembler(getSenderInstanceTag());
+
+		// TODO we could also create this thing JIT such that we have maximum
+		// flexibility w.r.t. fragmentation instructions.
+		fragmenter = new OtrFragmenter(outgoingSession,
+				listener.getFragmenterInstructions(this.getSessionID()));
 	}
 
 	public BigInteger getS() {
@@ -683,7 +691,17 @@ public class SessionImpl implements Session {
 		}
 		if (m instanceof QueryMessage)
 			msg += getHost().getFallbackMessage(getSessionID());
-		getHost().injectMessage(getSessionID(), msg);
+		
+		String[] fragments;
+		try {
+			fragments = this.fragmenter.fragment(msg);
+			for (String fragment : fragments) {
+				getHost().injectMessage(getSessionID(), fragment);
+			}
+		} catch (IOException e) {
+			logger.severe("Failed to fragment message.");
+			e.printStackTrace();
+		}
 	}
 
 	private String handlePlainTextMessage(PlainTextMessage plainTextMessage)
@@ -783,13 +801,13 @@ public class SessionImpl implements Session {
 
 		return plainTextMessage.cleanText;
 	}
-
-	public String transformSending(String msgText)
+	
+	public String[] transformSending(String msgText)
 			throws OtrException {
 		return this.transformSending(msgText, null);
 	}
 
-	public String transformSending(String msgText, List<TLV> tlvs)
+	public String[] transformSending(String msgText, List<TLV> tlvs)
 			throws OtrException {
 
 		if (isMasterSession && outgoingSession != this && getProtocolVersion() == OTRv.THREE) {
@@ -819,12 +837,12 @@ public class SessionImpl implements Session {
 					AbstractMessage abstractMessage = new PlainTextMessage(
 							versions, msgText);
 					try {
-						return SerializationUtils.toString(abstractMessage);
+						return new String[] {SerializationUtils.toString(abstractMessage)};
 					} catch (IOException e) {
 						throw new OtrException(e);
 					}
 				} else {
-					return msgText;
+					return new String[] {msgText};
 				}
 			}
 		case ENCRYPTED:
@@ -908,7 +926,8 @@ public class SessionImpl implements Session {
 			m.receiverInstanceTag = getReceiverInstanceTag().getValue();
 
 			try {
-				return SerializationUtils.toString(m);
+				final String completeMessage = SerializationUtils.toString(m);
+				return this.fragmenter.fragment(completeMessage);
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
@@ -917,7 +936,7 @@ public class SessionImpl implements Session {
 			return null;
 		default:
 			logger.finest("Uknown message state, not processing.");
-			return msgText;
+			return new String[] {msgText};
 		}
 	}
 
@@ -956,8 +975,10 @@ public class SessionImpl implements Session {
 			Vector<TLV> tlvs = new Vector<TLV>();
 			tlvs.add(new TLV(TLV.DISCONNECTED, null));
 
-			String msg = this.transformSending(null, tlvs);
-			getHost().injectMessage(getSessionID(), msg);
+			String[] msg = this.transformSending(null, tlvs);
+			for (String part : msg) {
+				getHost().injectMessage(getSessionID(), part);
+			}
 			this.setSessionStatus(SessionStatus.PLAINTEXT);
 			break;
 		case FINISHED:
@@ -1022,8 +1043,10 @@ public class SessionImpl implements Session {
 		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
 			return;
 		List<TLV> tlvs = otrSm.initRespondSmp(question, secret, true);
-		String msg = transformSending("", tlvs);
-		getHost().injectMessage(getSessionID(), msg);
+		String[] msg = transformSending("", tlvs);
+		for (String part : msg) {
+			getHost().injectMessage(getSessionID(), part);
+		}
 	}
 
 	public void respondSmp(String question, String secret) throws OtrException {
@@ -1034,8 +1057,10 @@ public class SessionImpl implements Session {
 		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
 			return;
 		List<TLV> tlvs = otrSm.initRespondSmp(question, secret, false);
-		String msg = transformSending("", tlvs);
-		getHost().injectMessage(getSessionID(), msg);
+		String[] msg = transformSending("", tlvs);
+		for (String part : msg) {
+			getHost().injectMessage(getSessionID(), part);
+		}
 	}
 
 	public void abortSmp() throws OtrException {
@@ -1046,8 +1071,10 @@ public class SessionImpl implements Session {
 		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
 			return;
 		List<TLV> tlvs = otrSm.abortSmp();
-		String msg = transformSending("", tlvs);
-		getHost().injectMessage(getSessionID(), msg);
+		String[] msg = transformSending("", tlvs);
+		for (String part : msg) {
+			getHost().injectMessage(getSessionID(), part);
+		}
 	}
 
 	public boolean isSmpInProgress() {

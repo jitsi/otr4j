@@ -7,8 +7,8 @@
 package net.java.otr4j;
 
 import java.security.KeyPair;
-import java.util.List;
 
+import net.java.otr4j.session.FragmenterInstructions;
 import net.java.otr4j.session.InstanceTag;
 import net.java.otr4j.session.SessionID;
 
@@ -45,6 +45,8 @@ public abstract interface OtrEngineHost {
 			String msgText) throws OtrException;
 
 	public abstract OtrPolicy getSessionPolicy(SessionID sessionID);
+	
+	public abstract FragmenterInstructions getFragmenterInstructions(SessionID sessionID); 
 
 	public abstract KeyPair getLocalKeyPair(SessionID sessionID)
 			throws OtrException;
