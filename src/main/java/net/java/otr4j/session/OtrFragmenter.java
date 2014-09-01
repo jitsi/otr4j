@@ -56,9 +56,12 @@ public class OtrFragmenter {
 		}
 		this.session = session;
 		if (instructions == null) {
-			throw new NullPointerException("instructions cannot be null");
+			this.instructions = new FragmenterInstructions(
+					FragmenterInstructions.UNLIMITED,
+					new int[] { FragmenterInstructions.UNLIMITED });
+		} else {
+			this.instructions = instructions;
 		}
-		this.instructions = instructions;
 	}
 	
 	/**

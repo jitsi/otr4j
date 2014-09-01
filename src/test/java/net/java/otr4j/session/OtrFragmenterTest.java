@@ -246,10 +246,15 @@ public class OtrFragmenterTest {
 		new OtrFragmenter(null, instructions);
 	}
 
-	@Test(expected = NullPointerException.class)
-	public void testNullInstructionsConstruction() {
+	@Test
+	public void testNullInstructionsConstructionSetsUnlimited() {
 		Session session = createSessionMock(null, 0, 0);
-		new OtrFragmenter(session, null);
+		OtrFragmenter fragmenter = new OtrFragmenter(session, null);
+		Assert.assertEquals(FragmenterInstructions.UNLIMITED,
+				fragmenter.getInstructions().maxFragmentsAllowed);
+		Assert.assertArrayEquals(
+				new int[] { FragmenterInstructions.UNLIMITED },
+				fragmenter.getInstructions().maxFragmentSizes);
 	}
 
 	@Test
