@@ -46,6 +46,18 @@ public abstract interface OtrEngineHost {
 
 	public abstract OtrPolicy getSessionPolicy(SessionID sessionID);
 	
+	/**
+	 * Get instructions for the necessary fragmentation operations.
+	 *
+	 * If no fragmentation is necessary, return <tt>null</tt> to set the default
+	 * fragmentation instructions which are to use unlimited messages of
+	 * unlimited size. Hence fragmentation is not necessary or applied.
+	 *
+	 * @param sessionID
+	 *            the session ID of the session
+	 * @return return fragmentation instructions or null for defaults (i.e. no
+	 *         fragmentation)
+	 */
 	public abstract FragmenterInstructions getFragmenterInstructions(SessionID sessionID); 
 
 	public abstract KeyPair getLocalKeyPair(SessionID sessionID)
