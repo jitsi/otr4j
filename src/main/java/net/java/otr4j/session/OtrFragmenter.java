@@ -244,7 +244,11 @@ public class OtrFragmenter {
 	/**
 	 * Compute the overhead size for a v2 header.
 	 *
-	 * Current implementation returns an upper bound size if the header 
+	 * Current implementation returns an upper bound size for the size of the
+	 * header. As I understand it, the protocol does not require leading zeros
+	 * to fill a 5-space number are so in theory it is possible to gain a few
+	 * extra characters per message if an exact calculation of the number of
+	 * required chars is used.
 	 *
 	 * TODO I think this is dependent on the number of chars in a decimal
 	 * representation of the current and total number of fragments.
