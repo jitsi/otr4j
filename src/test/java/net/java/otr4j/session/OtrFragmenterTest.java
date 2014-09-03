@@ -1,9 +1,12 @@
 package net.java.otr4j.session;
 
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 import net.java.otr4j.OtrPolicy;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.bouncycastle.util.encoders.Base64;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -368,6 +371,15 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		fragmenter.numberOfFragments(specV3MessageFull);
 	}
+	
+	@Test(expected = IOException.class)
+	public void testFragmentSizeTooSmallForPayload() throws IOException {
+		Session session = createSessionMock(POLICY_V3, 0, 0);
+		FragmenterInstructions instructions = new FragmenterInstructions(-1,
+				new int[] { OtrFragmenter.computeHeaderV3Size() });
+		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
+		fragmenter.numberOfFragments(specV3MessageFull);
+	}
 
 	@Test(expected = IOException.class)
 	public void testNumFragmentsTooLimited() throws IOException {
@@ -418,6 +430,55 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		String[] msg = fragmenter.fragment(specV3MessageFull);
 		Assert.assertArrayEquals(specV3MessageParts199, msg);
+	}
+	
+	@Test(expected = IOException.class)
+	public void testExceedProtocolMaximumNumberOfFragments() throws IOException {
+		final String veryLongString = new String(new char[65537]).replace('\0', 'a');
+		Session session = createSessionMock(POLICY_V3, 0x5a73a599, 0x27e31597);
+		FragmenterInstructions instructions = new FragmenterInstructions(-1,
+				new int[] { OtrFragmenter.computeHeaderV3Size() + 1 });
+		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
+		String[] msg = fragmenter.fragment(veryLongString);
+	}
+	
+	@Test
+	public void testFragmentPatternsV3() throws IOException {		
+		final Pattern OTRv3_FRAGMENT_PATTERN = Pattern.compile("^\\?OTR\\|[0-9abcdef]{8}\\|[0-9abcdef]{8},\\d{5},\\d{5},[a-zA-Z0-9\\+/=\\?:]+,$");
+		final String payload = new String(Base64.encode(RandomStringUtils.random(1700).getBytes()));
+		Session session = createSessionMock(POLICY_V3, 0x5a73a599, 0x27e31597);
+		FragmenterInstructions instructions = new FragmenterInstructions(-1,
+				new int[] { 100, 150 });
+		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
+		String[] msg = fragmenter.fragment(payload);
+		int count = 1;
+		for (String part : msg) {
+			Assert.assertTrue(OTRv3_FRAGMENT_PATTERN.matcher(part).matches());
+			// Test monotonic increase of part numbers ...
+			int partNumber = Integer.parseInt(part.substring(23, 28), 10);
+			Assert.assertEquals(count, partNumber);
+			count++;
+		}
+	}
+	
+	@Test
+	public void testFragmentPatternsV2() throws IOException {		
+		final Pattern OTRv2_FRAGMENT_PATTERN = Pattern.compile("^\\?OTR,\\d{1,5},\\d{1,5},[a-zA-Z0-9\\+/=\\?:]+,$");
+		final String payload = new String(Base64.encode(RandomStringUtils.random(700).getBytes()));
+		Session session = createSessionMock(POLICY_V2, 0, 0);
+		FragmenterInstructions instructions = new FragmenterInstructions(-1,
+				new int[] { 100, 150 });
+		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
+		String[] msg = fragmenter.fragment(payload);
+		int count = 1;
+		for (String part : msg) {
+			Assert.assertTrue(OTRv2_FRAGMENT_PATTERN.matcher(part).matches());
+			// Test monotonic increase of part numbers ...
+			String temp = part.substring(5, 11);
+			int partNumber = Integer.parseInt(temp.substring(0, temp.indexOf(',')), 10);
+			Assert.assertEquals(count, partNumber);
+			count++;
+		}
 	}
 	
 	private Session createSessionMock(final OtrPolicy policy, final int sender, final int receiver) {

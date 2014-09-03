@@ -104,6 +104,9 @@ public class OtrFragmenter {
 		int messages = 0;
 		int remaining = message.length();
 		for (int index = 0; remaining > 0; index = nextSizeIndex(index)) {
+			// TODO iterating through all sizes is very painful for 65000+
+			// fragments with content size 1. This is quite an extreme, though.
+			// Better to create iterator and finish off with last given size.
 			final int overhead = computeHeaderSize();
 			final int contentSize = instructions.maxFragmentSizes[index] - overhead;
 			if (contentSize <= 0) {
@@ -235,7 +238,7 @@ public class OtrFragmenter {
 	 *
 	 * @return returns size of v3 header
 	 */
-	private int computeHeaderV3Size() {
+	static int computeHeaderV3Size() {
 		// For a OTRv3 header this seems to be a constant number, since the
 		// specs seem to suggest that smaller numbers have leading zeros.
 		return 36;
@@ -255,7 +258,7 @@ public class OtrFragmenter {
 	 *
 	 * @return returns size of v2 header
 	 */
-	private int computeHeaderV2Size() {
+	static int computeHeaderV2Size() {
 		// currently returns an upper bound (for the case of 10000+ fragments)
 		return 18;
 	}
