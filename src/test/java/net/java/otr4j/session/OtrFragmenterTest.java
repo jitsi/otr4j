@@ -448,7 +448,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testFragmentPatternsV3() throws IOException {		
 		final Pattern OTRv3_FRAGMENT_PATTERN = Pattern.compile("^\\?OTR\\|[0-9abcdef]{8}\\|[0-9abcdef]{8},\\d{5},\\d{5},[a-zA-Z0-9\\+/=\\?:]+,$");
-		final String payload = new String(Base64.encode(RandomStringUtils.random(1700).getBytes()));
+		final String payload = new String(Base64.encode(RandomStringUtils.random(1700).getBytes("UTF-8")));
 		Session session = createSessionMock(POLICY_V3, 0x5a73a599, 0x27e31597);
 		FragmenterInstructions instructions = new FragmenterInstructions(-1,
 				new int[] { 100, 150 });
@@ -467,7 +467,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testFragmentPatternsV2() throws IOException {		
 		final Pattern OTRv2_FRAGMENT_PATTERN = Pattern.compile("^\\?OTR,\\d{1,5},\\d{1,5},[a-zA-Z0-9\\+/=\\?:]+,$");
-		final String payload = new String(Base64.encode(RandomStringUtils.random(700).getBytes()));
+		final String payload = new String(Base64.encode(RandomStringUtils.random(700).getBytes("UTF-8")));
 		Session session = createSessionMock(POLICY_V2, 0, 0);
 		FragmenterInstructions instructions = new FragmenterInstructions(-1,
 				new int[] { 100, 150 });
