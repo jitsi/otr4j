@@ -48,6 +48,7 @@ import net.java.otr4j.io.messages.QueryMessage;
 /**
  * 
  * @author George Politis
+ * @author Danny van Heumen
  */
 public class SessionImpl implements Session {
 

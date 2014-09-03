@@ -11,6 +11,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+/**
+ * Tests for OTR Fragmenter.
+ *
+ * @author Danny van Heumen
+ */
 public class OtrFragmenterTest {
 
 	private static final OtrPolicy POLICY_V23 = new OtrPolicy() {
@@ -225,8 +230,6 @@ public class OtrFragmenterTest {
 		public void setEnableManual(boolean value) {}
 	};
 
-	// TODO test with small numbers to ensure formatting template is correct in all cases!
-
 	private static final String specV3MessageFull = "?OTR:AAMDJ+MVmSfjFZcAAAAAAQAAAAIAAADA1g5IjD1ZGLDVQEyCgCyn9hbrL3KAbGDdzE2ZkMyTKl7XfkSxh8YJnudstiB74i4BzT0W2haClg6dMary/jo9sMudwmUdlnKpIGEKXWdvJKT+hQ26h9nzMgEditLB8vjPEWAJ6gBXvZrY6ZQrx3gb4v0UaSMOMiR5sB7Eaulb2Yc6RmRnnlxgUUC2alosg4WIeFN951PLjScajVba6dqlDi+q1H5tPvI5SWMN7PCBWIJ41+WvF+5IAZzQZYgNaVLbAAAAAAAAAAEAAAAHwNiIi5Ms+4PsY/L2ipkTtquknfx6HodLvk3RAAAAAA==.";
 
 	private static final String[] specV3MessageParts199 = new String[] {
@@ -439,7 +442,7 @@ public class OtrFragmenterTest {
 		FragmenterInstructions instructions = new FragmenterInstructions(-1,
 				new int[] { OtrFragmenter.computeHeaderV3Size() + 1 });
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
-		String[] msg = fragmenter.fragment(veryLongString);
+		fragmenter.fragment(veryLongString);
 	}
 	
 	@Test

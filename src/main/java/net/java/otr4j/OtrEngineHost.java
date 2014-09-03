@@ -50,8 +50,9 @@ public abstract interface OtrEngineHost {
 	 * Get instructions for the necessary fragmentation operations.
 	 *
 	 * If no fragmentation is necessary, return <tt>null</tt> to set the default
-	 * fragmentation instructions which are to use unlimited messages of
-	 * unlimited size. Hence fragmentation is not necessary or applied.
+	 * fragmentation instructions which are to use an unlimited number of
+	 * messages of unlimited size each. Hence fragmentation is not necessary or
+	 * applied.
 	 *
 	 * @param sessionID
 	 *            the session ID of the session

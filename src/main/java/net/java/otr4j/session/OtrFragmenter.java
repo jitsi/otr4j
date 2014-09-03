@@ -278,14 +278,29 @@ public class OtrFragmenter {
 		return current;
 	}
 	
+	/**
+	 * Get the OTR policy.
+	 *
+	 * @return returns the policy
+	 */
 	private OtrPolicy getPolicy() {
 		return this.session.getSessionPolicy();
 	}
 	
+	/**
+	 * Get the sender instance.
+	 *
+	 * @return returns the sender instance
+	 */
 	private int getSenderInstance() {
 		return this.session.getSenderInstanceTag().getValue();
 	}
 	
+	/**
+	 * Get the receiver instance.
+	 *
+	 * @return returns the receiver instance
+	 */
 	private int getReceiverInstance() {
 		return this.session.getReceiverInstanceTag().getValue();
 	}

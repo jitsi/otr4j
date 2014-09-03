@@ -1,7 +1,13 @@
 package net.java.otr4j.session;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
+/**
+ * Fragmenter Instructions tests.
+ *
+ * @author Danny van Heumen
+ */
 public class FragmenterInstructionsTest {
 
 	@Test
