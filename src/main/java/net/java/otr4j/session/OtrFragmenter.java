@@ -3,6 +3,7 @@ package net.java.otr4j.session;
 import java.io.IOException;
 import java.util.LinkedList;
 
+import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrPolicy;
 
 /**
@@ -42,26 +43,23 @@ public class OtrFragmenter {
 	/**
 	 * Instructions on how to fragment the input message.
 	 */
-	private final FragmenterInstructions instructions;
+	private final OtrEngineHost host;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param session session instance (cannot be null)
-	 * @param instructions fragmenter instructions (cannot be null)
+	 * @param host OTR engine host calling upon OTR session
 	 */
-	public OtrFragmenter(final Session session, final FragmenterInstructions instructions) {
+	public OtrFragmenter(final Session session, final OtrEngineHost host) {
 		if (session == null) {
 			throw new NullPointerException("session cannot be null");
 		}
 		this.session = session;
-		if (instructions == null) {
-			this.instructions = new FragmenterInstructions(
-					FragmenterInstructions.UNLIMITED,
-					FragmenterInstructions.UNLIMITED);
-		} else {
-			this.instructions = instructions;
+		if (host == null) {
+			throw new NullPointerException("host cannot be null");
 		}
+		this.host = host;
 	}
 	
 	/**
@@ -69,8 +67,8 @@ public class OtrFragmenter {
 	 *
 	 * @return returns instructions
 	 */
-	public FragmenterInstructions getInstructions() {
-		return this.instructions;
+	public OtrEngineHost getHost() {
+		return this.host;
 	}
 
 	/**
@@ -86,21 +84,41 @@ public class OtrFragmenter {
 	 *             support fragmentation, for example if only OTRv1 is allowed.
 	 */
 	public int numberOfFragments(final String message) throws IOException {
-		if (this.instructions.maxFragmentSize == FragmenterInstructions.UNLIMITED
-				|| this.instructions.maxFragmentSize >= message.length()) {
+		final FragmenterInstructions instructions = this.host.getFragmenterInstructions(this.session.getSessionID());
+		return numberOfFragments(message, instructions);
+	}
+	
+	/**
+	 * Calculate the number of fragments that are required for the message to be
+	 * sent fragmented completely.
+	 *
+	 * @param message
+	 *            the message to fragment
+	 * @param instructions
+	 *            the fragmentation instructions
+	 * @return returns number of fragments required
+	 * @throws IOException
+	 *             throws an IOException in case fragment size is too small to
+	 *             store any content or when the provided policy does not
+	 *             support fragmentation, for example if only OTRv1 is allowed.
+	 */
+	private int numberOfFragments(final String message, final FragmenterInstructions instructions) throws IOException {
+		if (instructions.maxFragmentSize == FragmenterInstructions.UNLIMITED
+				|| instructions.maxFragmentSize >= message.length()) {
 			return 1;
 		}
-		return computeFragmentNumber(message);
+		return computeFragmentNumber(message, instructions);
 	}
 
 	/**
 	 * Compute the number of fragments required.
 	 *
 	 * @param message the original message
+	 * @param instructions fragmentation instructions
 	 * @return returns number of fragments required.
 	 * @throws IOException throws an IOException if fragment size is too small.
 	 */
-	private int computeFragmentNumber(final String message) throws IOException {
+	private int computeFragmentNumber(final String message, final FragmenterInstructions instructions) throws IOException {
 		final int overhead = computeHeaderSize();
 		final int payloadSize = instructions.maxFragmentSize - overhead;
 		if (payloadSize <= 0) {
@@ -125,11 +143,12 @@ public class OtrFragmenter {
 	 *             the maximum number of fragments is exceeded.
 	 */
 	public String[] fragment(final String message) throws IOException {
+		final FragmenterInstructions instructions = this.host.getFragmenterInstructions(this.session.getSessionID());
 		if (instructions.maxFragmentSize == FragmenterInstructions.UNLIMITED
 				|| instructions.maxFragmentSize >= message.length()) {
 			return new String[] { message };
 		}
-		final int num = numberOfFragments(message);
+		final int num = numberOfFragments(message, instructions);
 		if (instructions.maxFragmentsAllowed != FragmenterInstructions.UNLIMITED
 				&& instructions.maxFragmentsAllowed < num) {
 			throw new IOException("Need more fragments to store full message.");

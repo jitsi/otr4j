@@ -96,8 +96,7 @@ public class SessionImpl implements Session {
 		isMasterSession = true;
 
 		assembler = new OtrAssembler(getSenderInstanceTag());
-		fragmenter = new OtrFragmenter(outgoingSession,
-				listener.getFragmenterInstructions(this.getSessionID()));
+		fragmenter = new OtrFragmenter(outgoingSession, listener);
 	}
 	
 	// A private constructor for instantiating 'slave' sessions.
@@ -121,11 +120,7 @@ public class SessionImpl implements Session {
 		protocolVersion = OTRv.THREE;
 
 		assembler = new OtrAssembler(getSenderInstanceTag());
-
-		// TODO we could also create this thing JIT such that we have maximum
-		// flexibility w.r.t. fragmentation instructions.
-		fragmenter = new OtrFragmenter(outgoingSession,
-				listener.getFragmenterInstructions(this.getSessionID()));
+		fragmenter = new OtrFragmenter(outgoingSession, listener);
 	}
 
 	public BigInteger getS() {
