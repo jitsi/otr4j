@@ -17,21 +17,18 @@ public class FragmenterInstructions {
 	public final int maxFragmentsAllowed;
 	
 	/**
-	 * Maximum sizes for each fragment. The final size in the array will be used
-	 * for all subsequent fragments too. Hence, only 1 size means that it will
-	 * be used for all fragments.
+	 * Maximum size for fragments.
 	 */
-	// FIXME force at least 1 size or some other measure?
-	public final int[] maxFragmentSizes;
+	public final int maxFragmentSize;
 	
 	/**
 	 * Constructor.
 	 *
 	 * @param maxFragmentsAllowed Maximum fragments allowed.
-	 * @param maxFragmentSizes Maximum fragment sizes allowed.
+	 * @param maxFragmentSize Maximum fragment size allowed.
 	 */
-	public FragmenterInstructions(int maxFragmentsAllowed, int[] maxFragmentSizes) {
+	public FragmenterInstructions(int maxFragmentsAllowed, int maxFragmentSize) {
 		this.maxFragmentsAllowed = maxFragmentsAllowed;
-		this.maxFragmentSizes = maxFragmentSizes;
+		this.maxFragmentSize = maxFragmentSize;
 	}
 }

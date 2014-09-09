@@ -12,8 +12,8 @@ public class FragmenterInstructionsTest {
 
 	@Test
 	public void testConstruction() {
-		FragmenterInstructions instructions = new FragmenterInstructions(1, new int[] {100});
+		FragmenterInstructions instructions = new FragmenterInstructions(1, 100);
 		Assert.assertEquals(1, instructions.maxFragmentsAllowed);
-		Assert.assertArrayEquals(new int[] {100}, instructions.maxFragmentSizes);
+		Assert.assertEquals(100, instructions.maxFragmentSize);
 	}
 }

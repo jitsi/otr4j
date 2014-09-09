@@ -248,7 +248,7 @@ public class OtrFragmenterTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testNullPolicyConstruction() {
-		FragmenterInstructions instructions = new FragmenterInstructions(2, new int[] {100, 100});
+		FragmenterInstructions instructions = new FragmenterInstructions(2, 100);
 		new OtrFragmenter(null, instructions);
 	}
 
@@ -258,22 +258,21 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, null);
 		Assert.assertEquals(FragmenterInstructions.UNLIMITED,
 				fragmenter.getInstructions().maxFragmentsAllowed);
-		Assert.assertArrayEquals(
-				new int[] { FragmenterInstructions.UNLIMITED },
-				fragmenter.getInstructions().maxFragmentSizes);
+		Assert.assertEquals(FragmenterInstructions.UNLIMITED,
+				fragmenter.getInstructions().maxFragmentSize);
 	}
 
 	@Test
 	public void testConstruction() {
 		Session session = createSessionMock(null, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(2, new int[] {100, 100});
+		FragmenterInstructions instructions = new FragmenterInstructions(2, 100);
 		new OtrFragmenter(session, instructions);
 	}
 	
 	@Test
 	public void testGetInstructions() {
 		Session session = createSessionMock(null, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(2, new int[] {100, 100});
+		FragmenterInstructions instructions = new FragmenterInstructions(2, 100);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		Assert.assertSame(instructions, fragmenter.getInstructions());
 	}
@@ -281,7 +280,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testUnlimitedSizedFragmentToSingleMessage() throws IOException {
 		Session session = createSessionMock(POLICY_V3, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {-1});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, -1);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		String[] msg = fragmenter.fragment(specV3MessageFull);
 		Assert.assertArrayEquals(new String[] {specV3MessageFull}, msg);
@@ -290,7 +289,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testUnlimitedSizedFragmentToSingleMessageV2() throws IOException {
 		Session session = createSessionMock(POLICY_V2, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {-1});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, -1);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		String[] msg = fragmenter.fragment(specV2MessageFull);
 		Assert.assertArrayEquals(new String[] {specV2MessageFull}, msg);
@@ -299,7 +298,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testLargeEnoughFragmentToSingleMessage() throws IOException {
 		Session session = createSessionMock(POLICY_V3, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {354});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 354);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		String[] msg = fragmenter.fragment(specV3MessageFull);
 		Assert.assertArrayEquals(new String[] {specV3MessageFull}, msg);
@@ -308,7 +307,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testLargeEnoughFragmentToSingleMessageV2() throws IOException {
 		Session session = createSessionMock(POLICY_V2, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {830});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 830);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		String[] msg = fragmenter.fragment(specV2MessageFull);
 		Assert.assertArrayEquals(new String[] {specV2MessageFull}, msg);
@@ -317,7 +316,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testCalculateNumberOfFragmentsUnlimitedSize() throws IOException {
 		Session session = createSessionMock(POLICY_V3, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {-1});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, -1);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		int num = fragmenter.numberOfFragments(specV3MessageFull);
 		Assert.assertEquals(1, num);
@@ -326,7 +325,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testCalculateNumberOfFragmentsLargeEnoughSize() throws IOException {
 		Session session = createSessionMock(POLICY_V3, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {1000});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 1000);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		int num = fragmenter.numberOfFragments(specV3MessageFull);
 		Assert.assertEquals(1, num);
@@ -335,7 +334,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testCalculateNumberOfFragmentsNumFragmentsSmallFragmentSize() throws IOException {
 		Session session = createSessionMock(POLICY_V3, 0, 0);;
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {199});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 199);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		int num = fragmenter.numberOfFragments(specV3MessageFull);
 		Assert.assertEquals(3, num);
@@ -344,33 +343,16 @@ public class OtrFragmenterTest {
 	@Test
 	public void testCalculateNumberOfFragmentsNumFragmentsSmallFragmentSize2() throws IOException {
 		Session session = createSessionMock(POLICY_V3, 0, 0);;
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {80});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 80);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		int num = fragmenter.numberOfFragments(specV3MessageFull);
 		Assert.assertEquals(9, num);
 	}
 
-	@Test
-	public void testCalculateNumberOfFragmentsNumFragmentsVariousSizes() throws IOException {
-		Session session = createSessionMock(POLICY_V3, 0, 0);;
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {50, 100, 100, 200});
-		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
-		int num = fragmenter.numberOfFragments(specV3MessageFull);
-		Assert.assertEquals(5, num);
-	}
-
 	@Test(expected = IOException.class)
 	public void testFragmentSizeTooSmallForOverhead() throws IOException {
 		Session session = createSessionMock(POLICY_V3, 0, 0);;
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {35});
-		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
-		fragmenter.numberOfFragments(specV3MessageFull);
-	}
-
-	@Test(expected = IOException.class)
-	public void testFragmentSizeTooSmallForOverheadVariableSizes() throws IOException {
-		Session session = createSessionMock(POLICY_V3, 0, 0);;
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {50, 40, 30, 40});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 35);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		fragmenter.numberOfFragments(specV3MessageFull);
 	}
@@ -379,7 +361,7 @@ public class OtrFragmenterTest {
 	public void testFragmentSizeTooSmallForPayload() throws IOException {
 		Session session = createSessionMock(POLICY_V3, 0, 0);
 		FragmenterInstructions instructions = new FragmenterInstructions(-1,
-				new int[] { OtrFragmenter.computeHeaderV3Size() });
+				OtrFragmenter.computeHeaderV3Size());
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		fragmenter.numberOfFragments(specV3MessageFull);
 	}
@@ -387,7 +369,7 @@ public class OtrFragmenterTest {
 	@Test(expected = IOException.class)
 	public void testNumFragmentsTooLimited() throws IOException {
 		Session session = createSessionMock(POLICY_V3, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(2, new int[] {100});
+		FragmenterInstructions instructions = new FragmenterInstructions(2, 100);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		fragmenter.fragment(specV3MessageFull);
 	}
@@ -395,7 +377,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testV3MessageToSplit() throws IOException {
 		Session session = createSessionMock(POLICY_V3, 0x5a73a599, 0x27e31597);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {199});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 199);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		String[] msg = fragmenter.fragment(specV3MessageFull);
 		Assert.assertArrayEquals(specV3MessageParts199, msg);
@@ -404,7 +386,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testV2MessageToSplit() throws IOException {
 		Session session = createSessionMock(POLICY_V2, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {318});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 318);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		String[] msg = fragmenter.fragment(specV2MessageFull);
 		Assert.assertArrayEquals(specV2MessageParts318, msg);
@@ -413,7 +395,7 @@ public class OtrFragmenterTest {
 	@Test(expected = UnsupportedOperationException.class)
 	public void testV1ComputeHeaderSize() throws IOException {
 		Session session = createSessionMock(POLICY_V1, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {310});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 310);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		fragmenter.numberOfFragments(specV2MessageFull);
 	}
@@ -421,7 +403,7 @@ public class OtrFragmenterTest {
 	@Test(expected = UnsupportedOperationException.class)
 	public void testV1MessageToSplit() throws IOException {
 		Session session = createSessionMock(POLICY_V1, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {310});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 310);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		fragmenter.fragment(specV2MessageFull);
 	}
@@ -429,7 +411,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testEnsureV3WhenMultipleVersionsAllowed() throws IOException {
 		Session session = createSessionMock(POLICY_V23, 0x5a73a599, 0x27e31597);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1, new int[] {199});
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 199);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		String[] msg = fragmenter.fragment(specV3MessageFull);
 		Assert.assertArrayEquals(specV3MessageParts199, msg);
@@ -440,7 +422,7 @@ public class OtrFragmenterTest {
 		final String veryLongString = new String(new char[65537]).replace('\0', 'a');
 		Session session = createSessionMock(POLICY_V3, 0x5a73a599, 0x27e31597);
 		FragmenterInstructions instructions = new FragmenterInstructions(-1,
-				new int[] { OtrFragmenter.computeHeaderV3Size() + 1 });
+				OtrFragmenter.computeHeaderV3Size() + 1);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		fragmenter.fragment(veryLongString);
 	}
@@ -451,7 +433,7 @@ public class OtrFragmenterTest {
 		final String payload = new String(Base64.encode(RandomStringUtils.random(1700).getBytes("UTF-8")));
 		Session session = createSessionMock(POLICY_V3, 0x5a73a599, 0x27e31597);
 		FragmenterInstructions instructions = new FragmenterInstructions(-1,
-				new int[] { 100, 150 });
+				150);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		String[] msg = fragmenter.fragment(payload);
 		int count = 1;
@@ -469,8 +451,7 @@ public class OtrFragmenterTest {
 		final Pattern OTRv2_FRAGMENT_PATTERN = Pattern.compile("^\\?OTR,\\d{1,5},\\d{1,5},[a-zA-Z0-9\\+/=\\?:]+,$");
 		final String payload = new String(Base64.encode(RandomStringUtils.random(700).getBytes("UTF-8")));
 		Session session = createSessionMock(POLICY_V2, 0, 0);
-		FragmenterInstructions instructions = new FragmenterInstructions(-1,
-				new int[] { 100, 150 });
+		FragmenterInstructions instructions = new FragmenterInstructions(-1, 150);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, instructions);
 		String[] msg = fragmenter.fragment(payload);
 		int count = 1;

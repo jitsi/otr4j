@@ -295,7 +295,7 @@ public class DummyClient {
 		
 		public FragmenterInstructions getFragmenterInstructions(SessionID sessionID) {
 			return new FragmenterInstructions(FragmenterInstructions.UNLIMITED,
-					new int[] { FragmenterInstructions.UNLIMITED });
+					FragmenterInstructions.UNLIMITED);
 		}
 	}
 }

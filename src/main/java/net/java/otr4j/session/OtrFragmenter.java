@@ -58,7 +58,7 @@ public class OtrFragmenter {
 		if (instructions == null) {
 			this.instructions = new FragmenterInstructions(
 					FragmenterInstructions.UNLIMITED,
-					new int[] { FragmenterInstructions.UNLIMITED });
+					FragmenterInstructions.UNLIMITED);
 		} else {
 			this.instructions = instructions;
 		}
@@ -86,8 +86,8 @@ public class OtrFragmenter {
 	 *             support fragmentation, for example if only OTRv1 is allowed.
 	 */
 	public int numberOfFragments(final String message) throws IOException {
-		if (this.instructions.maxFragmentSizes[0] == FragmenterInstructions.UNLIMITED
-				|| this.instructions.maxFragmentSizes[0] >= message.length()) {
+		if (this.instructions.maxFragmentSize == FragmenterInstructions.UNLIMITED
+				|| this.instructions.maxFragmentSize >= message.length()) {
 			return 1;
 		}
 		return computeFragmentNumber(message);
@@ -101,18 +101,13 @@ public class OtrFragmenter {
 	 * @throws IOException throws an IOException if fragment size is too small.
 	 */
 	private int computeFragmentNumber(final String message) throws IOException {
-		int messages = 0;
-		int remaining = message.length();
-		for (int index = 0; remaining > 0; index = nextSizeIndex(index)) {
-			// TODO iterating through all sizes is very painful for 65000+
-			// fragments with content size 1. This is quite an extreme, though.
-			// Better to create iterator and finish off with last given size.
-			final int overhead = computeHeaderSize();
-			final int contentSize = instructions.maxFragmentSizes[index] - overhead;
-			if (contentSize <= 0) {
-				throw new IOException("Fragment size too small for storing content.");
-			}
-			remaining -= contentSize;
+		final int overhead = computeHeaderSize();
+		final int payloadSize = instructions.maxFragmentSize - overhead;
+		if (payloadSize <= 0) {
+			throw new IOException("Fragment size too small for storing content.");
+		}
+		int messages = message.length() / payloadSize;
+		if (message.length() % payloadSize != 0) {
 			messages++;
 		}
 		return messages;
@@ -130,12 +125,12 @@ public class OtrFragmenter {
 	 *             the maximum number of fragments is exceeded.
 	 */
 	public String[] fragment(final String message) throws IOException {
-		if (instructions.maxFragmentSizes[0] == FragmenterInstructions.UNLIMITED
-				|| instructions.maxFragmentSizes[0] >= message.length()) {
+		if (instructions.maxFragmentSize == FragmenterInstructions.UNLIMITED
+				|| instructions.maxFragmentSize >= message.length()) {
 			return new String[] { message };
 		}
 		final int num = numberOfFragments(message);
-		if (instructions.maxFragmentsAllowed > FragmenterInstructions.UNLIMITED
+		if (instructions.maxFragmentsAllowed != FragmenterInstructions.UNLIMITED
 				&& instructions.maxFragmentsAllowed < num) {
 			throw new IOException("Need more fragments to store full message.");
 		}
@@ -143,22 +138,19 @@ public class OtrFragmenter {
 			throw new IOException(
 					"Number of necessary fragments exceeds limit.");
 		}
-		int start = 0;
-		int idx = 0;
+		final int payloadSize = instructions.maxFragmentSize
+				- computeHeaderSize();
+		int previous = 0;
 		final LinkedList<String> fragments = new LinkedList<String>();
-		while (start < message.length()) {
-			final int size = instructions.maxFragmentSizes[idx]
-					- computeHeaderSize();
+		while (previous < message.length()) {
 			// Either get new position or position of exact message end
-			final int end = Math.min(start + size, message.length());
+			final int end = Math.min(previous + payloadSize, message.length());
 
-			final String partialContent = message.substring(start, end);
+			final String partialContent = message.substring(previous, end);
 			fragments.add(createMessageFragment(fragments.size(), num,
 					partialContent));
 
-			// increase index for next fragment size
-			idx = nextSizeIndex(idx);
-			start = end;
+			previous = end;
 		}
 		return fragments.toArray(new String[fragments.size()]);
 	}
@@ -263,21 +255,6 @@ public class OtrFragmenter {
 		return 18;
 	}
 
-	/**
-	 * Get next size index. This method implements the logic for iterating
-	 * through available sizes and infinitely repeating the last available
-	 * fragment size.
-	 *
-	 * @param current the current size index
-	 * @return returns the next size index
-	 */
-	private int nextSizeIndex(int current) {
-		if (current + 1 < this.instructions.maxFragmentSizes.length) {
-			return current + 1;
-		}
-		return current;
-	}
-	
 	/**
 	 * Get the OTR policy.
 	 *
