@@ -84,6 +84,7 @@ public class OtrFragmenter {
 	 *             support fragmentation, for example if only OTRv1 is allowed.
 	 */
 	public int numberOfFragments(final String message) throws IOException {
+		// FIXME handle null instructions
 		final FragmenterInstructions instructions = this.host.getFragmenterInstructions(this.session.getSessionID());
 		return numberOfFragments(message, instructions);
 	}
@@ -143,6 +144,7 @@ public class OtrFragmenter {
 	 *             the maximum number of fragments is exceeded.
 	 */
 	public String[] fragment(final String message) throws IOException {
+		// FIXME handle null instructions
 		final FragmenterInstructions instructions = this.host.getFragmenterInstructions(this.session.getSessionID());
 		if (instructions.maxFragmentSize == FragmenterInstructions.UNLIMITED
 				|| instructions.maxFragmentSize >= message.length()) {

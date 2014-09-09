@@ -267,12 +267,34 @@ public class OtrFragmenterTest {
 	}
 	
 	@Test
-	public void testGetInstructions() {
+	public void testGetHost() {
 		Session session = createSessionMock(null, 0, 0);
 		FragmenterInstructions instructions = new FragmenterInstructions(2, 100);
 		OtrEngineHost host = host(instructions);
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		Assert.assertSame(host, fragmenter.getHost());
+	}
+
+	@Test
+	public void testFragmentNullInstructionsCompute() throws IOException {
+		final OtrEngineHost host = Mockito.mock(OtrEngineHost.class);
+		Mockito.when(host.getFragmenterInstructions(Mockito.any(SessionID.class))).thenReturn(null);
+		final String message = "Some message that shouldn't be fragmented.";
+		
+		final OtrFragmenter fragmenter = new OtrFragmenter(this.createSessionMock(POLICY_V3, 0, 0), host);
+		final int number = fragmenter.numberOfFragments(message);
+		Assert.assertEquals(1, number);
+	}
+
+	@Test
+	public void testFragmentNullInstructionsFragment() throws IOException {
+		final OtrEngineHost host = Mockito.mock(OtrEngineHost.class);
+		Mockito.when(host.getFragmenterInstructions(Mockito.any(SessionID.class))).thenReturn(null);
+		final String message = "Some message that shouldn't be fragmented.";
+		
+		final OtrFragmenter fragmenter = new OtrFragmenter(this.createSessionMock(POLICY_V3, 0, 0), host);
+		final String[] fragments = fragmenter.fragment(message);
+		Assert.assertArrayEquals(new String[] {message}, fragments);
 	}
 
 	@Test
