@@ -84,11 +84,14 @@ public class OtrFragmenter {
 	 *             support fragmentation, for example if only OTRv1 is allowed.
 	 */
 	public int numberOfFragments(final String message) throws IOException {
-		// FIXME handle null instructions
-		final FragmenterInstructions instructions = this.host.getFragmenterInstructions(this.session.getSessionID());
+		final SessionID session = this.session.getSessionID();
+		final FragmenterInstructions requested = this.host
+				.getFragmenterInstructions(session);
+		final FragmenterInstructions instructions = FragmenterInstructions
+				.verify(requested);
 		return numberOfFragments(message, instructions);
 	}
-	
+
 	/**
 	 * Calculate the number of fragments that are required for the message to be
 	 * sent fragmented completely.
@@ -103,7 +106,8 @@ public class OtrFragmenter {
 	 *             store any content or when the provided policy does not
 	 *             support fragmentation, for example if only OTRv1 is allowed.
 	 */
-	private int numberOfFragments(final String message, final FragmenterInstructions instructions) throws IOException {
+	private int numberOfFragments(final String message,
+			final FragmenterInstructions instructions) throws IOException {
 		if (instructions.maxFragmentSize == FragmenterInstructions.UNLIMITED
 				|| instructions.maxFragmentSize >= message.length()) {
 			return 1;
@@ -119,7 +123,8 @@ public class OtrFragmenter {
 	 * @return returns number of fragments required.
 	 * @throws IOException throws an IOException if fragment size is too small.
 	 */
-	private int computeFragmentNumber(final String message, final FragmenterInstructions instructions) throws IOException {
+	private int computeFragmentNumber(final String message,
+			final FragmenterInstructions instructions) throws IOException {
 		final int overhead = computeHeaderSize();
 		final int payloadSize = instructions.maxFragmentSize - overhead;
 		if (payloadSize <= 0) {
@@ -138,14 +143,36 @@ public class OtrFragmenter {
 	 * 
 	 * @param message
 	 *            the original message
-	 * @return returns an array of message fragments
+	 * @return returns an array of message fragments. The array will contain at
+	 *         least 1 message fragment, or more if fragmentation is necessary.
 	 * @throws IOException
 	 *             throws an IOException if the fragment size is too small or if
 	 *             the maximum number of fragments is exceeded.
 	 */
 	public String[] fragment(final String message) throws IOException {
-		// FIXME handle null instructions
-		final FragmenterInstructions instructions = this.host.getFragmenterInstructions(this.session.getSessionID());
+		final SessionID session = this.session.getSessionID();
+		final FragmenterInstructions requested = this.host
+				.getFragmenterInstructions(session);
+		final FragmenterInstructions instructions = FragmenterInstructions
+				.verify(requested);
+		return fragment(message, instructions);
+	}
+
+	/**
+	 * Fragment a message according to the specified instructions.
+	 * 
+	 * @param message
+	 *            the message
+	 * @param instructions
+	 *            the instructions
+	 * @return returns the fragmented message. The array will contain at least 1
+	 *         message fragment, or more if fragmentation is necessary.
+	 * @throws IOException
+	 *             Exception in the case when it is impossible to fragment the
+	 *             message according to the specified instructions.
+	 */
+	private String[] fragment(final String message,
+			final FragmenterInstructions instructions) throws IOException {
 		if (instructions.maxFragmentSize == FragmenterInstructions.UNLIMITED
 				|| instructions.maxFragmentSize >= message.length()) {
 			return new String[] { message };
@@ -193,10 +220,8 @@ public class OtrFragmenter {
 			final String partialContent) {
 		if (getPolicy().getAllowV3()) {
 			return createV3MessageFragment(count, total, partialContent);
-		} else if (getPolicy().getAllowV2()) {
-			return createV2MessageFragment(count, total, partialContent);
 		} else {
-			throw new UnsupportedOperationException(OTRv1_NOT_SUPPORTED);
+			return createV2MessageFragment(count, total, partialContent);
 		}
 	}
 
@@ -208,9 +233,11 @@ public class OtrFragmenter {
 	 * @param partialContent the content for this fragment
 	 * @return returns the full message fragment
 	 */
-	private String createV3MessageFragment(final int count, final int total, final String partialContent) {
+	private String createV3MessageFragment(final int count, final int total,
+			final String partialContent) {
 		final String msg = String.format(OTRv3_MESSAGE_FRAGMENT_FORMAT,
-				getSenderInstance(), getReceiverInstance(), count + 1, total, partialContent);
+				getSenderInstance(), getReceiverInstance(), count + 1, total,
+				partialContent);
 		return msg;
 	}
 
