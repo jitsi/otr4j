@@ -3,8 +3,6 @@ package net.java.otr4j.session;
 /**
  * Instructions for the fragmenter explaining how to fragment a payload.
  * 
- * TODO change maxFragmentSize to long (probably more realistic expectation)
- *
  * @author Danny van Heumen
  */
 public class FragmenterInstructions {
