@@ -688,11 +688,8 @@ public class SessionImpl implements Session {
 		if (m instanceof QueryMessage)
 			msg += getHost().getFallbackMessage(getSessionID());
 		
-		// Detect OTR encoded session by ?OTR header, but make an exception for
-		// '?OTRv' since this is only the tentative query for setting up an OTR
-		// session.
-		if (msg.startsWith(SerializationConstants.HEAD)
-				&& msg.charAt(4) != SerializationConstants.HEAD_QUERY_V) {
+		if (SerializationUtils.otrEncoded(msg)) {
+			// Content is OTR encoded, so we are allowed to partition.
 			String[] fragments;
 			try {
 				fragments = this.fragmenter.fragment(msg);
@@ -700,8 +697,8 @@ public class SessionImpl implements Session {
 					getHost().injectMessage(getSessionID(), fragment);
 				}
 			} catch (IOException e) {
-				logger.severe("Failed to fragment message.");
-				e.printStackTrace();
+				logger.warning("Failed to fragment message according to provided instructions.");
+				throw new OtrException(e);
 			}
 		} else {
 			getHost().injectMessage(getSessionID(), msg);

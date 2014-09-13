@@ -446,4 +446,15 @@ public class SerializationUtils {
 		return out.toByteArray();
 	}
 
+	/**
+	 * Check whether the provided content is OTR encoded.
+	 *
+	 * @param content
+	 *            the content to investigate
+	 * @return returns true if content is OTR encoded, or false otherwise
+	 */
+	public static boolean otrEncoded(String content) {
+		return content.startsWith(SerializationConstants.HEAD
+				+ SerializationConstants.HEAD_ENCODED);
+	}
 }
