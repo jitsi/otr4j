@@ -688,15 +688,23 @@ public class SessionImpl implements Session {
 		if (m instanceof QueryMessage)
 			msg += getHost().getFallbackMessage(getSessionID());
 		
-		String[] fragments;
-		try {
-			fragments = this.fragmenter.fragment(msg);
-			for (String fragment : fragments) {
-				getHost().injectMessage(getSessionID(), fragment);
+		// Detect OTR encoded session by ?OTR header, but make an exception for
+		// '?OTRv' since this is only the tentative query for setting up an OTR
+		// session.
+		if (msg.startsWith(SerializationConstants.HEAD)
+				&& msg.charAt(4) != SerializationConstants.HEAD_QUERY_V) {
+			String[] fragments;
+			try {
+				fragments = this.fragmenter.fragment(msg);
+				for (String fragment : fragments) {
+					getHost().injectMessage(getSessionID(), fragment);
+				}
+			} catch (IOException e) {
+				logger.severe("Failed to fragment message.");
+				e.printStackTrace();
 			}
-		} catch (IOException e) {
-			logger.severe("Failed to fragment message.");
-			e.printStackTrace();
+		} else {
+			getHost().injectMessage(getSessionID(), msg);
 		}
 	}
 
