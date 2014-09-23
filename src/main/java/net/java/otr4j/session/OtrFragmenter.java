@@ -28,7 +28,7 @@ public class OtrFragmenter {
 	/**
 	 * The message format of an OTRv3 message fragment.
 	 */
-	private static final String OTRv3_MESSAGE_FRAGMENT_FORMAT = "?OTR|%x|%x,%05d,%05d,%s,";
+	private static final String OTRv3_MESSAGE_FRAGMENT_FORMAT = "?OTR|%08x|%08x,%05d,%05d,%s,";
 
 	/**
 	 * The message format of an OTRv2 message fragment.

@@ -490,7 +490,7 @@ public class OtrFragmenterTest {
 	public void testFragmentPatternsV3() throws IOException {		
 		final Pattern OTRv3_FRAGMENT_PATTERN = Pattern.compile("^\\?OTR\\|[0-9abcdef]{8}\\|[0-9abcdef]{8},\\d{5},\\d{5},[a-zA-Z0-9\\+/=\\?:]+,$");
 		final String payload = new String(Base64.encode(RandomStringUtils.random(1700).getBytes("UTF-8")));
-		final Session session = createSessionMock(POLICY_V3, 0x5a73a599, 0x27e31597);
+		final Session session = createSessionMock(POLICY_V3, 0x0a73a599, 0x00000007);
 		final FragmenterInstructions instructions = new FragmenterInstructions(
 				-1, 150);
 		final OtrEngineHost host = host(instructions);
