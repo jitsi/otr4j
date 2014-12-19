@@ -1,7 +1,7 @@
 ## Synopsis
 
 otr4j is an implementation of the [OTR (Off The Record) protocol][1]
-in java. Its development started during the Google Summer of Code 2009
+in java. Its development started during the GSoC '09
 where the goal was to add support for OTR in [jitsi][2]. It currently
 supports OTRv1, [OTRv2][] and [OTRv3][]. Additionally, there is support
 for fragmenting outgoing messages.
