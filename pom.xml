@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.java</groupId>
     <artifactId>otr4j</artifactId>
-    <version>0.21</version>
+    <version>0.22</version>
     <packaging>jar</packaging>
     <name>otr4j library</name>
     <url>http://github.com/jitsi/otr4j</url>
