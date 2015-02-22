@@ -61,6 +61,8 @@ public final class OtrAssembler {
 	 *
 	 * @return String with the accumulated message or
 	 *         null if the message was incomplete or malformed
+     * @throws ProtocolException MVN_PASS_JAVADOC_INSPECTION
+     * @throws UnknownInstanceException MVN_PASS_JAVADOC_INSPECTION
 	 */
 	public String accumulate(String msgText)
 		throws ProtocolException, UnknownInstanceException {

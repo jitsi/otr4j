@@ -43,7 +43,10 @@ public class SM {
         public int smProgState;
 		public boolean approved;
 		public boolean asked;
-        
+
+        /**
+         * Ctor.
+         */
         public SMState(){
             g1 = new BigInteger(1, SM.GENERATOR_S);
             smProgState = SM.PROG_OK;
@@ -60,13 +63,13 @@ public class SM {
 			super("");
 		}
 
-		public SMException(Throwable t) {
-			super(t.getMessage());
+		public SMException(Throwable cause) {
+			super(cause);
 		}
-		
-		public SMException(String s)
+
+		public SMException(String message)
 		{
-			super(s);
+			super(message);
 		}
 	};
 	
@@ -121,7 +124,11 @@ public class SM {
 	public static final int MOD_LEN_BYTES = 192;
 	
 	
-	/** Generate a random exponent */
+	/**
+     * Generate a random exponent
+     *
+     * @return the generated random exponent.
+     */
 	public static BigInteger randomExponent() {
 		SecureRandom sr = new SecureRandom();
 		byte[] sb = new byte[MOD_LEN_BYTES];
@@ -130,7 +137,15 @@ public class SM {
 	}
 	
 	/**
-	 * Hash one or two BigIntegers.  To hash only one BigInteger, b may be set to NULL.
+	 * Hash one or two BigIntegers. To hash only one BigInteger, b may be set to
+     * NULL.
+     *
+     * @param version the prefix to use
+     * @param a The 1st BigInteger to hash.
+     * @param b The 2nd BigInteger to hash.
+     * @return the BigInteger for the resulting hash value.
+     * @throws net.java.otr4j.crypto.SM.SMException when the SHA-256 algorithm
+     * is missing or when the biginteger can't be serialized.
 	 */
 	public static BigInteger hash(int version, BigInteger a, BigInteger b) throws SMException
 	{
@@ -182,25 +197,41 @@ public class SM {
 		}
 	}
 	
-	/** Check that an BigInteger is in the right range to be a (non-unit) group
-	 * element */
+	/**
+     * Check that an BigInteger is in the right range to be a (non-unit) group
+	 * element.
+     *
+     * @param g the BigInteger to check.
+     * @return true if the BigInteger is in the right range, false otherwise.
+     */
 	public static boolean checkGroupElem(BigInteger g)
 	{
 		return !(g.compareTo(BigInteger.valueOf(2)) > 0 &&
 				g.compareTo(SM.MODULUS_MINUS_2) < 0);
 	}
 	
-	/** Check that an BigInteger is in the right range to be a (non-zero) exponent */
+	/**
+     * Check that an BigInteger is in the right range to be a (non-zero)
+     * exponent.
+     *
+     * @param x The BigInteger to check.
+     * @return true if the BigInteger is in the right range, false otherwise.
+     */
 	public static boolean checkExpon(BigInteger x)
 	{
 		return !(x.compareTo(BigInteger.ONE) > 0 && x.compareTo(SM.ORDER_S) <= 0);
 	}
 	
 	/**
-	 * Proof of knowledge of a discrete logarithm
-	 * @throws SMException 
+	 * Proof of knowledge of a discrete logarithm.
+     *
+     * @param g the group generator
+     * @param x the secret information
+     * @param version the prefix to use for the hashing function
+     * @return c and d.
+	 * @throws SMException when c and d could not be calculated
 	 */
-	public static BigInteger[] proofKnowLog(BigInteger g, BigInteger x, int version) throws SMException
+	public static BigInteger[]  proofKnowLog(BigInteger g, BigInteger x, int version) throws SMException
 	{
 	    BigInteger r = randomExponent();
 	    BigInteger temp = g.modPow(r, SM.MODULUS_S);
@@ -215,7 +246,15 @@ public class SM {
 	
 	/**
 	 * Verify a proof of knowledge of a discrete logarithm.  Checks that c = h(g^d x^c)
-	 * @throws SMException 
+     *
+     * @param c c from remote party
+     * @param d d from remote party
+     * @param g the group generator
+     * @param x our secret information
+     * @param version the prefix to use
+     * @return -1, 0 or 1 as our locally calculated value of c is numerically
+     * less than, equal to, or greater than {@code c}.
+	 * @throws SMException when something goes wrong
 	 */
 	public static int checkKnowLog(BigInteger c, BigInteger d, BigInteger g, BigInteger x, int version) throws SMException
 	{
@@ -230,7 +269,12 @@ public class SM {
 	
 	/**
 	 * Proof of knowledge of coordinates with first components being equal
-	 * @throws SMException 
+     *
+     * @param state MVN_PASS_JAVADOC_INSPECTION
+     * @param r MVN_PASS_JAVADOC_INSPECTION
+     * @param version MVN_PASS_JAVADOC_INSPECTION
+     * @return MVN_PASS_JAVADOC_INSPECTION
+	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
 	 */
 	public static BigInteger[] proofEqualCoords(SMState state, BigInteger r, int version) throws SMException
 	{
@@ -260,7 +304,15 @@ public class SM {
 	
 	/**
 	 * Verify a proof of knowledge of coordinates with first components being equal
-	 * @throws SMException 
+     * @param c MVN_PASS_JAVADOC_INSPECTION
+     * @param d1 MVN_PASS_JAVADOC_INSPECTION
+     * @param d2 MVN_PASS_JAVADOC_INSPECTION
+     * @param p MVN_PASS_JAVADOC_INSPECTION
+     * @param q MVN_PASS_JAVADOC_INSPECTION
+     * @param state MVN_PASS_JAVADOC_INSPECTION
+     * @param version MVN_PASS_JAVADOC_INSPECTION
+     * @return MVN_PASS_JAVADOC_INSPECTION
+	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
 	 */
 	public static int checkEqualCoords(BigInteger c, BigInteger d1, BigInteger d2, BigInteger p,
 			BigInteger q, SMState state, int version) throws SMException
@@ -293,7 +345,10 @@ public class SM {
 	
 	/**
 	 * Proof of knowledge of logs with exponents being equal
-	 * @throws SMException 
+     * @param state MVN_PASS_JAVADOC_INSPECTION
+     * @param version MVN_PASS_JAVADOC_INSPECTION
+     * @return MVN_PASS_JAVADOC_INSPECTION
+	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
 	 */
 	public static BigInteger[] proofEqualLogs(SMState state, int version) throws SMException
 	{
@@ -316,7 +371,13 @@ public class SM {
 	
 	/**
 	 * Verify a proof of knowledge of logs with exponents being equal
-	 * @throws SMException 
+     * @param c MVN_PASS_JAVADOC_INSPECTION
+     * @param d MVN_PASS_JAVADOC_INSPECTION
+     * @param r MVN_PASS_JAVADOC_INSPECTION
+     * @param state MVN_PASS_JAVADOC_INSPECTION
+     * @param version MVN_PASS_JAVADOC_INSPECTION
+     * @return MVN_PASS_JAVADOC_INSPECTION
+	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
 	 */
 	public static int checkEqualLogs(BigInteger c, BigInteger d, BigInteger r, SMState state, int version) throws SMException
 	{
@@ -354,8 +415,12 @@ public class SM {
 	 * [0] = g2a, Alice's half of DH exchange to determine g2
 	 * [1] = c2, [2] = d2, Alice's ZK proof of knowledge of g2a exponent
 	 * [3] = g3a, Alice's half of DH exchange to determine g3
-	 * [4] = c3, [5] = d3, Alice's ZK proof of knowledge of g3a exponent 
-	 * @throws SMException */
+	 * [4] = c3, [5] = d3, Alice's ZK proof of knowledge of g3a exponent
+     * @param astate MVN_PASS_JAVADOC_INSPECTION
+     * @param secret MVN_PASS_JAVADOC_INSPECTION
+     * @return MVN_PASS_JAVADOC_INSPECTION
+	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
+     */
 	public static byte[] step1(SMState astate, byte[] secret) throws SMException
 	{
 	    /* Initialize the sm state or update the secret */
@@ -386,8 +451,12 @@ public class SM {
 	
 	/** Receive the first message in SMP exchange, which was generated by
 	 *  step1.  Input is saved until the user inputs their secret
-	 * information.  No output. 
-	 * @throws SMException */
+	 * information.  No output.
+     * @param bstate MVN_PASS_JAVADOC_INSPECTION
+     * @param input MVN_PASS_JAVADOC_INSPECTION
+     * @param received_question MVN_PASS_JAVADOC_INSPECTION
+	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
+     */
 	public static void step2a(SMState bstate, byte[] input, int received_question) throws SMException
 	{
 
@@ -436,8 +505,12 @@ public class SM {
 	 * [3] = g3b, Bob's half of DH exchange to determine g3
 	 * [4] = c3, [5] = d3, Bob's ZK proof of knowledge of g3b exponent
 	 * [6] = pb, [7] = qb, Bob's halves of the (Pa/Pb) and (Qa/Qb) values
-	 * [8] = cp, [9] = d5, [10] = d6, Bob's ZK proof that pb, qb formed correctly 
-	 * @throws SMException */
+	 * [8] = cp, [9] = d5, [10] = d6, Bob's ZK proof that pb, qb formed correctly
+     * @param bstate MVN_PASS_JAVADOC_INSPECTION
+     * @param secret MVN_PASS_JAVADOC_INSPECTION
+     * @return MVN_PASS_JAVADOC_INSPECTION
+	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
+     */
 	public static byte[] step2b(SMState bstate, byte[] secret) throws SMException
 	{
 	    /* Convert the given secret to the proper form and store it */
@@ -488,8 +561,12 @@ public class SM {
 	 * [0] = pa, [1] = qa, Alice's halves of the (Pa/Pb) and (Qa/Qb) values
 	 * [2] = cp, [3] = d5, [4] = d6, Alice's ZK proof that pa, qa formed correctly
 	 * [5] = ra, calculated as (Qa/Qb)^x3 where x3 is the exponent used in g3a
-	 * [6] = cr, [7] = d7, Alice's ZK proof that ra is formed correctly 
-	 * @throws SMException */
+	 * [6] = cr, [7] = d7, Alice's ZK proof that ra is formed correctly
+     * @param astate MVN_PASS_JAVADOC_INSPECTION
+     * @param input MVN_PASS_JAVADOC_INSPECTION
+     * @return MVN_PASS_JAVADOC_INSPECTION
+	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
+     */
 	public static byte[] step3(SMState astate, byte[] input) throws SMException
 	{
 	    /* Read from input to find the mpis */
@@ -570,8 +647,13 @@ public class SM {
 	 * [1] = cr, [2] = d7, Bob's ZK proof that rb is formed correctly
 	 * This method also checks if Alice and Bob's secrets were the same.  If
 	 * so, it returns NO_ERROR.  If the secrets differ, an INV_VALUE error is
-	 * returned instead. 
-	 * @throws SMException */
+	 * returned instead.
+     *
+     * @param bstate MVN_PASS_JAVADOC_INSPECTION
+     * @param input MVN_PASS_JAVADOC_INSPECTION
+     * @return MVN_PASS_JAVADOC_INSPECTION
+	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
+     */
 	public static byte[] step4(SMState bstate, byte[] input) throws SMException
 	{
 	    /* Read from input to find the mpis */
@@ -626,8 +708,11 @@ public class SM {
 	/** Receives the final SMP message, which was generated in otrl_sm_step.
 	 * This method checks if Alice and Bob's secrets were the same.  If
 	 * so, it returns NO_ERROR.  If the secrets differ, an INV_VALUE error is
-	 * returned instead. 
-	 * @throws SMException */
+	 * returned instead.
+     * @param astate MVN_PASS_JAVADOC_INSPECTION
+     * @param input MVN_PASS_JAVADOC_INSPECTION
+	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
+     */
 	public static void step5(SMState astate, byte[] input) throws SMException
 	{
 	    /* Read from input to find the mpis */

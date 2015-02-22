@@ -28,7 +28,7 @@ public class OtrSm {
 	/**
 	 * Construct an OTR Socialist Millionaire handler object.
 	 * 
-	 * @param authContext The encryption context for encrypting the session.
+	 * @param session The session reference.
 	 * @param engineHost The host where we can present messages or ask for the shared secret.
 	 */
 	public OtrSm(Session session, OtrEngineHost engineHost) {
@@ -81,6 +81,7 @@ public class OtrSm {
 	 *  @param initiating Whether we are initiating or responding to an initial request.
 	 *  
 	 *  @return TLVs to send to the peer
+     *  @throws OtrException MVN_PASS_JAVADOC_INSPECTION
 	 */
 	public List<TLV> initRespondSmp(String question, String secret, boolean initiating) throws OtrException {
 		if (!initiating && !smstate.asked)
@@ -169,6 +170,7 @@ public class OtrSm {
 	 *  Create an abort TLV and reset our state.
 	 *  
 	 *  @return TLVs to send to the peer
+     *  @throws OtrException MVN_PASS_JAVADOC_INSPECTION
 	 */
 	public List<TLV> abortSmp() throws OtrException {
 		TLV sendtlv = new TLV(TLV.SMP_ABORT, new byte[0]);
