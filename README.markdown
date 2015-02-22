@@ -12,17 +12,19 @@ For a quick introduction on how to use the library have a look at the
 ## Maven
 
 If you use maven for managing your project lifecycle and you want to
-use otr4j in your project, just add the following repository entry to
+use otr4j in your project, just add the following dependency to your
 the pom.xml:
 
-**IMPORTANT** Repository URL has changed !
+**IMPORTANT** otr4j has moved to Maven Central! I will be making releases to the
+old repository for the foreseeable future, but it is highly recommended to
+update your settings!
 
 ```xml
-<repository>
-  <id>otr4j-repo</id>
-  <name>otr4j repository on GitHub</name>
-  <url>http://jitsi.github.com/otr4j/repository/</url>
-</repository>
+<dependency>
+    <groupId>org.jitsi</groupId>
+    <artifactId>org.otr4j</artifactId>
+    <version>0.22</version>
+</dependency>
 ```
 
 ## Contributing
