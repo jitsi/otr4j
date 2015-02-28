@@ -18,9 +18,9 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 import java.util.logging.Logger;
 
@@ -44,6 +44,7 @@ import net.java.otr4j.io.messages.ErrorMessage;
 import net.java.otr4j.io.messages.MysteriousT;
 import net.java.otr4j.io.messages.PlainTextMessage;
 import net.java.otr4j.io.messages.QueryMessage;
+import net.java.otr4j.util.SelectableMap;
 
 /**
  * 
@@ -52,9 +53,7 @@ import net.java.otr4j.io.messages.QueryMessage;
  */
 public class SessionImpl implements Session {
 
-	private Map<InstanceTag, SessionImpl> slaveSessions;
-
-	private volatile Session outgoingSession;
+	private final SelectableMap<InstanceTag, SessionImpl> slaveSessions;
 
 	private final boolean isMasterSession;
 
@@ -72,7 +71,7 @@ public class SessionImpl implements Session {
 	private final InstanceTag senderTag;
 	private InstanceTag receiverTag;
 	private int protocolVersion;
-	private OtrAssembler assembler;
+	private final OtrAssembler assembler;
 	private final OtrFragmenter fragmenter;
 
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
@@ -91,12 +90,11 @@ public class SessionImpl implements Session {
 		this.senderTag = new InstanceTag();
 		this.receiverTag = InstanceTag.ZERO_TAG;
 
-		slaveSessions = new HashMap<InstanceTag, SessionImpl>();
-		outgoingSession = this;
+		this.slaveSessions = new SelectableMap<InstanceTag, SessionImpl>(new HashMap<InstanceTag, SessionImpl>());
 		isMasterSession = true;
 
 		assembler = new OtrAssembler(getSenderInstanceTag());
-		fragmenter = new OtrFragmenter(outgoingSession, listener);
+		fragmenter = new OtrFragmenter(this, listener);
 	}
 	
 	// A private constructor for instantiating 'slave' sessions.
@@ -115,12 +113,12 @@ public class SessionImpl implements Session {
 		this.senderTag = senderTag;
 		this.receiverTag = receiverTag;
 
-		outgoingSession = this;
+		this.slaveSessions = new SelectableMap<InstanceTag, SessionImpl>(Collections.<InstanceTag, SessionImpl>emptyMap());
 		isMasterSession = false;
 		protocolVersion = OTRv.THREE;
 
 		assembler = new OtrAssembler(getSenderInstanceTag());
-		fragmenter = new OtrFragmenter(outgoingSession, listener);
+		fragmenter = new OtrFragmenter(this, listener);
 	}
 
 	public BigInteger getS() {
@@ -292,10 +290,10 @@ public class SessionImpl implements Session {
 	 * 
 	 * @see net.java.otr4j.session.ISession#getSessionStatus()
 	 */
-
 	public SessionStatus getSessionStatus() {
-		if (this != outgoingSession && getProtocolVersion() == OTRv.THREE)
-			return outgoingSession.getSessionStatus();
+		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
+			return this.slaveSessions.getSelected().getSessionStatus();
+		}
 		return sessionStatus;
 	}
 
@@ -309,7 +307,7 @@ public class SessionImpl implements Session {
 	 * @see net.java.otr4j.session.ISession#getSessionID()
 	 */
 	public SessionID getSessionID() {
-		return sessionID;
+            return sessionID;
 	}
 
 	private void setHost(OtrEngineHost host) {
@@ -811,8 +809,8 @@ public class SessionImpl implements Session {
 	public String[] transformSending(String msgText, List<TLV> tlvs)
 			throws OtrException {
 
-		if (isMasterSession && outgoingSession != this && getProtocolVersion() == OTRv.THREE) {
-			return outgoingSession.transformSending(msgText, tlvs);
+		if (isMasterSession && this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
+			return this.slaveSessions.getSelected().transformSending(msgText, tlvs);
 		}
 
 		switch (this.getSessionStatus()) {
@@ -947,8 +945,8 @@ public class SessionImpl implements Session {
 	 * @see net.java.otr4j.session.ISession#startSession()
 	 */
 	public void startSession() throws OtrException {
-		if (this != outgoingSession && getProtocolVersion() == OTRv.THREE) {
-			outgoingSession.startSession();
+		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
+			this.slaveSessions.getSelected().startSession();
 			return;
 		}
 		if (this.getSessionStatus() == SessionStatus.ENCRYPTED)
@@ -966,8 +964,8 @@ public class SessionImpl implements Session {
 	 * @see net.java.otr4j.session.ISession#endSession()
 	 */
 	public void endSession() throws OtrException {
-		if (this != outgoingSession && getProtocolVersion() == OTRv.THREE) {
-			outgoingSession.endSession();
+		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
+			this.slaveSessions.getSelected().endSession();
 			return;
 		}
 		SessionStatus status = this.getSessionStatus();
@@ -1008,8 +1006,8 @@ public class SessionImpl implements Session {
 	}
 
 	public PublicKey getRemotePublicKey() {
-		if (this != outgoingSession && getProtocolVersion() == OTRv.THREE)
-			return outgoingSession.getRemotePublicKey();
+		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE)
+			return this.slaveSessions.getSelected().getRemotePublicKey();
 		return remotePublicKey;
 	}
 
@@ -1036,9 +1034,10 @@ public class SessionImpl implements Session {
 		return getHost().getLocalKeyPair(this.getSessionID());
 	}
 
+	@Override
 	public void initSmp(String question, String secret) throws OtrException {
-		if (this != outgoingSession && getProtocolVersion() == OTRv.THREE) {
-			outgoingSession.initSmp(question, secret);
+		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
+			this.slaveSessions.getSelected().initSmp(question, secret);
 			return;
 		}
 		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
@@ -1050,9 +1049,10 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	@Override
 	public void respondSmp(String question, String secret) throws OtrException {
-		if (this != outgoingSession && getProtocolVersion() == OTRv.THREE) {
-			outgoingSession.respondSmp(question, secret);
+		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
+			this.slaveSessions.getSelected().respondSmp(question, secret);
 			return;
 		}
 		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
@@ -1064,9 +1064,10 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	@Override
 	public void abortSmp() throws OtrException {
-		if (this != outgoingSession && getProtocolVersion() == OTRv.THREE) {
-			outgoingSession.abortSmp();
+		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
+			this.slaveSessions.getSelected().abortSmp();
 			return;
 		}
 		if (this.getSessionStatus() != SessionStatus.ENCRYPTED)
@@ -1078,20 +1079,24 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	@Override
 	public boolean isSmpInProgress() {
-		if (this != outgoingSession && getProtocolVersion() == OTRv.THREE)
-			return outgoingSession.isSmpInProgress();
+		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE)
+			return this.slaveSessions.getSelected().isSmpInProgress();
 	    return otrSm.isSmpInProgress();
 	}
 
+	@Override
 	public InstanceTag getSenderInstanceTag() {
 		return senderTag;
 	}
 
+	@Override
 	public InstanceTag getReceiverInstanceTag() {
 		return receiverTag;
 	}
 
+	@Override
 	public void setReceiverInstanceTag(InstanceTag receiverTag) {
 		// ReceiverInstanceTag of a slave session is not supposed to change
 		if (!isMasterSession)
@@ -1099,6 +1104,7 @@ public class SessionImpl implements Session {
 		this.receiverTag = receiverTag;
 	}
 
+	@Override
 	public void setProtocolVersion(int protocolVersion) {
 		// Protocol version of a slave session is not supposed to change
 		if (!isMasterSession)
@@ -1106,10 +1112,12 @@ public class SessionImpl implements Session {
 		this.protocolVersion = protocolVersion;
 	}
 
+	@Override
 	public int getProtocolVersion() {
 		return isMasterSession ? this.protocolVersion : 3;
 	}
 
+	@Override
 	public List<Session> getInstances() {
 		List<Session> result = new ArrayList<Session>();
 		result.add(this);
@@ -1117,29 +1125,29 @@ public class SessionImpl implements Session {
 		return result;
 	}
 
+	@Override
 	public boolean setOutgoingInstance(InstanceTag tag) {
 		// Only master session can set the outgoing session.
 		if (!isMasterSession)
 			return false;
 		if (tag.equals(getReceiverInstanceTag())) {
-			outgoingSession = this;
+			this.slaveSessions.deselect();
 			for (OtrEngineListener l : listeners)
 				l.outgoingSessionChanged(sessionID);
 			return true;
 		}
-		
-		Session newActiveSession = slaveSessions.get(tag);
-		if (newActiveSession != null) {
-			outgoingSession = newActiveSession;
+		if (slaveSessions.containsKey(tag)) {
+			slaveSessions.select(tag);
 			for (OtrEngineListener l : listeners)
 				l.outgoingSessionChanged(sessionID);
 			return true;
 		} else {
-			outgoingSession = this;
+			this.slaveSessions.deselect();
 			return false;
 		}
 	}
 
+	@Override
 	public void respondSmp(InstanceTag receiverTag, String question, String secret)
 		throws OtrException
 	{
@@ -1158,6 +1166,7 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	@Override
 	public SessionStatus getSessionStatus(InstanceTag tag) {
 		if (tag.equals(getReceiverInstanceTag()))
 			return sessionStatus;
@@ -1168,6 +1177,7 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	@Override
 	public PublicKey getRemotePublicKey(InstanceTag tag) {
 		if (tag.equals(getReceiverInstanceTag()))
 			return remotePublicKey;
@@ -1178,7 +1188,15 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	@Override
 	public Session getOutgoingInstance() {
-		return outgoingSession;
+		if (this.slaveSessions.isSelected())
+		{
+			return this.slaveSessions.getSelected();
+		}
+		else
+		{
+			return this;
+		}
 	}		
 }
