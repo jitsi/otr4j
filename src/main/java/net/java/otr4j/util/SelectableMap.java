@@ -44,6 +44,8 @@ public class SelectableMap<K, V> implements Map<K, V>
 			throw new NullPointerException("base");
 		}
 		this.base = base;
+                this.selection = null;
+                this.selected = false;
 	}
 
 	/**
@@ -156,6 +158,7 @@ public class SelectableMap<K, V> implements Map<K, V>
 			throw new IllegalArgumentException("key is not in base map");
 		}
 		this.selection = key;
+		this.selected = true;
 	}
 
 	public final void deselect() {
