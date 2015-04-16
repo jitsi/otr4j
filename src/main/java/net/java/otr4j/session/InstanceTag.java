@@ -8,8 +8,15 @@ public class InstanceTag {
 
 	public static final int ZERO_VALUE = 0;
 
+	/**
+	 * The smallest possible valid tag value.
+	 */
 	public static final int SMALLEST_VALUE = 0x00000100;
 
+	/**
+	 * The highest possible tag value.
+	 * Note that this is -1 in the decimal representation.
+	 */
 	public static final int HIGHEST_VALUE = 0xffffffff;
 
 	public static final InstanceTag ZERO_TAG = new InstanceTag(ZERO_VALUE);
@@ -30,6 +37,12 @@ public class InstanceTag {
 	private final int value;
 
 	public static boolean isValidInstanceTag(final int tagValue) {
+		// Note that the decimal representation of Java's int is always
+		// signed, that means that any value over 0x7fffffff will be
+		// interpreted as a negative value. So, instead we verify that
+		// the tag value is not in the "forbidden range".
+		// Other than the forbidden range, every possible value of the
+		// 32 bits of memory is acceptable.
 		return !(0 < tagValue && tagValue < SMALLEST_VALUE);
 	}
 
@@ -56,6 +69,7 @@ public class InstanceTag {
 		this.value = value;
 	}
 
+	@Override
 	public boolean equals(Object other) {
 		if (this == other)
 			return true;
@@ -67,6 +81,7 @@ public class InstanceTag {
 		return this.value == otherInstanceTag.getValue();
 	}
 
+	@Override
 	public int hashCode() {
 		return value;
 	}
