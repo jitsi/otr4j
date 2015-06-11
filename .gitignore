@@ -5,3 +5,4 @@ target/
 .settings/
 *.orig
 otr.properties
+*.iml
