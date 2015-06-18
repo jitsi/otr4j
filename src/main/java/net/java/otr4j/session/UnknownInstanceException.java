@@ -2,6 +2,9 @@ package net.java.otr4j.session;
 
 import java.net.ProtocolException;
 
+/**
+ * @author Felix Eckhofer
+ */
 @SuppressWarnings("serial")
 public class UnknownInstanceException extends ProtocolException {
 
