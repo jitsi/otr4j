@@ -5,7 +5,7 @@ otherwise been involved with the project.
   java-otr to otr4j.
 - [a-iv][] moved the project to github and did various fixes.
 - [mdzhigarov][] added OTRv3 support
-- [tribut][] Implemented OTR fragmentation support for incomping messages and fixed some typos
+- [tribut][] Implemented OTR fragmentation support for incoming messages and fixed some typos
 - [cobratbq][] Implemented OTR fragmentation support for outgoing messages
 
   [devrandom]: https://github.com/devrandom/
