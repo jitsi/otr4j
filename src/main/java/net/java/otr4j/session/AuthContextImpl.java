@@ -204,7 +204,12 @@ class AuthContextImpl extends AuthContext {
 		localDHPublicKeyEncrypted = null;
 
 		s = null;
-		c = m1 = m2 = cp = m1p = m2p = null;
+		c = null;
+		m1 = null;
+		m2 = null;
+		cp = null;
+		m1p = null;
+		m2p = null;
 
 		localLongTermKeyPair = null;
 		setIsSecure(false);
