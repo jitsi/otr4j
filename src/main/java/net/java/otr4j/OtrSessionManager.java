@@ -35,9 +35,9 @@ public interface OtrSessionManager {
      * Get an OTR session.
      * @return MVN_PASS_JAVADOC_INSPECTION
      */
-	public abstract Session getSession(SessionID sessionID);
+	Session getSession(SessionID sessionID);
 
-	public abstract void addOtrEngineListener(OtrEngineListener l);
+	void addOtrEngineListener(OtrEngineListener l);
 
-	public abstract void removeOtrEngineListener(OtrEngineListener l);
+	void removeOtrEngineListener(OtrEngineListener l);
 }

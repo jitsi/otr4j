@@ -25,9 +25,9 @@ import net.java.otr4j.session.SessionID;
  * 
  */
 public interface OtrEngineListener {
-	public abstract void sessionStatusChanged(SessionID sessionID);
+	void sessionStatusChanged(SessionID sessionID);
 
-	public abstract void multipleInstancesDetected(SessionID sessionID);
+	void multipleInstancesDetected(SessionID sessionID);
 
-	public abstract void outgoingSessionChanged(SessionID sessionID);
+	void outgoingSessionChanged(SessionID sessionID);
 }

@@ -21,5 +21,5 @@ import net.java.otr4j.session.SessionID;
  * @author George Politis
  */
 public interface OtrKeyManagerListener {
-	public abstract void verificationStatusChanged(SessionID session);
+	void verificationStatusChanged(SessionID session);
 }

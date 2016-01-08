@@ -23,29 +23,29 @@ import net.java.otr4j.session.SessionID;
 /**
  * @author George Politis
  */
-public abstract interface OtrKeyManager {
+public interface OtrKeyManager {
 
-	public abstract void addListener(OtrKeyManagerListener l);
+	void addListener(OtrKeyManagerListener l);
 
-	public abstract void removeListener(OtrKeyManagerListener l);
+	void removeListener(OtrKeyManagerListener l);
 
-	public abstract void verify(SessionID sessionID);
+	void verify(SessionID sessionID);
 
-	public abstract void unverify(SessionID sessionID);
+	void unverify(SessionID sessionID);
 
-	public abstract boolean isVerified(SessionID sessionID);
+	boolean isVerified(SessionID sessionID);
 
-	public abstract String getRemoteFingerprint(SessionID sessionID);
+	String getRemoteFingerprint(SessionID sessionID);
 
-	public abstract String getLocalFingerprint(SessionID sessionID);
+	String getLocalFingerprint(SessionID sessionID);
 
-	public abstract byte[] getLocalFingerprintRaw(SessionID sessionID);
+	byte[] getLocalFingerprintRaw(SessionID sessionID);
 
-	public abstract void savePublicKey(SessionID sessionID, PublicKey pubKey);
+	void savePublicKey(SessionID sessionID, PublicKey pubKey);
 
-	public abstract PublicKey loadRemotePublicKey(SessionID sessionID);
+	PublicKey loadRemotePublicKey(SessionID sessionID);
 
-	public abstract KeyPair loadLocalKeyPair(SessionID sessionID);
+	KeyPair loadLocalKeyPair(SessionID sessionID);
 
-	public abstract void generateLocalKeyPair(SessionID sessionID);
+	void generateLocalKeyPair(SessionID sessionID);
 }
