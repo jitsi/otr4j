@@ -111,7 +111,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		public byte[] getPropertyBytes(String id) {
 			String value = properties.getProperty(id);
 			if (value == null)
-			    return null;
+				return null;
 			return Base64.decode(value);
 		}
 

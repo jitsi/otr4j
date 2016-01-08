@@ -285,8 +285,8 @@ public class SessionImpl implements Session {
 			break;
 		}
 
-        if (sessionStatus == this.sessionStatus)
-            return;
+		if (sessionStatus == this.sessionStatus)
+			return;
 
 		this.sessionStatus = sessionStatus;
 
@@ -316,7 +316,7 @@ public class SessionImpl implements Session {
 	 * @see net.java.otr4j.session.ISession#getSessionID()
 	 */
 	public SessionID getSessionID() {
-            return sessionID;
+		return sessionID;
 	}
 
 	private void setHost(OtrEngineHost host) {
@@ -1092,7 +1092,7 @@ public class SessionImpl implements Session {
 	public boolean isSmpInProgress() {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE)
 			return this.slaveSessions.getSelected().isSmpInProgress();
-	    return otrSm.isSmpInProgress();
+		return otrSm.isSmpInProgress();
 	}
 
 	@Override

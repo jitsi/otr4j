@@ -304,12 +304,12 @@ public class SerializationUtils {
 			} else if (idxHead == 0 && contentType == SerializationConstants.HEAD_ENCODED) {
 				// Data message found.
 
-                /*
-                 * BC 1.48 added a check to throw an exception if a non-base64 character is encountered.
-                 * An OTR message consists of ?OTR:AbcDefFe. (note the terminating point).
-                 * Otr4j doesn't strip this point before passing the content to the base64 decoder.
-                 * So in order to decode the content string we have to get rid of the '.' first.
-                 */
+				/*
+				 * BC 1.48 added a check to throw an exception if a non-base64 character is encountered.
+				 * An OTR message consists of ?OTR:AbcDefFe. (note the terminating point).
+				 * Otr4j doesn't strip this point before passing the content to the base64 decoder.
+				 * So in order to decode the content string we have to get rid of the '.' first.
+				 */
 				ByteArrayInputStream bin = new ByteArrayInputStream(Base64
 						.decode(content.substring(0, content.length() - 1).getBytes()));
 				OtrInputStream otr = new OtrInputStream(bin);

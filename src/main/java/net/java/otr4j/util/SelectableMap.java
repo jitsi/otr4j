@@ -59,8 +59,8 @@ public class SelectableMap<K, V> implements Map<K, V>
 			throw new NullPointerException("base");
 		}
 		this.base = base;
-                this.selection = null;
-                this.selected = false;
+		this.selection = null;
+		this.selected = false;
 	}
 
 	/**

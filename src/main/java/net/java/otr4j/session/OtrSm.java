@@ -22,7 +22,7 @@ import net.java.otr4j.io.OtrOutputStream;
 public class OtrSm {
 
 	private SMState smstate;
-    private OtrEngineHost engineHost;
+	private OtrEngineHost engineHost;
 	private Session session;
 
 	/**
@@ -73,16 +73,16 @@ public class OtrSm {
 	 *  Respond to or initiate an SMP negotiation
 	 *
 	 *  @param question
-	 *  	The question to present to the peer, if initiating.
-	 *  	May be <code>null</code> for no question.
+	 *      The question to present to the peer, if initiating.
+	 *      May be <code>null</code> for no question.
 	 *      If not initiating, then it should be received question
 	 *      in order to clarify whether this is shared secret verification.
 	 *  @param secret The secret.
 	 *  @param initiating Whether we are initiating or responding to an initial request.
 	 *
-	 *  @return TLVs to send to the peer
-     *  @throws OtrException MVN_PASS_JAVADOC_INSPECTION
-	 */
+	*  @return TLVs to send to the peer
+	*  @throws OtrException MVN_PASS_JAVADOC_INSPECTION
+	*/
 	public List<TLV> initRespondSmp(String question, String secret, boolean initiating) throws OtrException {
 		if (!initiating && !smstate.asked)
 			throw new OtrException(new IllegalStateException(
@@ -163,23 +163,23 @@ public class OtrSm {
 				(question != null ? TLV.SMP1Q:TLV.SMP1) : TLV.SMP2, smpmsg);
 		smstate.nextExpected = initiating? SM.EXPECT2 : SM.EXPECT3;
 		smstate.approved = initiating || question == null;
-        return makeTlvList(sendtlv);
+		return makeTlvList(sendtlv);
 	}
 
 	/**
 	 *  Create an abort TLV and reset our state.
 	 *
-	 *  @return TLVs to send to the peer
-     *  @throws OtrException MVN_PASS_JAVADOC_INSPECTION
-	 */
+	*  @return TLVs to send to the peer
+	*  @throws OtrException MVN_PASS_JAVADOC_INSPECTION
+	*/
 	public List<TLV> abortSmp() throws OtrException {
 		TLV sendtlv = new TLV(TLV.SMP_ABORT, new byte[0]);
 		smstate.nextExpected = SM.EXPECT1;
-        return makeTlvList(sendtlv);
+		return makeTlvList(sendtlv);
 	}
 
 	public boolean isSmpInProgress() {
-	    return smstate.nextExpected > SM.EXPECT1;
+		return smstate.nextExpected > SM.EXPECT1;
 	}
 
 	public boolean doProcessTlv(TLV tlv) throws OtrException {
@@ -192,9 +192,9 @@ public class OtrSm {
 		String fingerprint = null;
 		try {
 			fingerprint = new OtrCryptoEngineImpl().getFingerprint(pubKey);
-        } catch (OtrCryptoException e) {
-            e.printStackTrace();
-        }
+		} catch (OtrCryptoException e) {
+			e.printStackTrace();
+		}
 
 		if (tlvType == TLV.SMP1Q && nextMsg == SM.EXPECT1) {
 			/* We can only do the verification half now.
@@ -225,13 +225,13 @@ public class OtrSm {
 					// Never thrown - all JRE's support UTF-8
 					e.printStackTrace();
 				}
-			    engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), questionUTF);
+				engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), questionUTF);
 			} else {
-			    engineHost.smpError(session.getSessionID(), tlvType, true);
-			    reset();
+				engineHost.smpError(session.getSessionID(), tlvType, true);
+				reset();
 			}
 		} else if (tlvType == TLV.SMP1Q) {
-		    engineHost.smpError(session.getSessionID(), tlvType, false);
+			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP1 && nextMsg == SM.EXPECT1) {
 			/* We can only do the verification half now.
 			 * We must wait for the secret to be entered
@@ -243,13 +243,13 @@ public class OtrSm {
 			}
 			if (smstate.smProgState!=SM.PROG_CHEATED) {
 				smstate.asked = true;
-                engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), null);
+				engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), null);
 			} else {
-			    engineHost.smpError(session.getSessionID(), tlvType, true);
-			    reset();
+				engineHost.smpError(session.getSessionID(), tlvType, true);
+				reset();
 			}
 		} else if (tlvType == TLV.SMP1) {
-		    engineHost.smpError(session.getSessionID(), tlvType, false);
+			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP2 && nextMsg == SM.EXPECT2) {
 			byte[] nextmsg;
 			try {
@@ -266,11 +266,11 @@ public class OtrSm {
 					engineHost.injectMessage(session.getSessionID(), part);
 				}
 			} else {
-			    engineHost.smpError(session.getSessionID(), tlvType, true);
-			    reset();
+				engineHost.smpError(session.getSessionID(), tlvType, true);
+				reset();
 			}
 		} else if (tlvType == TLV.SMP2){
-		    engineHost.smpError(session.getSessionID(), tlvType, false);
+			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP3 && nextMsg == SM.EXPECT3) {
 			byte[] nextmsg;
 			try {
@@ -294,11 +294,11 @@ public class OtrSm {
 					engineHost.injectMessage(session.getSessionID(), part);
 				}
 			} else {
-			    engineHost.smpError(session.getSessionID(), tlvType, true);
+				engineHost.smpError(session.getSessionID(), tlvType, true);
 			}
 			reset();
 		} else if (tlvType == TLV.SMP3){
-		    engineHost.smpError(session.getSessionID(), tlvType, false);
+			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP4 && nextMsg == SM.EXPECT4) {
 
 			try {
@@ -313,12 +313,12 @@ public class OtrSm {
 			}
 			if (smstate.smProgState != SM.PROG_CHEATED){
 			} else {
-			    engineHost.smpError(session.getSessionID(), tlvType, true);
+				engineHost.smpError(session.getSessionID(), tlvType, true);
 			}
 			reset();
 
 		} else if (tlvType == TLV.SMP4){
-		    engineHost.smpError(session.getSessionID(), tlvType, false);
+			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP_ABORT){
 			engineHost.smpAborted(session.getSessionID());
 			reset();
@@ -328,9 +328,9 @@ public class OtrSm {
 		return true;
 	}
 
-    private List<TLV> makeTlvList(TLV sendtlv) {
-        List<TLV> tlvs = new ArrayList<TLV>(1);
-        tlvs.add(sendtlv);
-        return tlvs;
-    }
+	private List<TLV> makeTlvList(TLV sendtlv) {
+		List<TLV> tlvs = new ArrayList<TLV>(1);
+		tlvs.add(sendtlv);
+		return tlvs;
+	}
 }
