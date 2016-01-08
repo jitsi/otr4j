@@ -67,5 +67,4 @@ public interface SessionKeys {
 	DHPublicKey getRemoteKey();
 
 	KeyPair getLocalPair();
-
 }
