@@ -16,9 +16,8 @@
 package net.java.otr4j.session;
 
 /**
- * 
+ *
  * @author George Politis
- * 
  */
 public final class SessionID {
 

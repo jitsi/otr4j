@@ -56,7 +56,7 @@ import net.java.otr4j.io.messages.QueryMessage;
 import net.java.otr4j.util.SelectableMap;
 
 /**
- * 
+ *
  * @author George Politis
  * @author Danny van Heumen
  */
@@ -105,7 +105,7 @@ public class SessionImpl implements Session {
 		assembler = new OtrAssembler(getSenderInstanceTag());
 		fragmenter = new OtrFragmenter(this, listener);
 	}
-	
+
 	// A private constructor for instantiating 'slave' sessions.
 	private SessionImpl(SessionID sessionID,
 						OtrEngineHost listener,
@@ -133,7 +133,7 @@ public class SessionImpl implements Session {
 	public BigInteger getS() {
 		return ess;
 	}
-	
+
 	private SessionKeys getEncryptionSessionKeys() {
 		logger.finest("Getting encryption keys");
 		return getSessionKeysByIndex(SessionKeys.Previous, SessionKeys.Current);
@@ -296,7 +296,7 @@ public class SessionImpl implements Session {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see net.java.otr4j.session.ISession#getSessionStatus()
 	 */
 	public SessionStatus getSessionStatus() {
@@ -312,7 +312,7 @@ public class SessionImpl implements Session {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see net.java.otr4j.session.ISession#getSessionID()
 	 */
 	public SessionID getSessionID() {
@@ -347,12 +347,12 @@ public class SessionImpl implements Session {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * net.java.otr4j.session.ISession#handleReceivingMessage(java.lang.String)
 	 */
 	public String transformReceiving(String msgText) throws OtrException {
-		
+
 		OtrPolicy policy = getSessionPolicy();
 		if (!policy.getAllowV1() && !policy.getAllowV2() && !policy.getAllowV3()) {
 			logger
@@ -388,13 +388,13 @@ public class SessionImpl implements Session {
 			offerStatus = OfferStatus.accepted;
 		else if (offerStatus == OfferStatus.sent)
 			offerStatus = OfferStatus.rejected;
-		
+
 		if (m instanceof AbstractEncodedMessage && isMasterSession) {
 
 			AbstractEncodedMessage encodedM = (AbstractEncodedMessage) m;
 
 			if (encodedM.protocolVersion == OTRv.THREE) {
-				
+
 				if (encodedM.receiverInstanceTag != this.getSenderInstanceTag().getValue()) {
 					if (!(	encodedM.messageType == AbstractEncodedMessage.MESSAGE_DH_COMMIT
 							&& encodedM.receiverInstanceTag == 0)) {
@@ -442,7 +442,7 @@ public class SessionImpl implements Session {
 							}
 							session.addOtrEngineListener(new OtrEngineListener() {
 
-								public void sessionStatusChanged(SessionID sessionID) {								
+								public void sessionStatusChanged(SessionID sessionID) {
 									for (OtrEngineListener l : listeners)
 										l.sessionStatusChanged(sessionID);
 								}
@@ -453,7 +453,7 @@ public class SessionImpl implements Session {
 							});
 
 							slaveSessions.put(newReceiverTag, session);
-							
+
 							getHost().multipleInstancesDetected(sessionID);
 							for (OtrEngineListener l : listeners)
 								l.multipleInstancesDetected(sessionID);
@@ -479,7 +479,7 @@ public class SessionImpl implements Session {
 		case AbstractEncodedMessage.MESSAGE_DHKEY:
 		case AbstractEncodedMessage.MESSAGE_REVEALSIG:
 		case AbstractEncodedMessage.MESSAGE_SIGNATURE:
-			AuthContext auth = this.getAuthContext();				
+			AuthContext auth = this.getAuthContext();
 			auth.handleReceivingMessage(m);
 
 			if (auth.getIsSecure()) {
@@ -499,7 +499,7 @@ public class SessionImpl implements Session {
 				+ " received a query message from "
 				+ getSessionID().getUserID() + " through "
 				+ getSessionID().getProtocolName() + ".");
-		
+
 		OtrPolicy policy = getSessionPolicy();
 		if (queryMessage.versions.contains(OTRv.THREE) && policy.getAllowV3()) {
 			logger.finest("Query message with V3 support found.");
@@ -562,7 +562,7 @@ public class SessionImpl implements Session {
 		logger.finest(getSessionID().getAccountID()
 				+ " received a data message from " + getSessionID().getUserID()
 				+ ".");
-	
+
 		switch (this.getSessionStatus()) {
 		case ENCRYPTED:
 			logger
@@ -694,7 +694,7 @@ public class SessionImpl implements Session {
 		}
 		if (m instanceof QueryMessage)
 			msg += getHost().getFallbackMessage(getSessionID());
-		
+
 		if (SerializationUtils.otrEncoded(msg)) {
 			// Content is OTR encoded, so we are allowed to partition.
 			String[] fragments;
@@ -809,7 +809,7 @@ public class SessionImpl implements Session {
 
 		return plainTextMessage.cleanText;
 	}
-	
+
 	public String[] transformSending(String msgText)
 			throws OtrException {
 		return this.transformSending(msgText, null);
@@ -950,7 +950,7 @@ public class SessionImpl implements Session {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see net.java.otr4j.session.ISession#startSession()
 	 */
 	public void startSession() throws OtrException {
@@ -969,7 +969,7 @@ public class SessionImpl implements Session {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see net.java.otr4j.session.ISession#endSession()
 	 */
 	public void endSession() throws OtrException {
@@ -1000,7 +1000,7 @@ public class SessionImpl implements Session {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see net.java.otr4j.session.ISession#refreshSession()
 	 */
 	public void refreshSession() throws OtrException {
@@ -1207,5 +1207,5 @@ public class SessionImpl implements Session {
 		{
 			return this;
 		}
-	}		
+	}
 }

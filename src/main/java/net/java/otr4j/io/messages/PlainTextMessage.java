@@ -18,7 +18,7 @@ package net.java.otr4j.io.messages;
 import java.util.List;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class PlainTextMessage extends QueryMessage {

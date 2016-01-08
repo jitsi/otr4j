@@ -20,7 +20,7 @@ import java.security.PublicKey;
 import javax.crypto.interfaces.DHPublicKey;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class SignatureM {
@@ -29,7 +29,7 @@ public class SignatureM {
 	public DHPublicKey remotePubKey;
 	public PublicKey localLongTermPubKey;
 	public int keyPairID;
-	
+
 	// Ctor.
 	public SignatureM(DHPublicKey localPubKey, DHPublicKey remotePublicKey,
 			PublicKey localLongTermPublicKey, int keyPairID) {

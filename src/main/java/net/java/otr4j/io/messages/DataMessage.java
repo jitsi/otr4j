@@ -20,7 +20,7 @@ import java.util.Arrays;
 import javax.crypto.interfaces.DHPublicKey;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class DataMessage extends AbstractEncodedMessage {

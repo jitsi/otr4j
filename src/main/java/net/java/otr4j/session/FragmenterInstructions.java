@@ -17,7 +17,7 @@ package net.java.otr4j.session;
 
 /**
  * Instructions for the fragmenter explaining how to fragment a payload.
- * 
+ *
  * @author Danny van Heumen
  */
 public class FragmenterInstructions {
@@ -25,17 +25,17 @@ public class FragmenterInstructions {
 	 * Constant for indicating an unlimited amount.
 	 */
 	public static final int UNLIMITED = -1;
-	
+
 	/**
 	 * Maximum number of fragments.
 	 */
 	public final int maxFragmentsAllowed;
-	
+
 	/**
 	 * Maximum size for fragments.
 	 */
 	public final int maxFragmentSize;
-	
+
 	/**
 	 * Constructor.
 	 *
@@ -52,9 +52,9 @@ public class FragmenterInstructions {
 	/**
 	 * Verify instructions for safe usage. It will also create a default
 	 * instructions instance in case null is provided.
-	 * 
+	 *
 	 * If an invalid number is specified, it will be replaced with UNLIMITED.
-	 * 
+	 *
 	 * @param instructions
 	 *            the instructions or null for defaults
 	 * @return returns instructions

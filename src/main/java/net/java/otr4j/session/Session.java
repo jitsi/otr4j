@@ -74,7 +74,7 @@ public interface Session {
 	void respondSmp(String question, String secret) throws OtrException;
 
 	void abortSmp() throws OtrException;
-	
+
 	boolean isSmpInProgress();
 
 	BigInteger getS();

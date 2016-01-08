@@ -22,12 +22,10 @@ import net.java.otr4j.session.InstanceTag;
 import net.java.otr4j.session.SessionID;
 
 /**
- * 
  * This interface should be implemented by the host application. It is required
  * for otr4j to work properly.
- * 
+ *
  * @author George Politis
- * 
  */
 public interface OtrEngineHost {
 	void injectMessage(SessionID sessionID, String msg)
@@ -54,7 +52,7 @@ public interface OtrEngineHost {
 			String msgText) throws OtrException;
 
 	OtrPolicy getSessionPolicy(SessionID sessionID);
-	
+
 	/**
 	 * Get instructions for the necessary fragmentation operations.
 	 *
@@ -68,7 +66,7 @@ public interface OtrEngineHost {
 	 * @return return fragmentation instructions or null for defaults (i.e. no
 	 *         fragmentation)
 	 */
-	FragmenterInstructions getFragmenterInstructions(SessionID sessionID); 
+	FragmenterInstructions getFragmenterInstructions(SessionID sessionID);
 
 	KeyPair getLocalKeyPair(SessionID sessionID)
 			throws OtrException;

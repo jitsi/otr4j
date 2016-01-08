@@ -23,7 +23,7 @@ import net.java.otr4j.OtrPolicy;
 
 /**
  * OTR fragmenter.
- * 
+ *
  * TODO It may be better to separate the v2 and v3 implementations into
  * specialized classes.
  *
@@ -62,7 +62,7 @@ public class OtrFragmenter {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param session session instance (cannot be null)
 	 * @param host OTR engine host calling upon OTR session
 	 */
@@ -76,7 +76,7 @@ public class OtrFragmenter {
 		}
 		this.host = host;
 	}
-	
+
 	/**
 	 * Get instructions for fragmentation behaviour.
 	 *
@@ -155,7 +155,7 @@ public class OtrFragmenter {
 	/**
 	 * Fragment the given message into pieces as specified by the
 	 * FragmenterInstructions instance.
-	 * 
+	 *
 	 * @param message
 	 *            the original message
 	 * @return returns an array of message fragments. The array will contain at
@@ -175,7 +175,7 @@ public class OtrFragmenter {
 
 	/**
 	 * Fragment a message according to the specified instructions.
-	 * 
+	 *
 	 * @param message
 	 *            the message
 	 * @param instructions
@@ -326,7 +326,7 @@ public class OtrFragmenter {
 	private OtrPolicy getPolicy() {
 		return this.session.getSessionPolicy();
 	}
-	
+
 	/**
 	 * Get the sender instance.
 	 *
@@ -335,7 +335,7 @@ public class OtrFragmenter {
 	private int getSenderInstance() {
 		return this.session.getSenderInstanceTag().getValue();
 	}
-	
+
 	/**
 	 * Get the receiver instance.
 	 *

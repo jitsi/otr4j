@@ -57,9 +57,8 @@ import org.bouncycastle.crypto.signers.DSASigner;
 import org.bouncycastle.util.BigIntegers;
 
 /**
- * 
+ *
  * @author George Politis
- * 
  */
 public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 

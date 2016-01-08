@@ -7,9 +7,8 @@
 package net.java.otr4j.session;
 
 /**
- * 
+ *
  * @author alexander.ivanov
- * 
  */
 public enum OfferStatus {
 	idle, sent, rejected, accepted;

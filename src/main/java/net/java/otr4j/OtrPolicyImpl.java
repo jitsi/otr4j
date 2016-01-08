@@ -45,7 +45,7 @@ public class OtrPolicyImpl implements OtrPolicy {
 	public boolean getAllowV2() {
 		return (policy & OtrPolicy.ALLOW_V2) != 0;
 	}
-	
+
 	public boolean getAllowV3() {
 		return (policy & OtrPolicy.ALLOW_V3) != 0;
 	}

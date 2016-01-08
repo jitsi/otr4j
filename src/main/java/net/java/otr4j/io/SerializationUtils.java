@@ -416,7 +416,7 @@ public class SerializationUtils {
 			versions = new ArrayList<Integer>();
 			if (v1)
 				versions.add(OTRv.ONE);
-			if (v2) 
+			if (v2)
 				versions.add(OTRv.TWO);
 			if (v3)
 				versions.add(OTRv.THREE);

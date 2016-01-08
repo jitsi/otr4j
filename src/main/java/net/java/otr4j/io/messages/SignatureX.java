@@ -19,7 +19,7 @@ import java.security.PublicKey;
 import java.util.Arrays;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class SignatureX {

@@ -43,7 +43,7 @@ import net.java.otr4j.io.messages.SignatureMessage;
 import net.java.otr4j.session.Session.OTRv;
 
 /**
- * 
+ *
  * @author George Politis
  */
 class AuthContextImpl extends AuthContext {
@@ -52,7 +52,7 @@ class AuthContextImpl extends AuthContext {
 		this.setSession(session);
 		this.reset();
 	}
-	
+
 	private Session session;
 
 	private int authenticationState;
@@ -62,7 +62,7 @@ class AuthContextImpl extends AuthContext {
 	private byte[] remoteDHPublicKeyHash;
 
 	private int localDHPrivateKeyID;
-	
+
 	private BigInteger s;
 	private byte[] c;
 	private byte[] m1;
@@ -174,9 +174,9 @@ class AuthContextImpl extends AuthContext {
 				SignatureMessage signatureMessage =
 						new SignatureMessage(getSession().getProtocolVersion(), xEncrypted,
 								xEncryptedHash);
-				signatureMessage.senderInstanceTag = 
+				signatureMessage.senderInstanceTag =
 						getSession().getSenderInstanceTag().getValue();
-				signatureMessage.receiverInstanceTag = 
+				signatureMessage.receiverInstanceTag =
 						getSession().getReceiverInstanceTag().getValue();
 				return signatureMessage;
 			} catch (IOException e) {
@@ -700,7 +700,7 @@ class AuthContextImpl extends AuthContext {
 		} else if ( m.protocolVersion == OTRv.THREE &&
 					session.getSenderInstanceTag().getValue() != m.receiverInstanceTag &&
 					m.receiverInstanceTag != 0) {
-			
+
 			logger.finest("Received a D-H commit message with receiver instance tag "
 							+ "that is different from ours, ignore this message.");
 			return;

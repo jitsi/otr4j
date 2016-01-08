@@ -25,9 +25,8 @@ import net.java.otr4j.session.SessionStatus;
 import net.java.otr4j.session.TLV;
 
 /**
- * 
+ *
  * @author George Politis
- * 
  */
 public interface OtrSessionManager {
 

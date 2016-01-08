@@ -31,7 +31,7 @@ public class Util {
 		}
 		return true;
 	}
-	
+
 	public static void checkBytes(String s, byte[] bytes) {
 		String hexString = new String();
 		for (int i = 0; i < bytes.length; i++) {
@@ -40,7 +40,7 @@ public class Util {
 		}
 		System.out.println(s + ": " + hexString);
 	}
-	
+
 	static void writeInt(byte[] dst, int index, int src) {
 		dst[index] = (byte) ((src >> 24) & 0xff);
 		dst[index + 1] = (byte) ((src >> 16) & 0xff);
@@ -55,7 +55,7 @@ public class Util {
 				| ((int) src[index + 3] & 0xff);
 		return ret;
 	}
-	
+
 	static byte[] hexStringToBytes(String s){
 		byte[] sbytes = s.getBytes();
 		if(sbytes.length%2!=0) return null;
@@ -80,7 +80,7 @@ public class Util {
 		}
 		return ret;
 	}
-	
+
 	static String bytesToHexString(byte[] mpi){
 		byte[] hex = new byte[2*mpi.length];
 		for(int i=0; i<mpi.length; i++){
@@ -96,7 +96,7 @@ public class Util {
 			}else{
 				hex[2*i+1]=(byte)('A'+num-10);
 			}
-			
+
 		}
 		return new String(hex);
 	}

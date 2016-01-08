@@ -16,13 +16,13 @@
 package net.java.otr4j.io.messages;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class ErrorMessage extends AbstractMessage {
 	// Fields.
 	public String error;
-	
+
 	// Ctor.
 	public ErrorMessage(int messageType, String error) {
 		super(messageType);

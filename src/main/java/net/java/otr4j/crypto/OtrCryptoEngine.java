@@ -24,9 +24,8 @@ import java.security.PublicKey;
 import javax.crypto.interfaces.DHPublicKey;
 
 /**
- * 
+ *
  * @author George Politis
- * 
  */
 public interface OtrCryptoEngine {
 

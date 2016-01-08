@@ -18,7 +18,7 @@ package net.java.otr4j.io.messages;
 import javax.crypto.interfaces.DHPublicKey;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class DHKeyMessage extends AbstractEncodedMessage {

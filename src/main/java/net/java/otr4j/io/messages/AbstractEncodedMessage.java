@@ -16,7 +16,7 @@
 package net.java.otr4j.io.messages;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public abstract class AbstractEncodedMessage extends AbstractMessage {

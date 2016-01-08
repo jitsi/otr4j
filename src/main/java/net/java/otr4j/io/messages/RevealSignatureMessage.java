@@ -18,7 +18,7 @@ package net.java.otr4j.io.messages;
 import java.util.Arrays;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class RevealSignatureMessage extends SignatureMessage {

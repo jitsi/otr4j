@@ -29,7 +29,7 @@ import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.io.SerializationUtils;
 
 /**
- * 
+ *
  * @author George Politis
  */
 class SessionKeysImpl implements SessionKeys {

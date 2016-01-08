@@ -26,9 +26,8 @@ import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionImpl;
 
 /**
- * 
+ *
  * @author George Politis
- * 
  */
 public class OtrSessionManagerImpl implements OtrSessionManager {
 
@@ -65,7 +64,7 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 					for (OtrEngineListener l : listeners)
 						l.multipleInstancesDetected(sessionID);
 				}
-				
+
 				public void outgoingSessionChanged(SessionID sessionID) {
 					for (OtrEngineListener l : listeners)
 						l.outgoingSessionChanged(sessionID);

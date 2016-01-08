@@ -72,13 +72,13 @@ public class SM {
 			super(message);
 		}
 	};
-	
+
 	public static final int EXPECT1 = 0;
 	public static final int EXPECT2 = 1;
 	public static final int EXPECT3 = 2;
 	public static final int EXPECT4 = 3;
 	public static final int EXPECT5 = 4;
-	
+
 	public static final int PROG_OK = 0;
 	public static final int PROG_CHEATED = -2;
 	public static final int PROG_FAILED = -1;
@@ -88,7 +88,7 @@ public class SM {
 	public static final int MSG2_LEN = 11;
 	public static final int MSG3_LEN = 8;
 	public static final int MSG4_LEN = 3;
-	
+
 	public static final BigInteger MODULUS_S = new BigInteger(
 			"FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"+
 		    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"+
@@ -98,7 +98,7 @@ public class SM {
 		    "C2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F"+
 		    "83655D23DCA3AD961C62F356208552BB9ED529077096966D"+
 		    "670C354E4ABC9804F1746C08CA237327FFFFFFFFFFFFFFFF", 16);
-	
+
 	public static final BigInteger MODULUS_MINUS_2 = new BigInteger(
 			"FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"+
 		    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"+
@@ -108,7 +108,7 @@ public class SM {
 		    "C2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F"+
 		    "83655D23DCA3AD961C62F356208552BB9ED529077096966D"+
 		    "670C354E4ABC9804F1746C08CA237327FFFFFFFFFFFFFFFD", 16);
-	
+
 	public static final BigInteger ORDER_S = new BigInteger(
 			"7FFFFFFFFFFFFFFFE487ED5110B4611A62633145C06E0E68"+
 		    "948127044533E63A0105DF531D89CD9128A5043CC71A026E"+
@@ -118,12 +118,12 @@ public class SM {
 		    "E1003E5C50B1DF82CC6D241B0E2AE9CD348B1FD47E9267AF"+
 		    "C1B2AE91EE51D6CB0E3179AB1042A95DCF6A9483B84B4B36"+
 		    "B3861AA7255E4C0278BA36046511B993FFFFFFFFFFFFFFFF", 16);
-	
+
 	public static final byte[] GENERATOR_S = Util.hexStringToBytes("02");
 	public static final int MOD_LEN_BITS = 1536;
 	public static final int MOD_LEN_BYTES = 192;
-	
-	
+
+
 	/**
      * Generate a random exponent
      *
@@ -135,7 +135,7 @@ public class SM {
 		sr.nextBytes(sb);
 		return new BigInteger(1, sb);
 	}
-	
+
 	/**
 	 * Hash one or two BigIntegers. To hash only one BigInteger, b may be set to
      * NULL.
@@ -162,7 +162,7 @@ public class SM {
 			throw new SMException("cannot serialize bigint");
 		}
 	}
-	
+
 	public static byte[] serialize(BigInteger[] ints) throws SMException {
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -178,7 +178,7 @@ public class SM {
 			throw new SMException("cannot serialize bigints");
 		}
 	}
-	
+
 	public static BigInteger[] unserialize(byte[] bytes) throws SMException {
 		try {
 			ByteArrayInputStream in = new ByteArrayInputStream(bytes);
@@ -196,7 +196,7 @@ public class SM {
 			throw new SMException("cannot unserialize bigints");
 		}
 	}
-	
+
 	/**
      * Check that an BigInteger is in the right range to be a (non-unit) group
 	 * element.
@@ -208,7 +208,7 @@ public class SM {
 	{
 		return g.compareTo(BigInteger.valueOf(2)) < 0 || g.compareTo(SM.MODULUS_MINUS_2) > 0;
 	}
-	
+
 	/**
      * Check that an BigInteger is in the right range to be a (non-zero)
      * exponent.
@@ -220,7 +220,7 @@ public class SM {
 	{
 		return x.compareTo(BigInteger.ONE) < 0 || x.compareTo(SM.ORDER_S) >= 0;
 	}
-	
+
 	/**
 	 * Proof of knowledge of a discrete logarithm.
      *
@@ -242,7 +242,7 @@ public class SM {
 	    ret[1]=d;
 	    return ret;
 	}
-	
+
 	/**
 	 * Verify a proof of knowledge of a discrete logarithm.  Checks that c = h(g^d x^c)
      *
@@ -262,10 +262,10 @@ public class SM {
 	    BigInteger xc = x.modPow(c, MODULUS_S);
 	    BigInteger gdxc = gd.multiply(xc).mod(MODULUS_S);
 	    BigInteger hgdxc = hash(version, gdxc, null);
-	    
+
 	    return hgdxc.compareTo(c);
 	}
-	
+
 	/**
 	 * Proof of knowledge of coordinates with first components being equal
      *
@@ -284,9 +284,9 @@ public class SM {
 	    BigInteger temp1 = state.g1.modPow(r1, MODULUS_S);
 	    BigInteger temp2 = state.g2.modPow(r2, MODULUS_S);
 	    temp2 = temp1.multiply(temp2).mod(MODULUS_S);
-	    temp1 = state.g3.modPow(r1, MODULUS_S);    
+	    temp1 = state.g3.modPow(r1, MODULUS_S);
 	    BigInteger c = hash(version, temp1, temp2);
-	    
+
 	    /* Compute the d values, as d1 = r1 - r c, d2 = r2 - secret c */
 	    temp1 = r.multiply(c).mod(ORDER_S);
 	    BigInteger d1 = r1.subtract(temp1).mod(ORDER_S);
@@ -300,7 +300,7 @@ public class SM {
 	    ret[2]=d2;
 	    return ret;
 	}
-	
+
 	/**
 	 * Verify a proof of knowledge of coordinates with first components being equal
      * @param c MVN_PASS_JAVADOC_INSPECTION
@@ -330,18 +330,18 @@ public class SM {
 		BigInteger temp2 = state.g3.modPow(d1, MODULUS_S);
 		BigInteger temp3 = p.modPow(c, MODULUS_S);
 		BigInteger temp1 = temp2.multiply(temp3).mod(MODULUS_S);
-		
+
 		temp2 = state.g1.modPow(d1, MODULUS_S);
 		temp3 = state.g2.modPow(d2, MODULUS_S);
 		temp2 = temp2.multiply(temp3).mod(MODULUS_S);
 		temp3 = q.modPow(c, MODULUS_S);
 		temp2 = temp3.multiply(temp2).mod(MODULUS_S);
-		
+
 	    BigInteger cprime=hash(version, temp1, temp2);
 
 	    return c.compareTo(cprime);
 	}
-	
+
 	/**
 	 * Proof of knowledge of logs with exponents being equal
      * @param state MVN_PASS_JAVADOC_INSPECTION
@@ -367,7 +367,7 @@ public class SM {
 	    ret[1]=d;
 	    return ret;
 	}
-	
+
 	/**
 	 * Verify a proof of knowledge of logs with exponents being equal
      * @param c MVN_PASS_JAVADOC_INSPECTION
@@ -384,7 +384,7 @@ public class SM {
 	    /* Here, we recall the exponents used to create g3.
 	     * If we have previously seen g3o = g1^x where x is unknown
 	     * during the DH exchange to produce g3, then we may proceed with:
-	     * 
+	     *
 	     * To verify, we test that hash(g1^d * g3o^c, qab^d * r^c) = c
 	     * If indeed c = hash(g1^r1, qab^r1), d = r1- x * c
 	     * And if indeed r = qab^x
@@ -394,11 +394,11 @@ public class SM {
 	     * = hash(g1^r1, qab^r1)
 	     * = c
 	     */
-		
+
 		BigInteger temp2 = state.g1.modPow(d, MODULUS_S);
 		BigInteger temp3 = state.g3o.modPow(c, MODULUS_S);
 		BigInteger temp1 = temp2.multiply(temp3).mod(MODULUS_S);
-		
+
 		temp3 = state.qab.modPow(d, MODULUS_S);
 		temp2 = r.modPow(c, MODULUS_S);
 		temp2 = temp3.multiply(temp2).mod(MODULUS_S);
@@ -407,7 +407,7 @@ public class SM {
 
 	    return c.compareTo(cprime);
 	}
-	
+
 	/** Create first message in SMP exchange.  Input is Alice's secret value
 	 * which this protocol aims to compare to Bob's. The return value is a serialized
 	 * BigInteger array whose elements correspond to the following:
@@ -436,7 +436,7 @@ public class SM {
 	    BigInteger[] res = proofKnowLog(astate.g1, astate.x2, 1);
 	    msg1[1]=res[0];
 	    msg1[2]=res[1];
-	    
+
 	    msg1[3] = astate.g1.modPow(astate.x3, MODULUS_S);
 	    res = proofKnowLog(astate.g1, astate.x3, 2);
 	    msg1[4]=res[0];
@@ -447,7 +447,7 @@ public class SM {
 
 	    return ret;
 	}
-	
+
 	/** Receive the first message in SMP exchange, which was generated by
 	 *  step1.  Input is saved until the user inputs their secret
 	 * information.  No output.
@@ -474,7 +474,7 @@ public class SM {
 
 	    /* Store Alice's g3a value for later in the protocol */
 	    bstate.g3o=msg1[3];
-	    
+
 	    /* Verify Alice's proofs */
 	    if (checkKnowLog(msg1[1], msg1[2], bstate.g1, msg1[0], 1)!=0
 	    	||checkKnowLog(msg1[4], msg1[5], bstate.g1, msg1[3], 2)!=0) {
@@ -482,7 +482,7 @@ public class SM {
 	    }
 
 	    /* Create Bob's half of the generators g2 and g3 */
-	    
+
 	    bstate.x2 = randomExponent();
 	    bstate.x3 = randomExponent();
 
@@ -491,10 +491,10 @@ public class SM {
 	    //Util.checkBytes("g2b", bstate.g2.getValue());
 	    bstate.g3= msg1[3].modPow(bstate.x3, MODULUS_S);
 	    //Util.checkBytes("g3b", bstate.g3.getValue());
-	    
+
 	    bstate.smProgState = PROG_OK;
 	}
-	
+
 	/** Create second message in SMP exchange.  Input is Bob's secret value.
 	 * Information from earlier steps in the exchange is taken from Bob's
 	 * state.  Output is a serialized mpi array whose elements correspond
@@ -544,7 +544,7 @@ public class SM {
 	    bstate.q = qb1.multiply(qb2).mod(MODULUS_S);
 	    //Util.checkBytes("Qb", bstate.q.getValue());
 	    msg2[7] = bstate.q;
-	    
+
 	    res = proofEqualCoords(bstate, r, 5);
 	    msg2[8]=res[0];
 	    msg2[9]=res[1];
@@ -552,7 +552,7 @@ public class SM {
 
 	    /* Convert to serialized form */
 	    return serialize(msg2);
-	    
+
 	}
 	/** Create third message in SMP exchange.  Input is a message generated
 	 * by otrl_sm_step2b. Output is a serialized mpi array whose elements
@@ -570,7 +570,7 @@ public class SM {
 	{
 	    /* Read from input to find the mpis */
 	    astate.smProgState = PROG_CHEATED;
-	    
+
 	    BigInteger[] msg2 = unserialize(input);
 	    if (checkGroupElem(msg2[0]) || checkGroupElem(msg2[3]) ||
 		    checkGroupElem(msg2[6]) || checkGroupElem(msg2[7]) ||
@@ -585,7 +585,7 @@ public class SM {
 	    astate.g3o = msg2[3];
 
 	    /* Verify Bob's knowledge of discreet log proofs */
-	    if (checkKnowLog(msg2[1], msg2[2], astate.g1, msg2[0], 3)!=0 || 
+	    if (checkKnowLog(msg2[1], msg2[2], astate.g1, msg2[0], 3)!=0 ||
 	        checkKnowLog(msg2[4], msg2[5], astate.g1, msg2[3], 4)!=0) {
 	    	throw new SMException("Proof checking failed");
 	    }
@@ -595,7 +595,7 @@ public class SM {
 	    //Util.checkBytes("g2a", astate.g2.getValue());
 	    astate.g3 = msg2[3].modPow(astate.x3, MODULUS_S);
 	    //Util.checkBytes("g3a", astate.g3.getValue());
-	    
+
 	    /* Verify Bob's coordinate equality proof */
 	    if (checkEqualCoords(msg2[8], msg2[9], msg2[10], msg2[6], msg2[7], astate, 5)!=0)
 	    	throw new SMException("Invalid Parameter");
@@ -616,7 +616,7 @@ public class SM {
 	    astate.q = qa1.multiply(qa2).mod(MODULUS_S);
 	    msg3[1] = astate.q;
 	    //Util.checkBytes("Qa", astate.q.getValue());
-	    
+
 	    BigInteger[] res = proofEqualCoords(astate,r,6);
 	    msg3[2] = res[0];
 	    msg3[3] = res[1];
@@ -632,9 +632,9 @@ public class SM {
 	    res = proofEqualLogs(astate, 7);
 	    msg3[6]=res[0];
 	    msg3[7]=res[1];
-	    
+
 	    byte[] output = serialize(msg3);
-	   
+
 	    astate.smProgState = PROG_OK;
 	    return output;
 	}
@@ -659,7 +659,7 @@ public class SM {
 	    BigInteger[] msg3 = unserialize(input);
 
 	    bstate.smProgState = PROG_CHEATED;
-	    
+
 	    BigInteger[] msg4 = new BigInteger[3];
 
 	    if (checkGroupElem(msg3[0]) || checkGroupElem(msg3[1]) ||
@@ -671,13 +671,13 @@ public class SM {
 	    /* Verify Alice's coordinate equality proof */
 	    if (checkEqualCoords(msg3[2], msg3[3], msg3[4], msg3[0], msg3[1], bstate, 6)!=0)
 	    	throw new SMException("Invalid Parameter");
-	    
+
 	    /* Find Pa/Pb and Qa/Qb */
 	    BigInteger inv = bstate.p.modInverse(MODULUS_S);
 	    bstate.pab = msg3[0].multiply(inv).mod(MODULUS_S);
 	    inv = bstate.q.modInverse(MODULUS_S);
 	    bstate.qab = msg3[1].multiply(inv).mod(MODULUS_S);
-   
+
 
 	    /* Verify Alice's log equality proof */
 	    if (checkEqualLogs(msg3[6], msg3[7], msg3[5], bstate, 7)!=0){
@@ -689,11 +689,11 @@ public class SM {
 	    BigInteger[] res = proofEqualLogs(bstate,8);
 	    msg4[1]=res[0];
 	    msg4[2]=res[1];
-	    
+
 	    byte[] output = serialize(msg4);
 
 	    /* Calculate Rab and verify that secrets match */
-	    
+
 	    BigInteger rab = msg3[5].modPow(bstate.x3, MODULUS_S);
 	    //Util.checkBytes("rab", rab.getValue());
 	    //Util.checkBytes("pab", bstate.pab.getValue());
@@ -727,7 +727,7 @@ public class SM {
 	    	throw new SMException("Invalid Parameter");
 
 	    /* Calculate Rab and verify that secrets match */
-	    
+
 	    BigInteger rab = msg4[0].modPow(astate.x3, MODULUS_S);
 	    //Util.checkBytes("rab", rab.getValue());
 	    //Util.checkBytes("pab", astate.pab.getValue());
@@ -743,16 +743,16 @@ public class SM {
 
 	// ***************************************************
 	// Session stuff - perhaps factor out
-	
+
 	public static void main(String[] args) throws SMException {
 		BigInteger res = SM.MODULUS_MINUS_2.subtract(SM.MODULUS_S).mod(SM.MODULUS_S);
 		String ss = Util.bytesToHexString(res.toByteArray());
 		System.out.println(ss);
-		
+
 		byte[] secret1 = "abcdef".getBytes();
 		SMState a = new SMState();
 		SMState b = new SMState();
-		
+
 		byte[] msg1 = SM.step1(a, secret1);
 		SM.step2a(b, msg1, 123);
 		byte[] msg2 = SM.step2b(b, secret1);

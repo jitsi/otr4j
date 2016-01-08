@@ -30,7 +30,7 @@ import net.java.otr4j.io.messages.RevealSignatureMessage;
 import net.java.otr4j.io.messages.SignatureMessage;
 
 /**
- * 
+ *
  * @author George Politis
  */
 abstract class AuthContext {
@@ -56,15 +56,15 @@ abstract class AuthContext {
 	byte[] localDHPublicKeyEncrypted;
 
 	abstract class MessageFactory {
-		
+
 		abstract QueryMessage getQueryMessage();
-		
+
 		abstract DHCommitMessage getDHCommitMessage() throws OtrException;
-		
+
 		abstract DHKeyMessage getDHKeyMessage() throws OtrException;
-		
+
 		abstract RevealSignatureMessage getRevealSignatureMessage() throws OtrException;
-		
+
 		abstract SignatureMessage getSignatureMessage() throws OtrException;
 	}
 
