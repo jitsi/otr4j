@@ -79,7 +79,7 @@ public class SessionImpl implements Session {
 	private BigInteger ess;
 	private OfferStatus offerStatus;
 	private final InstanceTag senderTag;
-	private InstanceTag receiverTag;
+	private InstanceTag receiverInstanceTag;
 	private int protocolVersion;
 	private final OtrAssembler assembler;
 	private final OtrFragmenter fragmenter;
@@ -98,7 +98,7 @@ public class SessionImpl implements Session {
 
 		otrSm = new OtrSm(this, listener);
 		this.senderTag = new InstanceTag();
-		this.receiverTag = InstanceTag.ZERO_TAG;
+		this.receiverInstanceTag = InstanceTag.ZERO_TAG;
 
 		this.slaveSessions = new SelectableMap<InstanceTag, SessionImpl>(new HashMap<InstanceTag, SessionImpl>());
 		isMasterSession = true;
@@ -111,7 +111,7 @@ public class SessionImpl implements Session {
 	private SessionImpl(SessionID sessionID,
 						OtrEngineHost listener,
 						InstanceTag senderTag,
-						InstanceTag receiverTag) {
+						InstanceTag receiverInstanceTag) {
 
 		this.setSessionID(sessionID);
 		this.setHost(listener);
@@ -121,7 +121,7 @@ public class SessionImpl implements Session {
 
 		otrSm = new OtrSm(this, listener);
 		this.senderTag = senderTag;
-		this.receiverTag = receiverTag;
+		this.receiverInstanceTag = receiverInstanceTag;
 
 		this.slaveSessions = new SelectableMap<InstanceTag, SessionImpl>(Collections.<InstanceTag, SessionImpl>emptyMap());
 		isMasterSession = false;
@@ -1103,15 +1103,15 @@ public class SessionImpl implements Session {
 
 	@Override
 	public InstanceTag getReceiverInstanceTag() {
-		return receiverTag;
+		return receiverInstanceTag;
 	}
 
 	@Override
-	public void setReceiverInstanceTag(InstanceTag receiverTag) {
+	public void setReceiverInstanceTag(InstanceTag receiverInstanceTag) {
 		// ReceiverInstanceTag of a slave session is not supposed to change
 		if (!isMasterSession)
 			return;
-		this.receiverTag = receiverTag;
+		this.receiverInstanceTag = receiverInstanceTag;
 	}
 
 	@Override

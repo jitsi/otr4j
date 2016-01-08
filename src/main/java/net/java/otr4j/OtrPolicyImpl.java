@@ -147,9 +147,9 @@ public class OtrPolicyImpl implements OtrPolicy {
 		if (obj == null || obj.getClass() != this.getClass())
 			return false;
 
-		OtrPolicy policy = (OtrPolicy) obj;
+		OtrPolicy other = (OtrPolicy) obj;
 
-		return policy.getPolicy() == this.getPolicy();
+		return other.getPolicy() == this.getPolicy();
 	}
 
 	public int hashCode() {

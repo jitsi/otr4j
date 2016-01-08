@@ -99,9 +99,9 @@ public class OtrFragmenter {
 	 *             support fragmentation, for example if only OTRv1 is allowed.
 	 */
 	public int numberOfFragments(final String message) throws IOException {
-		final SessionID session = this.session.getSessionID();
+		final SessionID sessionID = this.session.getSessionID();
 		final FragmenterInstructions requested = this.host
-				.getFragmenterInstructions(session);
+				.getFragmenterInstructions(sessionID);
 		final FragmenterInstructions instructions = FragmenterInstructions
 				.verify(requested);
 		return numberOfFragments(message, instructions);
@@ -165,9 +165,9 @@ public class OtrFragmenter {
 	 *             the maximum number of fragments is exceeded.
 	 */
 	public String[] fragment(final String message) throws IOException {
-		final SessionID session = this.session.getSessionID();
+		final SessionID sessionID = this.session.getSessionID();
 		final FragmenterInstructions requested = this.host
-				.getFragmenterInstructions(session);
+				.getFragmenterInstructions(sessionID);
 		final FragmenterInstructions instructions = FragmenterInstructions
 				.verify(requested);
 		return fragment(message, instructions);

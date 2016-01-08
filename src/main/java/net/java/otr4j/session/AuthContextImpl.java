@@ -335,11 +335,11 @@ class AuthContextImpl extends AuthContext {
 
 		byte[] h2 = h2(M1_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		byte[] m1 = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
-		buff.get(m1);
+		byte[] tmpM1 = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
+		buff.get(tmpM1);
 		logger.finest("Computed m1.");
-		this.m1 = m1;
-		return m1;
+		this.m1 = tmpM1;
+		return tmpM1;
 	}
 
 	private byte[] getM2() throws OtrException {
@@ -348,11 +348,11 @@ class AuthContextImpl extends AuthContext {
 
 		byte[] h2 = h2(M2_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		byte[] m2 = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
-		buff.get(m2);
+		byte[] tmpM2 = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
+		buff.get(tmpM2);
 		logger.finest("Computed m2.");
-		this.m2 = m2;
-		return m2;
+		this.m2 = tmpM2;
+		return tmpM2;
 	}
 
 	private byte[] getCp() throws OtrException {
@@ -361,12 +361,12 @@ class AuthContextImpl extends AuthContext {
 
 		byte[] h2 = h2(C_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		byte[] cp = new byte[OtrCryptoEngine.AES_KEY_BYTE_LENGTH];
+		byte[] tmpCp = new byte[OtrCryptoEngine.AES_KEY_BYTE_LENGTH];
 		buff.position(OtrCryptoEngine.AES_KEY_BYTE_LENGTH);
-		buff.get(cp);
+		buff.get(tmpCp);
 		logger.finest("Computed c'.");
-		this.cp = cp;
-		return cp;
+		this.cp = tmpCp;
+		return tmpCp;
 	}
 
 	private byte[] getM1p() throws OtrException {
@@ -375,11 +375,11 @@ class AuthContextImpl extends AuthContext {
 
 		byte[] h2 = h2(M1p_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		byte[] m1p = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
-		buff.get(m1p);
-		this.m1p = m1p;
+		byte[] tmpM1p = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
+		buff.get(tmpM1p);
+		this.m1p = tmpM1p;
 		logger.finest("Computed m1'.");
-		return m1p;
+		return tmpM1p;
 	}
 
 	private byte[] getM2p() throws OtrException {
@@ -388,11 +388,11 @@ class AuthContextImpl extends AuthContext {
 
 		byte[] h2 = h2(M2p_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
-		byte[] m2p = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
-		buff.get(m2p);
-		this.m2p = m2p;
+		byte[] tmpM2p = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
+		buff.get(tmpM2p);
+		this.m2p = tmpM2p;
 		logger.finest("Computed m2'.");
-		return m2p;
+		return tmpM2p;
 	}
 
 	public KeyPair getLocalLongTermKeyPair() throws OtrException {
@@ -454,20 +454,20 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	private void handleSignatureMessage(SignatureMessage m) throws OtrException {
-		Session session = getSession();
-		SessionID sessionID = session.getSessionID();
+		Session mySession = getSession();
+		SessionID sessionID = mySession.getSessionID();
 		logger.finest(sessionID.getAccountID()
 				+ " received a signature message from " + sessionID.getUserID()
 				+ " through " + sessionID.getProtocolName() + ".");
 
-		if (m.protocolVersion == OTRv.TWO && !session.getSessionPolicy().getAllowV2()) {
+		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
 			logger.finest("If ALLOW_V2 is not set, ignore this message.");
 			return;
-		} else if (m.protocolVersion == OTRv.THREE && !session.getSessionPolicy().getAllowV3()) {
+		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
 			logger.finest("If ALLOW_V3 is not set, ignore this message.");
 			return;
 		} else if ( m.protocolVersion == OTRv.THREE &&
-					session.getSenderInstanceTag().getValue() != m.receiverInstanceTag) {
+					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag) {
 			logger.finest("Received a Signature Message with receiver instance tag"
 							+ " that is different from ours, ignore this message");
 			return;
@@ -491,10 +491,10 @@ class AuthContextImpl extends AuthContext {
 				throw new OtrException(e);
 			}
 			// Compute signature.
-			PublicKey remoteLongTermPublicKey = remoteX.longTermPublicKey;
+			PublicKey localRemoteLongTermPublicKey = remoteX.longTermPublicKey;
 			SignatureM remoteM = new SignatureM(this.getRemoteDHPublicKey(),
 					(DHPublicKey) this.getLocalDHKeyPair().getPublic(),
-					remoteLongTermPublicKey, remoteX.dhKeyID);
+					localRemoteLongTermPublicKey, remoteX.dhKeyID);
 			OtrCryptoEngine otrCryptoEngine = new OtrCryptoEngineImpl();
 			// Verify signature.
 			byte[] signature;
@@ -504,14 +504,14 @@ class AuthContextImpl extends AuthContext {
 			} catch (IOException e) {
 				throw new OtrException(e);
 			}
-			if (!otrCryptoEngine.verify(signature, remoteLongTermPublicKey,
+			if (!otrCryptoEngine.verify(signature, localRemoteLongTermPublicKey,
 					remoteX.signature)) {
 				logger.finest("Signature verification failed.");
 				return;
 			}
 
 			this.setIsSecure(true);
-			this.setRemoteLongTermPublicKey(remoteLongTermPublicKey);
+			this.setRemoteLongTermPublicKey(localRemoteLongTermPublicKey);
 			break;
 		default:
 			logger
@@ -522,20 +522,20 @@ class AuthContextImpl extends AuthContext {
 
 	private void handleRevealSignatureMessage(RevealSignatureMessage m)
 			throws OtrException {
-		Session session = getSession();
-		SessionID sessionID = session.getSessionID();
+		Session mySession = getSession();
+		SessionID sessionID = mySession.getSessionID();
 		logger.finest(sessionID.getAccountID()
 				+ " received a reveal signature message from "
 				+ sessionID.getUserID() + " through "
 				+ sessionID.getProtocolName() + ".");
-		if (m.protocolVersion == OTRv.TWO && !session.getSessionPolicy().getAllowV2()) {
+		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
 			logger.finest("If ALLOW_V2 is not set, ignore this message.");
 			return;
-		} else if (m.protocolVersion == OTRv.THREE && !session.getSessionPolicy().getAllowV3()) {
+		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
 			logger.finest("If ALLOW_V3 is not set, ignore this message.");
 			return;
 		} else if ( m.protocolVersion == OTRv.THREE &&
-					session.getSenderInstanceTag().getValue() != m.receiverInstanceTag) {
+					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag) {
 			logger.finest("Received a Reveal Signature Message with receiver instance tag"
 							+ " that is different from ours, ignore this message");
 			return;
@@ -636,26 +636,26 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	private void handleDHKeyMessage(DHKeyMessage m) throws OtrException {
-		Session session = getSession();
-		SessionID sessionID = session.getSessionID();
+		Session mySession = getSession();
+		SessionID sessionID = mySession.getSessionID();
 		logger.finest(sessionID.getAccountID()
 				+ " received a D-H key message from " + sessionID.getUserID()
 				+ " through " + sessionID.getProtocolName() + ".");
 
-		if (m.protocolVersion == OTRv.TWO && !session.getSessionPolicy().getAllowV2()) {
+		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
 			logger.finest("If ALLOW_V2 is not set, ignore this message.");
 			return;
-		} else if (m.protocolVersion == OTRv.THREE && !session.getSessionPolicy().getAllowV3()) {
+		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
 			logger.finest("If ALLOW_V3 is not set, ignore this message.");
 			return;
 		} else if ( m.protocolVersion == OTRv.THREE
-					&& session.getSenderInstanceTag().getValue() != m.receiverInstanceTag) {
+					&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag) {
 			logger.finest("Received a D-H Key Message with receiver instance tag"
 							+ " that is different from ours, ignore this message");
 			return;
 		}
 
-		session.setReceiverInstanceTag(new InstanceTag(m.senderInstanceTag));
+		mySession.setReceiverInstanceTag(new InstanceTag(m.senderInstanceTag));
 		switch (this.getAuthenticationState()) {
 		case NONE:
 		case AWAITING_DHKEY:
@@ -690,21 +690,21 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	private void handleDHCommitMessage(DHCommitMessage m) throws OtrException {
-		Session session = getSession();
-		SessionID sessionID = session.getSessionID();
+		Session mySession = getSession();
+		SessionID sessionID = mySession.getSessionID();
 		logger.finest(sessionID.getAccountID()
 				+ " received a D-H commit message from "
 				+ sessionID.getUserID() + " through "
 				+ sessionID.getProtocolName() + ".");
 
-		if (m.protocolVersion == OTRv.TWO && !session.getSessionPolicy().getAllowV2()) {
+		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
 			logger.finest("ALLOW_V2 is not set, ignore this message.");
 			return;
-		} else if (m.protocolVersion == OTRv.THREE && !session.getSessionPolicy().getAllowV3()) {
+		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
 			logger.finest("ALLOW_V3 is not set, ignore this message.");
 			return;
 		} else if ( m.protocolVersion == OTRv.THREE &&
-					session.getSenderInstanceTag().getValue() != m.receiverInstanceTag &&
+					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag &&
 					m.receiverInstanceTag != 0) {
 
 			logger.finest("Received a D-H commit message with receiver instance tag "
@@ -712,7 +712,7 @@ class AuthContextImpl extends AuthContext {
 			return;
 		}
 
-		session.setReceiverInstanceTag(new InstanceTag(m.senderInstanceTag));
+		mySession.setReceiverInstanceTag(new InstanceTag(m.senderInstanceTag));
 		switch (this.getAuthenticationState()) {
 		case NONE:
 			// Reply with a D-H Key Message, and transition authstate to
