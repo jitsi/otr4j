@@ -24,7 +24,6 @@ import java.math.BigInteger;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -279,7 +278,7 @@ public class SerializationUtils {
 					|| contentType == SerializationConstants.HEAD_QUERY_Q) {
 				// Query tag found.
 
-				List<Integer> versions = new Vector<Integer>();
+				List<Integer> versions = new ArrayList<Integer>();
 				String versionString = null;
 				if (SerializationConstants.HEAD_QUERY_Q == contentType) {
 					versions.add(OTRv.ONE);

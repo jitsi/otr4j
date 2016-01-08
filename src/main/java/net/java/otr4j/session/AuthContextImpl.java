@@ -20,9 +20,10 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
-import java.util.Vector;
 import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
@@ -80,7 +81,7 @@ class AuthContextImpl extends AuthContext {
 	class MessageFactoryImpl extends MessageFactory {
 
 		QueryMessage getQueryMessage() {
-			Vector<Integer> versions = new Vector<Integer>();
+			List<Integer> versions = new ArrayList<Integer>(2);
 			versions.add(OTRv.TWO);
 			versions.add(OTRv.THREE);
 			return new QueryMessage(versions);

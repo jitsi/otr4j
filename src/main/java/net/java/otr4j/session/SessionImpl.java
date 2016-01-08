@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 import java.util.logging.Logger;
@@ -543,7 +544,7 @@ public class SessionImpl implements Session {
 		OtrPolicy policy = getSessionPolicy();
 		if (policy.getErrorStartAKE()) {
 			logger.finest("Error message starts AKE.");
-			Vector<Integer> versions = new Vector<Integer>();
+			List<Integer> versions = new ArrayList<Integer>();
 			if (policy.getAllowV1())
 				versions.add(OTRv.ONE);
 
@@ -643,7 +644,7 @@ public class SessionImpl implements Session {
 				byte[] tlvsb = new byte[dmc.length - tlvIndex];
 				System.arraycopy(dmc, tlvIndex, tlvsb, 0, tlvsb.length);
 
-				tlvs = new Vector<TLV>();
+				tlvs = new LinkedList<TLV>();
 				ByteArrayInputStream tin = new ByteArrayInputStream(tlvsb);
 				while (tin.available() > 0) {
 					int type;
@@ -833,7 +834,7 @@ public class SessionImpl implements Session {
 				if (otrPolicy.getSendWhitespaceTag()
 						&& offerStatus != OfferStatus.rejected) {
 					offerStatus = OfferStatus.sent;
-					List<Integer> versions = new Vector<Integer>();
+					List<Integer> versions = new ArrayList<Integer>(3);
 					if (otrPolicy.getAllowV1())
 						versions.add(OTRv.ONE);
 					if (otrPolicy.getAllowV2())
@@ -980,7 +981,7 @@ public class SessionImpl implements Session {
 		SessionStatus status = this.getSessionStatus();
 		switch (status) {
 		case ENCRYPTED:
-			Vector<TLV> tlvs = new Vector<TLV>();
+			List<TLV> tlvs = new ArrayList<TLV>(1);
 			tlvs.add(new TLV(TLV.DISCONNECTED, null));
 
 			String[] msg = this.transformSending(null, tlvs);

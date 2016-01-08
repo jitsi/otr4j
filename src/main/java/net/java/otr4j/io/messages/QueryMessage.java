@@ -15,6 +15,7 @@
  */
 package net.java.otr4j.io.messages;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,7 +29,8 @@ public class QueryMessage extends AbstractMessage {
 	// Ctor.
 	protected QueryMessage(int messageType, List<Integer> versions) {
 		super(messageType);
-		this.versions = versions;
+		this.versions = (versions == null) ? versions
+				: Collections.synchronizedList(versions);
 	}
 
 	public QueryMessage(List<Integer> versions) {
