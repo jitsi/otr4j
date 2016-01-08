@@ -36,7 +36,7 @@ import net.java.otr4j.io.SerializationUtils;
 
 
 public class SM {
-	static public class SMState{
+	public static class SMState{
 		BigInteger secret, x2, x3, g1, g2, g3, g3o, p, q, pab, qab;
 		public int nextExpected;
 		int receivedQuestion;
@@ -55,7 +55,7 @@ public class SM {
 		}
 	}
 
-	static public class SMException extends Exception {
+	public static class SMException extends Exception {
 		private static final long serialVersionUID = 1L;
 
 		public SMException()
