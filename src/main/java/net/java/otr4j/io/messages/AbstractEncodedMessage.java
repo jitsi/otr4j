@@ -34,14 +34,16 @@ public abstract class AbstractEncodedMessage extends AbstractMessage {
 	}
 
 	public AbstractEncodedMessage(
-			int messageType, int protocolVersion, int senderInstanceTag) {
+			int messageType, int protocolVersion, int senderInstanceTag)
+	{
 		this(messageType, protocolVersion, senderInstanceTag, 0);
 	}
 
 	public AbstractEncodedMessage(  int messageType,
 									int protocolVersion,
 									int senderInstanceTag,
-									int recipientInstanceTag) {
+									int recipientInstanceTag)
+	{
 		super(messageType);
 		this.protocolVersion = protocolVersion;
 		this.senderInstanceTag = senderInstanceTag;

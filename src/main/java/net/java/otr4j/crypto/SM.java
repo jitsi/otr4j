@@ -147,7 +147,8 @@ public class SM {
 	 * @throws net.java.otr4j.crypto.SM.SMException when the SHA-256 algorithm
 	 * is missing or when the biginteger can't be serialized.
 	 */
-	public static BigInteger hash(int version, BigInteger a, BigInteger b) throws SMException
+	public static BigInteger hash(int version, BigInteger a, BigInteger b)
+			throws SMException
 	{
 		try {
 			MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
@@ -216,8 +217,7 @@ public class SM {
 	 * @param x The BigInteger to check.
 	 * @return true if the BigInteger is in the right range, false otherwise.
 	 */
-	public static boolean checkExpon(BigInteger x)
-	{
+	public static boolean checkExpon(BigInteger x) {
 		return x.compareTo(BigInteger.ONE) < 0 || x.compareTo(SM.ORDER_S) >= 0;
 	}
 
@@ -230,7 +230,8 @@ public class SM {
 	 * @return c and d.
 	 * @throws SMException when c and d could not be calculated
 	 */
-	public static BigInteger[]  proofKnowLog(BigInteger g, BigInteger x, int version) throws SMException
+	public static BigInteger[]  proofKnowLog(BigInteger g, BigInteger x,
+			int version) throws SMException
 	{
 		BigInteger r = randomExponent();
 		BigInteger temp = g.modPow(r, SM.MODULUS_S);
@@ -255,9 +256,9 @@ public class SM {
 	 * less than, equal to, or greater than {@code c}.
 	 * @throws SMException when something goes wrong
 	 */
-	public static int checkKnowLog(BigInteger c, BigInteger d, BigInteger g, BigInteger x, int version) throws SMException
+	public static int checkKnowLog(BigInteger c, BigInteger d, BigInteger g,
+			BigInteger x, int version) throws SMException
 	{
-
 		BigInteger gd = g.modPow(d, MODULUS_S);
 		BigInteger xc = x.modPow(c, MODULUS_S);
 		BigInteger gdxc = gd.multiply(xc).mod(MODULUS_S);
@@ -275,7 +276,8 @@ public class SM {
 	 * @return MVN_PASS_JAVADOC_INSPECTION
 	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
 	 */
-	public static BigInteger[] proofEqualCoords(SMState state, BigInteger r, int version) throws SMException
+	public static BigInteger[] proofEqualCoords(SMState state, BigInteger r,
+			int version) throws SMException
 	{
 		BigInteger r1 = randomExponent();
 		BigInteger r2 = randomExponent();
@@ -349,7 +351,8 @@ public class SM {
 	 * @return MVN_PASS_JAVADOC_INSPECTION
 	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
 	 */
-	public static BigInteger[] proofEqualLogs(SMState state, int version) throws SMException
+	public static BigInteger[] proofEqualLogs(SMState state, int version)
+			throws SMException
 	{
 		BigInteger r = randomExponent();
 
@@ -378,9 +381,9 @@ public class SM {
 	 * @return MVN_PASS_JAVADOC_INSPECTION
 	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
 	 */
-	public static int checkEqualLogs(BigInteger c, BigInteger d, BigInteger r, SMState state, int version) throws SMException
+	public static int checkEqualLogs(BigInteger c, BigInteger d, BigInteger r,
+			SMState state, int version) throws SMException
 	{
-
 		/* Here, we recall the exponents used to create g3.
 		 * If we have previously seen g3o = g1^x where x is unknown
 		 * during the DH exchange to produce g3, then we may proceed with:
@@ -456,9 +459,9 @@ public class SM {
 	 * @param received_question MVN_PASS_JAVADOC_INSPECTION
 	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
 	 */
-	public static void step2a(SMState bstate, byte[] input, int received_question) throws SMException
+	public static void step2a(SMState bstate, byte[] input,
+			int received_question) throws SMException
 	{
-
 		/* Initialize the sm state if needed */
 
 		bstate.receivedQuestion = received_question;
@@ -468,7 +471,8 @@ public class SM {
 		BigInteger[] msg1 = unserialize(input);
 
 		if (checkGroupElem(msg1[0]) || checkExpon(msg1[2]) ||
-				checkGroupElem(msg1[3]) || checkExpon(msg1[5])) {
+				checkGroupElem(msg1[3]) || checkExpon(msg1[5]))
+		{
 			throw new SMException("Invalid parameter");
 		}
 
@@ -477,7 +481,8 @@ public class SM {
 
 		/* Verify Alice's proofs */
 		if (checkKnowLog(msg1[1], msg1[2], bstate.g1, msg1[0], 1)!=0
-			||checkKnowLog(msg1[4], msg1[5], bstate.g1, msg1[3], 2)!=0) {
+			||checkKnowLog(msg1[4], msg1[5], bstate.g1, msg1[3], 2)!=0)
+		{
 			throw new SMException("Proof checking failed");
 		}
 
@@ -510,7 +515,8 @@ public class SM {
 	 * @return MVN_PASS_JAVADOC_INSPECTION
 	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
 	 */
-	public static byte[] step2b(SMState bstate, byte[] secret) throws SMException
+	public static byte[] step2b(SMState bstate, byte[] secret)
+			throws SMException
 	{
 		/* Convert the given secret to the proper form and store it */
 		//Util.checkBytes("secret", secret);
@@ -575,7 +581,8 @@ public class SM {
 		if (checkGroupElem(msg2[0]) || checkGroupElem(msg2[3]) ||
 			checkGroupElem(msg2[6]) || checkGroupElem(msg2[7]) ||
 			checkExpon(msg2[2]) || checkExpon(msg2[5]) ||
-			checkExpon(msg2[9]) || checkExpon(msg2[10])) {
+			checkExpon(msg2[9]) || checkExpon(msg2[10]))
+		{
 			throw new SMException("Invalid Parameter");
 		}
 
@@ -586,7 +593,8 @@ public class SM {
 
 		/* Verify Bob's knowledge of discreet log proofs */
 		if (checkKnowLog(msg2[1], msg2[2], astate.g1, msg2[0], 3)!=0 ||
-			checkKnowLog(msg2[4], msg2[5], astate.g1, msg2[3], 4)!=0) {
+			checkKnowLog(msg2[4], msg2[5], astate.g1, msg2[3], 4)!=0)
+		{
 			throw new SMException("Proof checking failed");
 		}
 
@@ -664,7 +672,8 @@ public class SM {
 
 		if (checkGroupElem(msg3[0]) || checkGroupElem(msg3[1]) ||
 			checkGroupElem(msg3[5]) || checkExpon(msg3[3]) ||
-			checkExpon(msg3[4]) || checkExpon(msg3[7]))  {
+			checkExpon(msg3[4]) || checkExpon(msg3[7]))
+		{
 			throw new SMException("Invalid Parameter");
 		}
 
@@ -712,8 +721,7 @@ public class SM {
 	 * @param input MVN_PASS_JAVADOC_INSPECTION
 	 * @throws SMException MVN_PASS_JAVADOC_INSPECTION
 	 */
-	public static void step5(SMState astate, byte[] input) throws SMException
-	{
+	public static void step5(SMState astate, byte[] input) throws SMException {
 		/* Read from input to find the mpis */
 		BigInteger[] msg4 = unserialize(input);
 		astate.smProgState = PROG_CHEATED;

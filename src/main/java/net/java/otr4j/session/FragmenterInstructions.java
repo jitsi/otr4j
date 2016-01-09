@@ -64,12 +64,14 @@ public class FragmenterInstructions {
 			return new FragmenterInstructions(UNLIMITED, UNLIMITED);
 		}
 		if (instructions.maxFragmentsAllowed != UNLIMITED
-				&& instructions.maxFragmentsAllowed < 0) {
+				&& instructions.maxFragmentsAllowed < 0)
+		{
 			throw new IllegalArgumentException(
 					"Invalid fragmenter instructions: bad number of fragments.");
 		}
 		if (instructions.maxFragmentSize != UNLIMITED
-				&& instructions.maxFragmentSize < 0) {
+				&& instructions.maxFragmentSize < 0)
+		{
 			throw new IllegalArgumentException(
 					"Invalid fragmenter instructions: bad fragment size.");
 		}

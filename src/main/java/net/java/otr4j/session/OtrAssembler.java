@@ -65,7 +65,8 @@ public final class OtrAssembler {
      * @throws UnknownInstanceException MVN_PASS_JAVADOC_INSPECTION
 	 */
 	public String accumulate(String msgText)
-		throws ProtocolException, UnknownInstanceException {
+		throws ProtocolException, UnknownInstanceException
+	{
 		// if it's a fragment, remove everything before "k,n,piece-k"
 		if (msgText.startsWith(HEAD_FRAGMENT_V2)) {
 			// v2
@@ -94,7 +95,8 @@ public final class OtrAssembler {
 				throw new ProtocolException();
 			}
 			if (receiverInstance != 0 &&
-					receiverInstance != ownInstance.getValue()) {
+					receiverInstance != ownInstance.getValue())
+			{
 				// discard message for different instance id
 				throw new UnknownInstanceException(
 						"Message for unknown instance tag " +

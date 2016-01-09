@@ -39,8 +39,8 @@ public class MysteriousT {
 	public MysteriousT(int protocolVersion, int senderInstanceTag, int receiverInstanceTag,
 			int flags, int senderKeyID,
 			int recipientKeyID, DHPublicKey nextDH, byte[] ctr,
-			byte[] encryptedMessage) {
-
+			byte[] encryptedMessage)
+	{
 		this.protocolVersion = protocolVersion;
 		this.senderInstanceTag = senderInstanceTag;
 		this.receiverInstanceTag = receiverInstanceTag;

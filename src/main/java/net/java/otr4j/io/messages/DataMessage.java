@@ -39,7 +39,8 @@ public class DataMessage extends AbstractEncodedMessage {
 	// Ctor.
 	public DataMessage(int protocolVersion, int flags, int senderKeyID,
 			int recipientKeyID, DHPublicKey nextDH, byte[] ctr,
-			byte[] encryptedMessage, byte[] mac, byte[] oldMacKeys) {
+			byte[] encryptedMessage, byte[] mac, byte[] oldMacKeys)
+	{
 		super(MESSAGE_DATA, protocolVersion);
 
 		this.flags = flags;

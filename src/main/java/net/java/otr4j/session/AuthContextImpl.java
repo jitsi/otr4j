@@ -108,7 +108,8 @@ class AuthContextImpl extends AuthContext {
 		}
 
 		RevealSignatureMessage getRevealSignatureMessage()
-				throws OtrException {
+				throws OtrException
+		{
 			try {
 				SignatureM m = new SignatureM((DHPublicKey) getLocalDHKeyPair()
 						.getPublic(), getRemoteDHPublicKey(),
@@ -467,7 +468,8 @@ class AuthContextImpl extends AuthContext {
 			logger.finest("If ALLOW_V3 is not set, ignore this message.");
 			return;
 		} else if ( m.protocolVersion == OTRv.THREE &&
-					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag) {
+					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
+		{
 			logger.finest("Received a Signature Message with receiver instance tag"
 							+ " that is different from ours, ignore this message");
 			return;
@@ -505,7 +507,8 @@ class AuthContextImpl extends AuthContext {
 				throw new OtrException(e);
 			}
 			if (!otrCryptoEngine.verify(signature, localRemoteLongTermPublicKey,
-					remoteX.signature)) {
+					remoteX.signature))
+			{
 				logger.finest("Signature verification failed.");
 				return;
 			}
@@ -521,7 +524,8 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	private void handleRevealSignatureMessage(RevealSignatureMessage m)
-			throws OtrException {
+			throws OtrException
+	{
 		Session mySession = getSession();
 		SessionID sessionID = mySession.getSessionID();
 		logger.finest(sessionID.getAccountID()
@@ -535,7 +539,8 @@ class AuthContextImpl extends AuthContext {
 			logger.finest("If ALLOW_V3 is not set, ignore this message.");
 			return;
 		} else if ( m.protocolVersion == OTRv.THREE &&
-					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag) {
+					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
+		{
 			logger.finest("Received a Reveal Signature Message with receiver instance tag"
 							+ " that is different from ours, ignore this message");
 			return;
@@ -567,7 +572,8 @@ class AuthContextImpl extends AuthContext {
 			byte[] remoteDHPublicKeyHash = otrCryptoEngine
 					.sha256Hash(remoteDHPublicKeyDecrypted);
 			if (!Arrays.equals(remoteDHPublicKeyHash, this
-					.getRemoteDHPublicKeyHash())) {
+					.getRemoteDHPublicKeyHash()))
+			{
 				logger.finest("Hashes don't match, ignoring message.");
 				return;
 			}
@@ -617,7 +623,8 @@ class AuthContextImpl extends AuthContext {
 			}
 
 			if (!otrCryptoEngine.verify(signature, remoteLongTermPublicKey,
-					remoteX.signature)) {
+					remoteX.signature))
+			{
 				logger.finest("Signature verification failed.");
 				return;
 			}
@@ -649,7 +656,8 @@ class AuthContextImpl extends AuthContext {
 			logger.finest("If ALLOW_V3 is not set, ignore this message.");
 			return;
 		} else if ( m.protocolVersion == OTRv.THREE
-					&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag) {
+					&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
+		{
 			logger.finest("Received a D-H Key Message with receiver instance tag"
 							+ " that is different from ours, ignore this message");
 			return;
@@ -705,8 +713,8 @@ class AuthContextImpl extends AuthContext {
 			return;
 		} else if ( m.protocolVersion == OTRv.THREE &&
 					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag &&
-					m.receiverInstanceTag != 0) {
-
+					m.receiverInstanceTag != 0)
+		{
 			logger.finest("Received a D-H commit message with receiver instance tag "
 							+ "that is different from ours, ignore this message.");
 			return;

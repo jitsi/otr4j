@@ -30,7 +30,8 @@ public class SignatureX {
 
 	// Ctor.
 	public SignatureX(PublicKey ourLongTermPublicKey, int ourKeyID,
-			byte[] signature) {
+			byte[] signature)
+	{
 		this.longTermPublicKey = ourLongTermPublicKey;
 		this.dhKeyID = ourKeyID;
 		this.signature = signature;

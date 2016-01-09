@@ -27,7 +27,8 @@ public class RevealSignatureMessage extends SignatureMessage {
 
 	// Ctor.
 	public RevealSignatureMessage(int protocolVersion, byte[] xEncrypted,
-			byte[] xEncryptedMAC, byte[] revealedKey) {
+			byte[] xEncryptedMAC, byte[] revealedKey)
+	{
 		super(MESSAGE_REVEALSIG, protocolVersion, xEncrypted, xEncryptedMAC);
 
 		this.revealedKey = revealedKey;

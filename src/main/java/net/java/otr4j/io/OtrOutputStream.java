@@ -35,8 +35,8 @@ import org.bouncycastle.util.BigIntegers;
  * @author George Politis
  */
 public class OtrOutputStream extends FilterOutputStream implements
-		SerializationConstants {
-
+		SerializationConstants
+{
 	public OtrOutputStream(OutputStream out) {
 		super(out);
 	}
@@ -124,7 +124,8 @@ public class OtrOutputStream extends FilterOutputStream implements
 	}
 
 	public void writeSignature(byte[] signature, PublicKey pubKey)
-			throws IOException {
+			throws IOException
+	{
 		if (!pubKey.getAlgorithm().equals("DSA"))
 			throw new UnsupportedOperationException();
 		out.write(signature);

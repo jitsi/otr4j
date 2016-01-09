@@ -33,14 +33,16 @@ public class SignatureMessage extends AbstractEncodedMessage {
 
 	// Ctor.
 	protected SignatureMessage(int messageType, int protocolVersion,
-			byte[] xEncrypted, byte[] xEncryptedMAC) {
+			byte[] xEncrypted, byte[] xEncryptedMAC)
+	{
 		super(messageType, protocolVersion);
 		this.xEncrypted = xEncrypted;
 		this.xEncryptedMAC = xEncryptedMAC;
 	}
 
 	public SignatureMessage(int protocolVersion, byte[] xEncrypted,
-			byte[] xEncryptedMAC) {
+			byte[] xEncryptedMAC)
+	{
 		this(MESSAGE_SIGNATURE, protocolVersion, xEncrypted, xEncryptedMAC);
 	}
 

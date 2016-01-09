@@ -268,14 +268,16 @@ public class SerializationUtils {
 					.substring(idxHead + SerializationConstants.HEAD.length() + 1);
 
 			if (contentType == SerializationConstants.HEAD_ERROR
-					&& content.startsWith(SerializationConstants.ERROR_PREFIX)) {
+					&& content.startsWith(SerializationConstants.ERROR_PREFIX))
+			{
 				// Error tag found.
 
 				content = content.substring(idxHead + SerializationConstants.ERROR_PREFIX
 						.length());
 				return new ErrorMessage(AbstractMessage.MESSAGE_ERROR, content);
 			} else if (contentType == SerializationConstants.HEAD_QUERY_V
-					|| contentType == SerializationConstants.HEAD_QUERY_Q) {
+					|| contentType == SerializationConstants.HEAD_QUERY_Q)
+			{
 				// Query tag found.
 
 				List<Integer> versions = new ArrayList<Integer>();

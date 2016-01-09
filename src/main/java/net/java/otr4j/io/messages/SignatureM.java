@@ -32,8 +32,8 @@ public class SignatureM {
 
 	// Ctor.
 	public SignatureM(DHPublicKey localPubKey, DHPublicKey remotePublicKey,
-			PublicKey localLongTermPublicKey, int keyPairID) {
-
+			PublicKey localLongTermPublicKey, int keyPairID)
+	{
 		this.localPubKey = localPubKey;
 		this.remotePubKey = remotePublicKey;
 		this.localLongTermPubKey = localLongTermPublicKey;
