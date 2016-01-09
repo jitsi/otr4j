@@ -53,7 +53,11 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		this.store = store;
 	}
 
-	class DefaultPropertiesStore implements OtrKeyManagerStore {
+	/*
+	 * NOTE This class should probably be moved to its own file,
+	 *   maybe in the util package or as OtrKeyManagerStoreImpl in this package.
+	 */
+	public static class DefaultPropertiesStore implements OtrKeyManagerStore {
 		private final Properties properties = new Properties();
 		private String filepath;
 
