@@ -64,7 +64,7 @@ public class SM {
 		private static final long serialVersionUID = 1L;
 
 		public SMException() {
-			super("");
+			super();
 		}
 
 		public SMException(Throwable cause) {
@@ -73,6 +73,10 @@ public class SM {
 
 		public SMException(String message) {
 			super(message);
+		}
+
+		public SMException(String message, Throwable cause) {
+			super(message, cause);
 		}
 	}
 
@@ -163,10 +167,10 @@ public class SM {
 			if (b != null)
 				sha256.update(SerializationUtils.writeMpi(b));
 			return new BigInteger(1, sha256.digest());
-		} catch (NoSuchAlgorithmException e) {
-			throw new SMException("cannot find SHA-256");
-		} catch (IOException e) {
-			throw new SMException("cannot serialize bigint");
+		} catch (NoSuchAlgorithmException ex) {
+			throw new SMException("cannot find SHA-256", ex);
+		} catch (IOException ex) {
+			throw new SMException("cannot serialize bigint", ex);
 		}
 	}
 
@@ -182,7 +186,7 @@ public class SM {
 			oos.close();
 			return b;
 		} catch (IOException ex) {
-			throw new SMException("cannot serialize bigints");
+			throw new SMException("cannot serialize bigints", ex);
 		}
 	}
 
@@ -200,7 +204,7 @@ public class SM {
 			ois.close();
 			return ints;
 		} catch (IOException ex) {
-			throw new SMException("cannot unserialize bigints");
+			throw new SMException("cannot unserialize bigints", ex);
 		}
 	}
 
