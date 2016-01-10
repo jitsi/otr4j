@@ -105,8 +105,8 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		return getDHPublicKey(new BigInteger(mpiBytes));
 	}
 
-	public DHPublicKey getDHPublicKey(BigInteger mpi) throws OtrCryptoException
-	{
+	public DHPublicKey getDHPublicKey(BigInteger mpi) throws OtrCryptoException {
+
 		DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(mpi, MODULUS,
 				GENERATOR);
 		try {

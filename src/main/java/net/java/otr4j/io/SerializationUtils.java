@@ -50,6 +50,7 @@ import net.java.otr4j.session.Session.OTRv;
  * @author George Politis
  */
 public class SerializationUtils {
+
 	// Mysterious X IO.
 	public static SignatureX toMysteriousX(byte[] b) throws IOException {
 		ByteArrayInputStream in = new ByteArrayInputStream(b);
@@ -251,7 +252,7 @@ public class SerializationUtils {
 		return writer.toString();
 	}
 
-	static final Pattern patternWhitespace = Pattern
+	private static final Pattern PATTERN_WHITESPACE = Pattern
 			.compile("( \\t  \\t\\t\\t\\t \\t \\t \\t  )( \\t \\t  \\t )?(  \\t\\t  \\t )?(  \\t\\t  \\t\\t)?");
 
 	public static AbstractMessage toMessage(String s) throws IOException {
@@ -392,7 +393,7 @@ public class SerializationUtils {
 
 
 		// Try to detect whitespace tag.
-		final Matcher matcher = patternWhitespace.matcher(s);
+		final Matcher matcher = PATTERN_WHITESPACE.matcher(s);
 
 		boolean v1 = false;
 		boolean v2 = false;

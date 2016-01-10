@@ -29,8 +29,8 @@ import java.util.Set;
  * @param <K> Key type
  * @param <V> Value type
  */
-public class SelectableMap<K, V> implements Map<K, V>
-{
+public class SelectableMap<K, V> implements Map<K, V> {
+
 	/**
 	 * Map instance that is at the basis of the selectable map.
 	 */
@@ -54,8 +54,7 @@ public class SelectableMap<K, V> implements Map<K, V>
 	 * @param base the base map
 	 */
 	public SelectableMap(Map<K, V> base) {
-		if (base == null)
-		{
+		if (base == null) {
 			throw new NullPointerException("base");
 		}
 		this.base = base;
@@ -69,105 +68,87 @@ public class SelectableMap<K, V> implements Map<K, V>
 	 * @param base the base map
 	 * @param selected the initially selected entry
 	 */
-	public SelectableMap(Map<K, V> base, K selected)
-	{
+	public SelectableMap(Map<K, V> base, K selected) {
 		this(base);
 		select(selected);
 	}
 
 	@Override
-	public int size()
-	{
+	public int size() {
 		return base.size();
 	}
 
 	@Override
-	public boolean isEmpty()
-	{
+	public boolean isEmpty() {
 		return base.isEmpty();
 	}
 
 	@Override
-	public boolean containsKey(Object key)
-	{
+	public boolean containsKey(Object key) {
 		return base.containsKey(key);
 	}
 
 	@Override
-	public boolean containsValue(Object value)
-	{
+	public boolean containsValue(Object value) {
 		return base.containsValue(value);
 	}
 
 	@Override
-	public V get(Object key)
-	{
+	public V get(Object key) {
 		return base.get(key);
 	}
 
 	@Override
-	public V put(K key, V value)
-	{
+	public V put(K key, V value) {
 		return base.put(key, value);
 	}
 
 	@Override
-	public V remove(Object key)
-	{
-		if (isSelected() && this.selection.equals(key))
-		{
+	public V remove(Object key) {
+		if (isSelected() && this.selection.equals(key)) {
 			deselect();
 		}
 		return base.remove(key);
 	}
 
 	@Override
-	public void putAll(Map<? extends K, ? extends V> m)
-	{
+	public void putAll(Map<? extends K, ? extends V> m) {
 		base.putAll(m);
 	}
 
 	@Override
-	public void clear()
-	{
+	public void clear() {
 		deselect();
 		base.clear();
 	}
 
 	@Override
-	public Set<K> keySet()
-	{
+	public Set<K> keySet() {
 		return Collections.unmodifiableSet(base.keySet());
 	}
 
 	@Override
-	public Collection<V> values()
-	{
+	public Collection<V> values() {
 		return Collections.unmodifiableCollection(base.values());
 	}
 
 	@Override
-	public Set<Entry<K, V>> entrySet()
-	{
+	public Set<Entry<K, V>> entrySet() {
 		return Collections.unmodifiableSet(base.entrySet());
 	}
 
-	public final boolean isSelected()
-	{
+	public final boolean isSelected() {
 		return this.selected;
 	}
 
-	public final V getSelected()
-	{
-		if (!this.selected)
-		{
+	public final V getSelected() {
+		if (!this.selected) {
 			throw new IllegalStateException("no selection available");
 		}
 		return base.get(this.selection);
 	}
 
-	public final void select(K key)
-	{
+	public final void select(K key) {
 		// verify that key exists before changing selected
 		if (!base.containsKey(key)) {
 			throw new IllegalArgumentException("key is not in base map");

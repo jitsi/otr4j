@@ -398,12 +398,12 @@ public class SessionImpl implements Session {
 			if (encodedM.protocolVersion == OTRv.THREE) {
 
 				if (encodedM.receiverInstanceTag != this.getSenderInstanceTag().getValue()) {
-					if (!(	encodedM.messageType == AbstractEncodedMessage.MESSAGE_DH_COMMIT
+					if (!(encodedM.messageType == AbstractEncodedMessage.MESSAGE_DH_COMMIT
 							&& encodedM.receiverInstanceTag == 0))
 					{
 						// The message is not intended for us. Discarding...
-						logger.finest("Received an encoded message with receiver instance tag" +
-										" that is different from ours, ignore this message");
+						logger.finest("Received an encoded message with receiver instance tag"
+								+ " that is different from ours, ignore this message");
 						getHost().messageFromAnotherInstanceReceived(getSessionID());
 						return null;
 					}
@@ -415,8 +415,8 @@ public class SessionImpl implements Session {
 					// Message is intended for us but is coming from a different instance.
 					// We relay this message to the appropriate session for transforming.
 
-					logger.finest("Received an encoded message from a different instance. Our buddy" +
-									"may be logged from multiple locations.");
+					logger.finest("Received an encoded message from a different instance. Our buddy"
+							+ "may be logged from multiple locations."); // XXX missing a space at the string connection point
 
 					InstanceTag newReceiverTag = new InstanceTag(encodedM.senderInstanceTag);
 					synchronized (slaveSessions) {
@@ -1172,13 +1172,10 @@ public class SessionImpl implements Session {
 	public void respondSmp(InstanceTag receiverTag, String question, String secret)
 		throws OtrException
 	{
-		if (receiverTag.equals(getReceiverInstanceTag()))
-		{
+		if (receiverTag.equals(getReceiverInstanceTag())) {
 			respondSmp(question, secret);
 			return;
-		}
-		else
-		{
+		} else {
 			Session slave = slaveSessions.get(receiverTag);
 			if (slave != null)
 				slave.respondSmp(question, secret);

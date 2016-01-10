@@ -467,8 +467,8 @@ class AuthContextImpl extends AuthContext {
 		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
 			logger.finest("If ALLOW_V3 is not set, ignore this message.");
 			return;
-		} else if ( m.protocolVersion == OTRv.THREE &&
-					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
+		} else if (m.protocolVersion == OTRv.THREE
+				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
 		{
 			logger.finest("Received a Signature Message with receiver instance tag"
 							+ " that is different from ours, ignore this message");
@@ -538,8 +538,8 @@ class AuthContextImpl extends AuthContext {
 		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
 			logger.finest("If ALLOW_V3 is not set, ignore this message.");
 			return;
-		} else if ( m.protocolVersion == OTRv.THREE &&
-					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
+		} else if (m.protocolVersion == OTRv.THREE
+				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
 		{
 			logger.finest("Received a Reveal Signature Message with receiver instance tag"
 							+ " that is different from ours, ignore this message");
@@ -655,8 +655,8 @@ class AuthContextImpl extends AuthContext {
 		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
 			logger.finest("If ALLOW_V3 is not set, ignore this message.");
 			return;
-		} else if ( m.protocolVersion == OTRv.THREE
-					&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
+		} else if (m.protocolVersion == OTRv.THREE
+				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
 		{
 			logger.finest("Received a D-H Key Message with receiver instance tag"
 							+ " that is different from ours, ignore this message");
@@ -711,9 +711,9 @@ class AuthContextImpl extends AuthContext {
 		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
 			logger.finest("ALLOW_V3 is not set, ignore this message.");
 			return;
-		} else if ( m.protocolVersion == OTRv.THREE &&
-					mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag &&
-					m.receiverInstanceTag != 0)
+		} else if (m.protocolVersion == OTRv.THREE
+				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag
+				&& m.receiverInstanceTag != 0)
 		{
 			logger.finest("Received a D-H commit message with receiver instance tag "
 							+ "that is different from ours, ignore this message.");

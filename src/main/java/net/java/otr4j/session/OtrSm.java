@@ -63,10 +63,9 @@ public class OtrSm {
 			throw new SMException("cannot find SHA-256");
 		}
 		byte[] res = sha256.digest(sdata);
-		byte[] secure_session_id = new byte[8];
-		System.arraycopy(res, 0, secure_session_id, 0, 8);
-		return secure_session_id;
-
+		byte[] secureSessionId = new byte[8];
+		System.arraycopy(res, 0, secureSessionId, 0, 8);
+		return secureSessionId;
 	}
 
 	/**
@@ -93,12 +92,12 @@ public class OtrSm {
 		 * Version byte (0x01), Initiator fingerprint (20 bytes),
 		 * responder fingerprint (20 bytes), secure session id, input secret
 		 */
-		byte[] our_fp = engineHost.getLocalFingerprintRaw(session
+		byte[] ourFp = engineHost.getLocalFingerprintRaw(session
 				.getSessionID());
-		byte[] their_fp;
+		byte[] theirFp;
 		PublicKey remotePublicKey = session.getRemotePublicKey();
 		try {
-			their_fp = new OtrCryptoEngineImpl()
+			theirFp = new OtrCryptoEngineImpl()
 					.getFingerprintRaw(remotePublicKey);
 		} catch (OtrCryptoException e) {
 			throw new OtrException(e);
@@ -111,19 +110,19 @@ public class OtrSm {
 			throw new OtrException(ex);
 		}
 
-		int combined_buf_len = 41 + sessionId.length + secret.length();
-		byte[] combined_buf = new byte[combined_buf_len];
-		combined_buf[0]=1;
+		int combinedBufLen = 41 + sessionId.length + secret.length();
+		byte[] combinedBuf = new byte[combinedBufLen];
+		combinedBuf[0] = 1;
 		if (initiating){
-			System.arraycopy(our_fp, 0, combined_buf, 1, 20);
-			System.arraycopy(their_fp, 0, combined_buf, 21, 20);
+			System.arraycopy(ourFp, 0, combinedBuf, 1, 20);
+			System.arraycopy(theirFp, 0, combinedBuf, 21, 20);
 		} else {
-			System.arraycopy(their_fp, 0, combined_buf, 1, 20);
-			System.arraycopy(our_fp, 0, combined_buf, 21, 20);
+			System.arraycopy(theirFp, 0, combinedBuf, 1, 20);
+			System.arraycopy(ourFp, 0, combinedBuf, 21, 20);
 		}
-		System.arraycopy(sessionId, 0, combined_buf, 41, sessionId.length);
+		System.arraycopy(sessionId, 0, combinedBuf, 41, sessionId.length);
 		System.arraycopy(secret.getBytes(), 0,
-				combined_buf, 41 + sessionId.length, secret.length());
+				combinedBuf, 41 + sessionId.length, secret.length());
 
 		MessageDigest sha256;
 		try {
@@ -132,13 +131,13 @@ public class OtrSm {
 			throw new OtrException(ex);
 		}
 
-		byte[] combined_secret = sha256.digest(combined_buf);
+		byte[] combinedSecret = sha256.digest(combinedBuf);
 		byte[] smpmsg;
 		try {
 			if (initiating) {
-				smpmsg = SM.step1(smstate, combined_secret);
+				smpmsg = SM.step1(smstate, combinedSecret);
 			} else {
-				smpmsg = SM.step2b(smstate, combined_secret);
+				smpmsg = SM.step2b(smstate, combinedSecret);
 			}
 		} catch (SMException ex) {
 			throw new OtrException(ex);
@@ -159,9 +158,9 @@ public class OtrSm {
 			smpmsg = qsmpmsg;
 		}
 
-		TLV sendtlv = new TLV(initiating?
-				(question != null ? TLV.SMP1Q:TLV.SMP1) : TLV.SMP2, smpmsg);
-		smstate.nextExpected = initiating? SM.EXPECT2 : SM.EXPECT3;
+		TLV sendtlv = new TLV(initiating
+				? (question != null ? TLV.SMP1Q : TLV.SMP1) : TLV.SMP2, smpmsg);
+		smstate.nextExpected = initiating ? SM.EXPECT2 : SM.EXPECT3;
 		smstate.approved = initiating || question == null;
 		return makeTlvList(sendtlv);
 	}
@@ -201,11 +200,14 @@ public class OtrSm {
 			 * We must wait for the secret to be entered
 			 * to continue. */
 			byte[] question = tlv.getValue();
-			int qlen=0;
-			for(; qlen!=question.length && question[qlen]!=0; qlen++){
+			int qlen = 0;
+			for(; qlen != question.length && question[qlen] != 0; qlen++) {
 			}
-			if (qlen == question.length) qlen=0;
-			else qlen++;
+			if (qlen == question.length) {
+				qlen = 0;
+			} else {
+				qlen++;
+			}
 			byte[] input = new byte[question.length-qlen];
 			System.arraycopy(question, qlen, input, 0, question.length-qlen);
 			try {
@@ -241,7 +243,7 @@ public class OtrSm {
 			} catch (SMException e) {
 				throw new OtrException(e);
 			}
-			if (smstate.smProgState!=SM.PROG_CHEATED) {
+			if (smstate.smProgState != SM.PROG_CHEATED) {
 				smstate.asked = true;
 				engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), null);
 			} else {
@@ -297,16 +299,15 @@ public class OtrSm {
 				engineHost.smpError(session.getSessionID(), tlvType, true);
 			}
 			reset();
-		} else if (tlvType == TLV.SMP3){
+		} else if (tlvType == TLV.SMP3) {
 			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP4 && nextMsg == SM.EXPECT4) {
-
 			try {
 				SM.step5(smstate, tlv.getValue());
 			} catch (SMException e) {
 				throw new OtrException(e);
 			}
-			if (smstate.smProgState == SM.PROG_SUCCEEDED){
+			if (smstate.smProgState == SM.PROG_SUCCEEDED) {
 				engineHost.verify(session.getSessionID(), fingerprint, smstate.approved);
 			} else {
 				engineHost.unverify(session.getSessionID(), fingerprint);
@@ -316,8 +317,7 @@ public class OtrSm {
 				engineHost.smpError(session.getSessionID(), tlvType, true);
 			}
 			reset();
-
-		} else if (tlvType == TLV.SMP4){
+		} else if (tlvType == TLV.SMP4) {
 			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP_ABORT){
 			engineHost.smpAborted(session.getSessionID());

@@ -27,8 +27,12 @@ import net.java.otr4j.OtrException;
  */
 public interface SessionKeys {
 
-	int Previous = 0;
-	int Current = 1;
+	int PREVIOUS = 0;
+	int CURRENT = 1;
+	/** @deprecated use {@link #PREVIOUS} instead */
+	int Previous = PREVIOUS;
+	/** @deprecated use {@link #CURRENT} instead */
+	int Current = CURRENT;
 	byte HIGH_SEND_BYTE = (byte) 0x01;
 	byte HIGH_RECEIVE_BYTE = (byte) 0x02;
 	byte LOW_SEND_BYTE = (byte) 0x02;

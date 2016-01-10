@@ -43,8 +43,12 @@ abstract class AuthContext {
 	public static final byte C_START = (byte) 0x01;
 	public static final byte M1_START = (byte) 0x02;
 	public static final byte M2_START = (byte) 0x03;
-	public static final byte M1p_START = (byte) 0x04;
-	public static final byte M2p_START = (byte) 0x05;
+	public static final byte M1P_START = (byte) 0x04;
+	/** @deprecated use {@link #M1P_START} instead */
+	public static final byte M1p_START = M1P_START;
+	public static final byte M2P_START = (byte) 0x05;
+	/** @deprecated use {@link #M2P_START} instead */
+	public static final byte M2p_START = M2P_START;
 
 	// These parameters are initialized when generating D-H Commit Messages.
 	// If the Session that this AuthContext belongs to is the 'master' session

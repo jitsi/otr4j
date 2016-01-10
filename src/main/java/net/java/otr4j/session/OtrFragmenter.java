@@ -33,7 +33,7 @@ public class OtrFragmenter {
 	/**
 	 * Exception message in cases where only OTRv1 is allowed.
 	 */
-	private static final String OTRv1_NOT_SUPPORTED = "Fragmentation is not supported in OTRv1.";
+	private static final String OTR_V1_NOT_SUPPORTED = "Fragmentation is not supported in OTRv1.";
 
 	/**
 	 * The maximum number of fragments supported by the OTR (v3) protocol.
@@ -43,12 +43,12 @@ public class OtrFragmenter {
 	/**
 	 * The message format of an OTRv3 message fragment.
 	 */
-	private static final String OTRv3_MESSAGE_FRAGMENT_FORMAT = "?OTR|%08x|%08x,%05d,%05d,%s,";
+	private static final String OTR_V3_MESSAGE_FRAGMENT_FORMAT = "?OTR|%08x|%08x,%05d,%05d,%s,";
 
 	/**
 	 * The message format of an OTRv2 message fragment.
 	 */
-	private static final String OTRv2_MESSAGE_FRAGMENT_FORMAT = "?OTR,%d,%d,%s,";
+	private static final String OTR_V2_MESSAGE_FRAGMENT_FORMAT = "?OTR,%d,%d,%s,";
 
 	/**
 	 * Session instance.
@@ -258,7 +258,7 @@ public class OtrFragmenter {
 	private String createV3MessageFragment(final int count, final int total,
 			final String partialContent)
 	{
-		final String msg = String.format(OTRv3_MESSAGE_FRAGMENT_FORMAT,
+		final String msg = String.format(OTR_V3_MESSAGE_FRAGMENT_FORMAT,
 				getSenderInstance(), getReceiverInstance(), count + 1, total,
 				partialContent);
 		return msg;
@@ -275,7 +275,7 @@ public class OtrFragmenter {
 	private String createV2MessageFragment(final int count, final int total,
 			final String partialContent)
 	{
-		final String msg = String.format(OTRv2_MESSAGE_FRAGMENT_FORMAT,
+		final String msg = String.format(OTR_V2_MESSAGE_FRAGMENT_FORMAT,
 				count + 1, total, partialContent);
 		return msg;
 	}
@@ -293,7 +293,7 @@ public class OtrFragmenter {
 		} else if (getPolicy().getAllowV2()) {
 			return computeHeaderV2Size();
 		} else {
-			throw new UnsupportedOperationException(OTRv1_NOT_SUPPORTED);
+			throw new UnsupportedOperationException(OTR_V1_NOT_SUPPORTED);
 		}
 	}
 

@@ -31,7 +31,9 @@ public final class SessionID {
 	private final String userID;
 	private final String protocolName;
 
-	public static final SessionID Empty = new SessionID(null, null, null);
+	public static final SessionID EMPTY = new SessionID(null, null, null);
+	/** @deprecated use {@link #EMPTY} instead */
+	public static final SessionID Empty = EMPTY;
 
 	public String getAccountID() {
 		return accountID;

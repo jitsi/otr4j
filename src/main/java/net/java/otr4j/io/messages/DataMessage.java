@@ -60,9 +60,9 @@ public class DataMessage extends AbstractEncodedMessage {
 
 	// Methods.
 	public MysteriousT getT() {
-		return new MysteriousT( protocolVersion, senderInstanceTag,
-								receiverInstanceTag, flags, senderKeyID,
-								recipientKeyID, nextDH, ctr, encryptedMessage);
+		return new MysteriousT(protocolVersion, senderInstanceTag,
+				receiverInstanceTag, flags, senderKeyID, recipientKeyID, nextDH,
+				ctr, encryptedMessage);
 	}
 
 	@Override
