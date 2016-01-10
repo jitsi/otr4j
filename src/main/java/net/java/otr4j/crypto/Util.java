@@ -21,6 +21,10 @@ package net.java.otr4j.crypto;
 
 public class Util {
 
+	/** Hide the ctor, because this is an utility class. */
+	private Util() {
+	}
+
 	public static boolean arrayEquals(byte[] b1, byte[] b2){
 		if (b1 == null || b2 == null || b1.length != b2.length) {
 			return false;

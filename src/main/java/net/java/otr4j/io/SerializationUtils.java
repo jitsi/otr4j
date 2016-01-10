@@ -51,6 +51,10 @@ import net.java.otr4j.session.Session.OTRv;
  */
 public class SerializationUtils {
 
+	/** Hide the ctor, because this is an utility class. */
+	private SerializationUtils() {
+	}
+
 	// Mysterious X IO.
 	public static SignatureX toMysteriousX(byte[] b) throws IOException {
 		ByteArrayInputStream in = new ByteArrayInputStream(b);

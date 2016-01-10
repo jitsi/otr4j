@@ -126,6 +126,9 @@ public class SM {
 	public static final int MOD_LEN_BITS = 1536;
 	public static final int MOD_LEN_BYTES = 192;
 
+	/** Hide the ctor, because this is an utility class. */
+	private SM() {
+	}
 
 	/**
 	 * Generate a random exponent
