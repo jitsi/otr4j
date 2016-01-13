@@ -206,8 +206,7 @@ public class SM {
      */
 	public static boolean checkGroupElem(BigInteger g)
 	{
-		return !(g.compareTo(BigInteger.valueOf(2)) > 0 &&
-				g.compareTo(SM.MODULUS_MINUS_2) < 0);
+		return g.compareTo(BigInteger.valueOf(2)) < 0 || g.compareTo(SM.MODULUS_MINUS_2) > 0;
 	}
 	
 	/**
@@ -219,7 +218,7 @@ public class SM {
      */
 	public static boolean checkExpon(BigInteger x)
 	{
-		return !(x.compareTo(BigInteger.ONE) > 0 && x.compareTo(SM.ORDER_S) <= 0);
+		return x.compareTo(BigInteger.ONE) < 0 || x.compareTo(SM.ORDER_S) >= 0;
 	}
 	
 	/**
