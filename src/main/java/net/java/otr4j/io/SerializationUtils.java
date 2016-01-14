@@ -444,7 +444,7 @@ public class SerializationUtils {
 
 		if (in == null || in.length <= 0)
 			return null;
-		StringBuffer out = new StringBuffer(in.length * 2);
+		StringBuilder out = new StringBuilder(in.length * 2);
 		for (int i = 0; i < in.length; i++) {
 			out.append(HEX_ENCODER[(in[i] >>> 4) & 0x0F]);
 			out.append(HEX_ENCODER[in[i] & 0x0F]);
