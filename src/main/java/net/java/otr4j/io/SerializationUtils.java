@@ -441,14 +441,13 @@ public class SerializationUtils {
 			'6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
 	public static String byteArrayToHexString(byte[] in) {
-		int i = 0;
+
 		if (in == null || in.length <= 0)
 			return null;
 		StringBuffer out = new StringBuffer(in.length * 2);
-		while (i < in.length) {
+		for (int i = 0; i < in.length; i++) {
 			out.append(HEX_ENCODER[(in[i] >>> 4) & 0x0F]);
 			out.append(HEX_ENCODER[in[i] & 0x0F]);
-			i++;
 		}
 		return out.toString();
 	}
