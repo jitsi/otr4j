@@ -19,6 +19,9 @@ import net.java.otr4j.crypto.SM.SMException;
 import net.java.otr4j.crypto.SM.SMState;
 import net.java.otr4j.io.OtrOutputStream;
 
+/**
+ * Socialist Millionaire Protocol handler.
+ */
 public class OtrSm {
 
 	private SMState smstate;

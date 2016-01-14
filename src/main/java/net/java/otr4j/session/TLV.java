@@ -1,5 +1,12 @@
 package net.java.otr4j.session;
 
+/**
+ * Type/Length/Value record.
+ * - Type (SHORT): The type of this record. Records with unrecognized types should be ignored.
+ * - Length (SHORT): The length of the following field
+ * - Value (BYTEs): Any pertinent data for the record type
+ * A list of these might be attached to data-messages.
+ */
 public class TLV {
 
 	/* This is just padding for the encrypted message, and should be ignored. */

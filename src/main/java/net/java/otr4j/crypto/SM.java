@@ -33,6 +33,9 @@ import net.java.otr4j.io.OtrInputStream;
 import net.java.otr4j.io.OtrOutputStream;
 import net.java.otr4j.io.SerializationUtils;
 
+/**
+ * Socialist Millionaire Protocol utilities.
+ */
 public class SM {
 	public static class SMState {
 		BigInteger secret;
