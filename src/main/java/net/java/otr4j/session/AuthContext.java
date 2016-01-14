@@ -72,6 +72,19 @@ abstract class AuthContext {
 		abstract SignatureMessage getSignatureMessage() throws OtrException;
 	}
 
+	/**
+	 * Sets this instances settings to the values of the supplied one.
+	 * @param otherAuthContext we set the property values of this
+	 */
+	public void set(final AuthContext otherAuthContext) {
+
+		r = otherAuthContext.r;
+		localDHKeyPair = otherAuthContext.localDHKeyPair;
+		localDHPublicKeyBytes = otherAuthContext.localDHPublicKeyBytes;
+		localDHPublicKeyHash = otherAuthContext.localDHPublicKeyHash;
+		localDHPublicKeyEncrypted = otherAuthContext.localDHPublicKeyEncrypted;
+	}
+
 	public abstract void reset();
 
 	public abstract boolean getIsSecure();
