@@ -312,8 +312,7 @@ public class OtrSm {
 			} else {
 				engineHost.unverify(session.getSessionID(), fingerprint);
 			}
-			if (smstate.smProgState != SM.PROG_CHEATED){
-			} else {
+			if (smstate.smProgState == SM.PROG_CHEATED) {
 				engineHost.smpError(session.getSessionID(), tlvType, true);
 			}
 			reset();
