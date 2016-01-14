@@ -94,8 +94,11 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 
 		private void store() throws FileNotFoundException, IOException {
 			OutputStream out = new FileOutputStream(getConfigurationFile());
-			properties.store(out, null);
-			out.close();
+			try {
+				properties.store(out, null);
+			} finally {
+				out.close();
+			}
 		}
 
 		public void setProperty(String id, byte[] value) {
