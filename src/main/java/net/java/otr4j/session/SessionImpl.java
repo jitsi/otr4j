@@ -505,7 +505,7 @@ public class SessionImpl implements Session {
 
 		OtrPolicy policy = getSessionPolicy();
 		if (queryMessage.versions.contains(OTRv.THREE) && policy.getAllowV3()) {
-			logger.finest("Query message with V3 support found.");
+			logger.finest("V3 message tag found and supported.");
 			DHCommitMessage dhCommit = getAuthContext().respondAuth(OTRv.THREE);
 			if (isMasterSession) {
 				for (SessionImpl session : slaveSessions.values()) {
@@ -522,15 +522,17 @@ public class SessionImpl implements Session {
 							this.getAuthContext().localDHPublicKeyHash;
 				}
 			}
+			logger.finest("Sending D-H Commit Message");
 			injectMessage(dhCommit);
 		}
 		else if (queryMessage.versions.contains(OTRv.TWO) && policy.getAllowV2()) {
-			logger.finest("Query message with V2 support found.");
+			logger.finest("V2 message tag found and supported.");
 			DHCommitMessage dhCommit = getAuthContext().respondAuth(OTRv.TWO);
 			logger.finest("Sending D-H Commit Message");
 			injectMessage(dhCommit);
 		} else if (queryMessage.versions.contains(OTRv.ONE) && policy.getAllowV1()) {
-			logger.finest("Query message with V1 support found - ignoring.");
+			logger.finest("V1 message tag found and supported.");
+			logger.finest(" - ignoring.");
 		}
 	}
 
@@ -775,7 +777,7 @@ public class SessionImpl implements Session {
 				if (plainTextMessage.versions.contains(OTRv.THREE)
 						&& policy.getAllowV3())
 				{
-					logger.finest("V3 tag found.");
+					logger.finest("V3 message tag found and supported.");
 					try {
 						DHCommitMessage dhCommit = getAuthContext().respondAuth(OTRv.THREE);
 						if (isMasterSession) {
@@ -800,7 +802,7 @@ public class SessionImpl implements Session {
 				} else if (plainTextMessage.versions.contains(OTRv.TWO)
 						&& policy.getAllowV2())
 				{
-					logger.finest("V2 tag found.");
+					logger.finest("V2 message tag found and supported.");
 					try {
 						DHCommitMessage dhCommit = getAuthContext().respondAuth(OTRv.TWO);
 						logger.finest("Sending D-H Commit Message");
@@ -810,6 +812,7 @@ public class SessionImpl implements Session {
 				} else if (plainTextMessage.versions.contains(1)
 						&& policy.getAllowV1())
 				{
+					logger.finest("V1 message tag found and supported.");
 					throw new UnsupportedOperationException();
 				}
 			}
