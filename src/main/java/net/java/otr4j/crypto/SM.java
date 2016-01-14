@@ -37,51 +37,6 @@ import net.java.otr4j.io.SerializationUtils;
  * Socialist Millionaire Protocol utilities.
  */
 public class SM {
-	public static class SMState {
-		BigInteger secret;
-		BigInteger x2;
-		BigInteger x3;
-		BigInteger g1;
-		BigInteger g2;
-		BigInteger g3;
-		BigInteger g3o;
-		BigInteger p;
-		BigInteger q;
-		BigInteger pab;
-		BigInteger qab;
-		public int nextExpected;
-		int receivedQuestion;
-		public int smProgState;
-		public boolean approved;
-		public boolean asked;
-
-		public SMState() {
-			g1 = new BigInteger(1, SM.GENERATOR_S);
-			smProgState = SM.PROG_OK;
-			approved = false;
-			asked = false;
-		}
-	}
-
-	public static class SMException extends Exception {
-		private static final long serialVersionUID = 1L;
-
-		public SMException() {
-			super();
-		}
-
-		public SMException(Throwable cause) {
-			super(cause);
-		}
-
-		public SMException(String message) {
-			super(message);
-		}
-
-		public SMException(String message, Throwable cause) {
-			super(message, cause);
-		}
-	}
 
 	public static final int EXPECT1 = 0;
 	public static final int EXPECT2 = 1;
@@ -132,6 +87,52 @@ public class SM {
 	public static final byte[] GENERATOR_S = Util.hexStringToBytes("02");
 	public static final int MOD_LEN_BITS = 1536;
 	public static final int MOD_LEN_BYTES = 192;
+
+	public static class SMState {
+		BigInteger secret;
+		BigInteger x2;
+		BigInteger x3;
+		BigInteger g1;
+		BigInteger g2;
+		BigInteger g3;
+		BigInteger g3o;
+		BigInteger p;
+		BigInteger q;
+		BigInteger pab;
+		BigInteger qab;
+		public int nextExpected;
+		int receivedQuestion;
+		public int smProgState;
+		public boolean approved;
+		public boolean asked;
+
+		public SMState() {
+			g1 = new BigInteger(1, SM.GENERATOR_S);
+			smProgState = SM.PROG_OK;
+			approved = false;
+			asked = false;
+		}
+	}
+
+	public static class SMException extends Exception {
+		private static final long serialVersionUID = 1L;
+
+		public SMException() {
+			super();
+		}
+
+		public SMException(Throwable cause) {
+			super(cause);
+		}
+
+		public SMException(String message) {
+			super(message);
+		}
+
+		public SMException(String message, Throwable cause) {
+			super(message, cause);
+		}
+	}
 
 	/** Hide the ctor, because this is an utility class. */
 	private SM() {
