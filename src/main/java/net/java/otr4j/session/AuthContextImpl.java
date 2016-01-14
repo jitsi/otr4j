@@ -517,7 +517,7 @@ class AuthContextImpl extends AuthContext {
 			break;
 		default:
 			logger.finest("We were not expecting a signature, ignoring message.");
-			return;
+			break;
 		}
 	}
 
