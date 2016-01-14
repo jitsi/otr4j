@@ -285,6 +285,8 @@ public class SessionImpl implements Session {
 		case FINISHED:
 		case PLAINTEXT:
 			break;
+		default:
+			throw new UnsupportedOperationException("What to do for this state?");
 		}
 
 		if (sessionStatus == this.sessionStatus)
@@ -676,6 +678,8 @@ public class SessionImpl implements Session {
 			injectMessage(new ErrorMessage(AbstractMessage.MESSAGE_ERROR,
 					getHost().getReplyForUnreadableMessage(getSessionID())));
 			break;
+		default:
+			throw new UnsupportedOperationException("What to do for this state?");
 		}
 
 		return null;
@@ -739,6 +743,8 @@ public class SessionImpl implements Session {
 							plainTextMessage.cleanText);
 				}
 				return plainTextMessage.cleanText;
+			default:
+				throw new UnsupportedOperationException("What to do for this state?");
 			}
 		} else {
 			logger
@@ -762,6 +768,8 @@ public class SessionImpl implements Session {
 					getHost().unencryptedMessageReceived(sessionID,
 							plainTextMessage.cleanText);
 				break;
+			default:
+				throw new UnsupportedOperationException("What to do for this state?");
 			}
 
 			if (policy.getWhitespaceStartAKE()) {
@@ -965,6 +973,8 @@ public class SessionImpl implements Session {
 			break;
 		case PLAINTEXT:
 			return;
+		default:
+			throw new UnsupportedOperationException("What to do for this state?");
 		}
 
 	}
