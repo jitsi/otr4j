@@ -524,7 +524,7 @@ public class SessionImpl implements Session {
 		logger.finest(getSessionID().getAccountID()
 				+ " received an error message from "
 				+ getSessionID().getUserID() + " through "
-				+ getSessionID().getUserID() + ".");
+				+ getSessionID().getProtocolName() + ".");
 
 		getHost().showError(this.getSessionID(), errorMessage.error);
 
