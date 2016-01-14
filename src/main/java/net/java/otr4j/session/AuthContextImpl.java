@@ -479,8 +479,7 @@ class AuthContextImpl extends AuthContext {
 		case AWAITING_SIG:
 			// Verify MAC.
 			if (!m.verify(this.getM2p())) {
-				logger
-						.finest("Signature MACs are not equal, ignoring message.");
+				logger.finest("Signature MACs are not equal, ignoring message.");
 				return;
 			}
 
@@ -517,8 +516,7 @@ class AuthContextImpl extends AuthContext {
 			this.setRemoteLongTermPublicKey(localRemoteLongTermPublicKey);
 			break;
 		default:
-			logger
-					.finest("We were not expecting a signature, ignoring message.");
+			logger.finest("We were not expecting a signature, ignoring message.");
 			return;
 		}
 	}
@@ -593,8 +591,7 @@ class AuthContextImpl extends AuthContext {
 
 			// Verify received Data.
 			if (!m.verify(this.getM2())) {
-				logger
-						.finest("Signature MACs are not equal, ignoring message.");
+				logger.finest("Signature MACs are not equal, ignoring message.");
 				return;
 			}
 
@@ -801,8 +798,7 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	public void startAuth() throws OtrException {
-		logger
-				.finest("Starting Authenticated Key Exchange, sending query message");
+		logger.finest("Starting Authenticated Key Exchange, sending query message");
 		getSession().injectMessage(messageFactory.getQueryMessage());
 	}
 
