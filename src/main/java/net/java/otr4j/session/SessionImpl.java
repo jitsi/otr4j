@@ -484,14 +484,9 @@ public class SessionImpl implements Session {
 		}
 	}
 
-	private void handleQueryMessage(QueryMessage queryMessage)
+	private void sendingDHCommitMessage(final QueryMessage queryMessage, final boolean supportV1)
 			throws OtrException
 	{
-		logger.finest(getSessionID().getAccountID()
-				+ " received a query message from "
-				+ getSessionID().getUserID() + " through "
-				+ getSessionID().getProtocolName() + ".");
-
 		OtrPolicy policy = getSessionPolicy();
 		if (queryMessage.versions.contains(OTRv.THREE) && policy.getAllowV3()) {
 			logger.finest("V3 message tag found and supported.");
@@ -511,9 +506,24 @@ public class SessionImpl implements Session {
 			logger.finest("Sending D-H Commit Message");
 			injectMessage(dhCommit);
 		} else if (queryMessage.versions.contains(OTRv.ONE) && policy.getAllowV1()) {
-			logger.finest("V1 message tag found and supported.");
-			logger.finest(" - ignoring.");
+			if (supportV1) {
+				logger.finest("V1 message tag found and supported. - ignoring.");
+			} else {
+				logger.finest("V1 message tag found but not supported.");
+				throw new UnsupportedOperationException();
+			}
 		}
+	}
+
+	private void handleQueryMessage(QueryMessage queryMessage)
+			throws OtrException
+	{
+		logger.finest(getSessionID().getAccountID()
+				+ " received a query message from "
+				+ getSessionID().getUserID() + " through "
+				+ getSessionID().getProtocolName() + ".");
+
+		sendingDHCommitMessage(queryMessage, true);
 	}
 
 	private void handleErrorMessage(ErrorMessage errorMessage)
@@ -754,37 +764,9 @@ public class SessionImpl implements Session {
 			if (policy.getWhitespaceStartAKE()) {
 				logger.finest("WHITESPACE_START_AKE is set");
 
-				if (plainTextMessage.versions.contains(OTRv.THREE)
-						&& policy.getAllowV3())
-				{
-					logger.finest("V3 message tag found and supported.");
-					try {
-						DHCommitMessage dhCommit = getAuthContext().respondAuth(OTRv.THREE);
-						if (isMasterSession) {
-							for (SessionImpl session : slaveSessions.values()) {
-								session.getAuthContext().reset();
-								session.getAuthContext().set(this.getAuthContext());
-							}
-						}
-						logger.finest("Sending D-H Commit Message");
-						injectMessage(dhCommit);
-					} catch (OtrException e) {
-					}
-				} else if (plainTextMessage.versions.contains(OTRv.TWO)
-						&& policy.getAllowV2())
-				{
-					logger.finest("V2 message tag found and supported.");
-					try {
-						DHCommitMessage dhCommit = getAuthContext().respondAuth(OTRv.TWO);
-						logger.finest("Sending D-H Commit Message");
-						injectMessage(dhCommit);
-					} catch (OtrException e) {
-					}
-				} else if (plainTextMessage.versions.contains(OTRv.ONE)
-						&& policy.getAllowV1())
-				{
-					logger.finest("V1 message tag found and supported.");
-					throw new UnsupportedOperationException();
+				try {
+					sendingDHCommitMessage(plainTextMessage, false);
+				} catch (OtrException ex) {
 				}
 			}
 		}
