@@ -38,7 +38,7 @@ class SessionKeysImpl implements SessionKeys {
 			.getName());
 	private String keyDescription;
 
-	public SessionKeysImpl(int localKeyIndex, int remoteKeyIndex) {
+	SessionKeysImpl(int localKeyIndex, int remoteKeyIndex) {
 		if (localKeyIndex == 0)
 			keyDescription = "(Previous local, ";
 		else

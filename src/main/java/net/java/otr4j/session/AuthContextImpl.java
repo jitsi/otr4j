@@ -50,7 +50,7 @@ import net.java.otr4j.session.Session.OTRv;
  */
 class AuthContextImpl extends AuthContext {
 
-	public AuthContextImpl(Session session) {
+	AuthContextImpl(Session session) {
 		this.setSession(session);
 		this.reset();
 	}
