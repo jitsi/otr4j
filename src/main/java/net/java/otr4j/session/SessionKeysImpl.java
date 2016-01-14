@@ -19,6 +19,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.util.Arrays;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
@@ -71,8 +72,8 @@ class SessionKeysImpl implements SessionKeys {
 	public void setLocalPair(KeyPair keyPair, int localPairKeyID) {
 		this.localPair = keyPair;
 		this.setLocalKeyID(localPairKeyID);
-		logger.finest(keyDescription + " current local key ID: "
-				+ this.getLocalKeyID());
+		logger.log(Level.FINEST, "{0} current local key ID: {1}",
+				new Object[] {keyDescription, this.getLocalKeyID()});
 		this.reset();
 	}
 
@@ -80,15 +81,15 @@ class SessionKeysImpl implements SessionKeys {
 	public void setRemoteDHPublicKey(DHPublicKey pubKey, int remoteKeyID) {
 		this.setRemoteKey(pubKey);
 		this.setRemoteKeyID(remoteKeyID);
-		logger.finest(keyDescription + " current remote key ID: "
-				+ this.getRemoteKeyID());
+		logger.log(Level.FINEST, "{0} current remote key ID: {1}",
+				new Object[] {keyDescription, this.getRemoteKeyID()});
 		this.reset();
 	}
 
 	@Override
 	public void incrementSendingCtr() {
-		logger.finest("Incrementing counter for (localkeyID, remoteKeyID) = ("
-				+ getLocalKeyID() + "," + getRemoteKeyID() + ")");
+		logger.log(Level.FINEST, "Incrementing counter for (localkeyID, remoteKeyID) = ({0},{1})",
+				new Object[] {getLocalKeyID(), getRemoteKeyID()});
 		// logger.debug("Counter prior increament: " +
 		// Utils.dump(sendingCtr,
 		// true, 16));
@@ -116,7 +117,7 @@ class SessionKeysImpl implements SessionKeys {
 	}
 
 	private void reset() {
-		logger.finest("Resetting " + keyDescription + " session keys.");
+		logger.log(Level.FINEST, "Resetting {0} session keys.", keyDescription);
 		Arrays.fill(this.sendingCtr, (byte) 0x00);
 		Arrays.fill(this.receivingCtr, (byte) 0x00);
 		this.sendingAESKey = null;

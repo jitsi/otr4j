@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
@@ -144,9 +145,9 @@ public class SessionImpl implements Session {
 	}
 
 	private SessionKeys getSessionKeysByID(int localKeyID, int remoteKeyID) {
-		logger
-				.finest("Searching for session keys with (localKeyID, remoteKeyID) = ("
-						+ localKeyID + "," + remoteKeyID + ")");
+		logger.log(Level.FINEST,
+				"Searching for session keys with (localKeyID, remoteKeyID) = ({0},{1})",
+				new Object[] {localKeyID, remoteKeyID});
 
 		for (int i = 0; i < getSessionKeys().length; i++) {
 			for (int j = 0; j < getSessionKeys()[i].length; j++) {
@@ -508,10 +509,9 @@ public class SessionImpl implements Session {
 	private void handleQueryMessage(QueryMessage queryMessage)
 			throws OtrException
 	{
-		logger.finest(getSessionID().getAccountID()
-				+ " received a query message from "
-				+ getSessionID().getUserID() + " through "
-				+ getSessionID().getProtocolName() + ".");
+		logger.log(Level.FINEST, "{0} received a query message from {1} through {2}.",
+				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID(),
+					getSessionID().getProtocolName()});
 
 		sendingDHCommitMessage(queryMessage, true);
 	}
@@ -519,10 +519,9 @@ public class SessionImpl implements Session {
 	private void handleErrorMessage(ErrorMessage errorMessage)
 			throws OtrException
 	{
-		logger.finest(getSessionID().getAccountID()
-				+ " received an error message from "
-				+ getSessionID().getUserID() + " through "
-				+ getSessionID().getProtocolName() + ".");
+		logger.log(Level.FINEST, "{0} received an error message from {1} through {2}.",
+				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID(),
+					getSessionID().getProtocolName()});
 
 		getHost().showError(this.getSessionID(), errorMessage.error);
 
@@ -545,9 +544,8 @@ public class SessionImpl implements Session {
 	}
 
 	private String handleDataMessage(DataMessage data) throws OtrException {
-		logger.finest(getSessionID().getAccountID()
-				+ " received a data message from " + getSessionID().getUserID()
-				+ ".");
+		logger.log(Level.FINEST, "{0} received a data message from {1}.",
+				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID()});
 
 		switch (this.getSessionStatus()) {
 		case ENCRYPTED:
@@ -607,7 +605,7 @@ public class SessionImpl implements Session {
 				throw new OtrException(e);
 			}
 
-			logger.finest("Decrypted message: \"" + decryptedMsgContent + "\"");
+			logger.log(Level.FINEST, "Decrypted message: \"{0}\"", decryptedMsgContent);
 
 			// Rotate keys if necessary.
 			SessionKeys mostRecent = this.getMostRecentSessionKeys();
@@ -702,10 +700,9 @@ public class SessionImpl implements Session {
 	private String handlePlainTextMessage(PlainTextMessage plainTextMessage)
 			throws OtrException
 	{
-		logger.finest(getSessionID().getAccountID()
-				+ " received a plaintext message from "
-				+ getSessionID().getUserID() + " through "
-				+ getSessionID().getProtocolName() + ".");
+		logger.log(Level.FINEST, "{0} received a plaintext message from {1} through {2}.",
+				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID(),
+					getSessionID().getProtocolName()});
 
 		OtrPolicy policy = getSessionPolicy();
 		List<Integer> versions = plainTextMessage.versions;
@@ -817,10 +814,9 @@ public class SessionImpl implements Session {
 				}
 			}
 		case ENCRYPTED:
-			logger.finest(getSessionID().getAccountID()
-					+ " sends an encrypted message to "
-					+ getSessionID().getUserID() + " through "
-					+ getSessionID().getProtocolName() + ".");
+			logger.log(Level.FINEST, "{0} sends an encrypted message to {1} through {2}.",
+					new Object[] {getSessionID().getAccountID(), getSessionID().getUserID(),
+						getSessionID().getProtocolName()});
 
 			// Get encryption keys.
 			SessionKeys encryptionKeys = this.getEncryptionSessionKeys();
@@ -858,9 +854,9 @@ public class SessionImpl implements Session {
 
 			byte[] data = out.toByteArray();
 			// Encrypt message.
-			logger
-					.finest("Encrypting message with keyids (localKeyID, remoteKeyID) = ("
-							+ senderKeyID + ", " + receipientKeyID + ")");
+			logger.log(Level.FINEST,
+					"Encrypting message with keyids (localKeyID, remoteKeyID) = ({0}, {1})",
+					new Object[] {senderKeyID, receipientKeyID});
 			byte[] encryptedMsg = otrCryptoEngine.aesEncrypt(encryptionKeys
 					.getSendingAESKey(), ctr, data);
 
