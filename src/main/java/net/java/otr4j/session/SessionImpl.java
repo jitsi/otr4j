@@ -298,11 +298,6 @@ public class SessionImpl implements Session {
 			l.sessionStatusChanged(getSessionID());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see net.java.otr4j.session.ISession#getSessionStatus()
-	 */
 	public SessionStatus getSessionStatus() {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
 			return this.slaveSessions.getSelected().getSessionStatus();
@@ -314,11 +309,6 @@ public class SessionImpl implements Session {
 		this.sessionID = sessionID;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see net.java.otr4j.session.ISession#getSessionID()
-	 */
 	public SessionID getSessionID() {
 		return sessionID;
 	}
@@ -349,12 +339,6 @@ public class SessionImpl implements Session {
 		return oldMacKeys;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * net.java.otr4j.session.ISession#handleReceivingMessage(java.lang.String)
-	 */
 	public String transformReceiving(String msgText) throws OtrException {
 
 		OtrPolicy policy = getSessionPolicy();
@@ -922,11 +906,6 @@ public class SessionImpl implements Session {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see net.java.otr4j.session.ISession#startSession()
-	 */
 	public void startSession() throws OtrException {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
 			this.slaveSessions.getSelected().startSession();
@@ -941,11 +920,6 @@ public class SessionImpl implements Session {
 		this.getAuthContext().startAuth();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see net.java.otr4j.session.ISession#endSession()
-	 */
 	public void endSession() throws OtrException {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
 			this.slaveSessions.getSelected().endSession();
@@ -973,11 +947,6 @@ public class SessionImpl implements Session {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see net.java.otr4j.session.ISession#refreshSession()
-	 */
 	public void refreshSession() throws OtrException {
 		this.endSession();
 		this.startSession();
