@@ -809,7 +809,7 @@ public class SessionImpl implements Session {
 						injectMessage(dhCommit);
 					} catch (OtrException e) {
 					}
-				} else if (plainTextMessage.versions.contains(1)
+				} else if (plainTextMessage.versions.contains(OTRv.ONE)
 						&& policy.getAllowV1())
 				{
 					logger.finest("V1 message tag found and supported.");
