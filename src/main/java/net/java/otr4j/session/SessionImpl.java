@@ -1113,7 +1113,6 @@ public class SessionImpl implements Session {
 	{
 		if (receiverTag.equals(getReceiverInstanceTag())) {
 			respondSmp(question, secret);
-			return;
 		} else {
 			Session slave = slaveSessions.get(receiverTag);
 			if (slave != null)
