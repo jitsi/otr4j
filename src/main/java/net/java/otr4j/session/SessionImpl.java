@@ -745,12 +745,14 @@ public class SessionImpl implements Session {
 					.finest("Received plaintext message with the whitespace tag.");
 			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
+				break;
 			case FINISHED:
 				// Remove the whitespace tag and display the message to the
 				// user, but warn him that the message was received
 				// unencrypted.
 				getHost().unencryptedMessageReceived(sessionID,
 						plainTextMessage.cleanText);
+				break;
 			case PLAINTEXT:
 				// Remove the whitespace tag and display the message to the
 				// user. If REQUIRE_ENCRYPTION is set, warn him that the
@@ -759,6 +761,7 @@ public class SessionImpl implements Session {
 				if (policy.getRequireEncryption())
 					getHost().unencryptedMessageReceived(sessionID,
 							plainTextMessage.cleanText);
+				break;
 			}
 
 			if (policy.getWhitespaceStartAKE()) {
