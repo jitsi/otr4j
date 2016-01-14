@@ -753,7 +753,10 @@ class AuthContextImpl extends AuthContext {
 			logger.finest("Sent D-H key.");
 			break;
 		case V1_SETUP:
-			throw new UnsupportedOperationException();
+			// fall-through
+		default:
+			throw new UnsupportedOperationException("Can not handle message in auth. state "
+					+ getAuthenticationState());
 		}
 	}
 
