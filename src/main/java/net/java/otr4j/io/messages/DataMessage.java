@@ -25,7 +25,6 @@ import javax.crypto.interfaces.DHPublicKey;
  */
 public class DataMessage extends AbstractEncodedMessage {
 
-	// Fields.
 	public byte[] mac;
 	public byte[] oldMACKeys;
 
@@ -36,7 +35,6 @@ public class DataMessage extends AbstractEncodedMessage {
 	public byte[] ctr;
 	public byte[] encryptedMessage;
 
-	// Ctor.
 	public DataMessage(int protocolVersion, int flags, int senderKeyID,
 			int recipientKeyID, DHPublicKey nextDH, byte[] ctr,
 			byte[] encryptedMessage, byte[] mac, byte[] oldMacKeys)
@@ -58,7 +56,6 @@ public class DataMessage extends AbstractEncodedMessage {
 				t.nextDH, t.ctr, t.encryptedMessage, mac, oldMacKeys);
 	}
 
-	// Methods.
 	public MysteriousT getT() {
 		return new MysteriousT(protocolVersion, senderInstanceTag,
 				receiverInstanceTag, flags, senderKeyID, recipientKeyID, nextDH,

@@ -23,16 +23,13 @@ import javax.crypto.interfaces.DHPublicKey;
  */
 public class DHKeyMessage extends AbstractEncodedMessage {
 
-	// Fields.
 	public DHPublicKey dhPublicKey;
 
-	// Ctor.
 	public DHKeyMessage(int protocolVersion, DHPublicKey dhPublicKey) {
 		super(MESSAGE_DHKEY, protocolVersion);
 		this.dhPublicKey = dhPublicKey;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;

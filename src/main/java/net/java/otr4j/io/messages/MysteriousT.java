@@ -23,7 +23,7 @@ import javax.crypto.interfaces.DHPublicKey;
  * @author George Politis
  */
 public class MysteriousT {
-	// Fields.
+
 	public int protocolVersion;
 	public int senderInstanceTag;
 	public int receiverInstanceTag;
@@ -35,7 +35,6 @@ public class MysteriousT {
 	public byte[] ctr;
 	public byte[] encryptedMessage;
 
-	// Ctor.
 	public MysteriousT(int protocolVersion, int senderInstanceTag, int receiverInstanceTag,
 			int flags, int senderKeyID,
 			int recipientKeyID, DHPublicKey nextDH, byte[] ctr,
@@ -53,7 +52,6 @@ public class MysteriousT {
 		this.encryptedMessage = encryptedMessage;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		// TODO: Needs work.
@@ -107,5 +105,4 @@ public class MysteriousT {
 			return false;
 		return true;
 	}
-
 }

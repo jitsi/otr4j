@@ -20,14 +20,13 @@ package net.java.otr4j.io.messages;
  * @author George Politis
  */
 public abstract class AbstractEncodedMessage extends AbstractMessage {
-	// Fields.
+
 	public int protocolVersion;
 
 	public int senderInstanceTag;
 
 	public int receiverInstanceTag;
 
-	// Ctor.
 	public AbstractEncodedMessage(int messageType, int protocolVersion) {
 		super(messageType);
 		this.protocolVersion = protocolVersion;
@@ -48,7 +47,6 @@ public abstract class AbstractEncodedMessage extends AbstractMessage {
 		this.receiverInstanceTag = recipientInstanceTag;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;

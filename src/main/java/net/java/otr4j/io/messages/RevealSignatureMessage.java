@@ -22,10 +22,9 @@ import java.util.Arrays;
  * @author George Politis
  */
 public class RevealSignatureMessage extends SignatureMessage {
-	// Fields.
+
 	public byte[] revealedKey;
 
-	// Ctor.
 	public RevealSignatureMessage(int protocolVersion, byte[] xEncrypted,
 			byte[] xEncryptedMAC, byte[] revealedKey)
 	{
@@ -34,7 +33,6 @@ public class RevealSignatureMessage extends SignatureMessage {
 		this.revealedKey = revealedKey;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;

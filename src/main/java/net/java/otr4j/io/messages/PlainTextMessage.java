@@ -22,16 +22,14 @@ import java.util.List;
  * @author George Politis
  */
 public class PlainTextMessage extends QueryMessage {
-	// Fields.
+
 	public String cleanText;
 
-	// Ctor.
 	public PlainTextMessage(List<Integer> versions, String cleanText) {
 		super(MESSAGE_PLAINTEXT, versions);
 		this.cleanText = cleanText;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -57,5 +55,4 @@ public class PlainTextMessage extends QueryMessage {
 			return false;
 		return true;
 	}
-
 }

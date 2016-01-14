@@ -27,11 +27,10 @@ import net.java.otr4j.io.SerializationUtils;
  * @author George Politis
  */
 public class SignatureMessage extends AbstractEncodedMessage {
-	// Fields.
+
 	public byte[] xEncrypted;
 	public byte[] xEncryptedMAC;
 
-	// Ctor.
 	protected SignatureMessage(int messageType, int protocolVersion,
 			byte[] xEncrypted, byte[] xEncryptedMAC)
 	{
@@ -46,7 +45,6 @@ public class SignatureMessage extends AbstractEncodedMessage {
 		this(MESSAGE_SIGNATURE, protocolVersion, xEncrypted, xEncryptedMAC);
 	}
 
-	// Memthods.
 	public byte[] decrypt(byte[] key) throws OtrException {
 		return new OtrCryptoEngineImpl().aesDecrypt(key, null, xEncrypted);
 	}

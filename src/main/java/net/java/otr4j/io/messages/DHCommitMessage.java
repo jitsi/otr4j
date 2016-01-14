@@ -23,11 +23,9 @@ import java.util.Arrays;
  */
 public class DHCommitMessage extends AbstractEncodedMessage {
 
-	// Fields.
 	public byte[] dhPublicKeyEncrypted;
 	public byte[] dhPublicKeyHash;
 
-	// Ctor.
 	public DHCommitMessage(int protocolVersion, byte[] dhPublicKeyHash,
 			byte[] dhPublicKeyEncrypted)
 	{
@@ -36,7 +34,6 @@ public class DHCommitMessage extends AbstractEncodedMessage {
 		this.dhPublicKeyHash = dhPublicKeyHash;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -61,5 +58,4 @@ public class DHCommitMessage extends AbstractEncodedMessage {
 			return false;
 		return true;
 	}
-
 }

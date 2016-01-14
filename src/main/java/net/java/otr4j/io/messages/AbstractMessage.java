@@ -20,15 +20,13 @@ package net.java.otr4j.io.messages;
  * @author George Politis
  */
 public abstract class AbstractMessage {
-	// Fields.
+
 	public int messageType;
 
-	// Ctor.
 	public AbstractMessage(int messageType) {
 		this.messageType = messageType;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;
