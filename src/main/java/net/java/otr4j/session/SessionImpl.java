@@ -972,7 +972,7 @@ public class SessionImpl implements Session {
 			this.setSessionStatus(SessionStatus.PLAINTEXT);
 			break;
 		case PLAINTEXT:
-			return;
+			break;
 		default:
 			throw new UnsupportedOperationException("What to do for this state?");
 		}
