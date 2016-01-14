@@ -437,26 +437,38 @@ class AuthContextImpl extends AuthContext {
 
 	public void handleReceivingMessage(AbstractMessage m) throws OtrException {
 
-		switch (m.messageType) {
-		case AbstractEncodedMessage.MESSAGE_DH_COMMIT:
-			handleDHCommitMessage((DHCommitMessage) m);
-			break;
-		case AbstractEncodedMessage.MESSAGE_DHKEY:
-			handleDHKeyMessage((DHKeyMessage) m);
-			break;
-		case AbstractEncodedMessage.MESSAGE_REVEALSIG:
-			handleRevealSignatureMessage((RevealSignatureMessage) m);
-			break;
-		case AbstractEncodedMessage.MESSAGE_SIGNATURE:
-			handleSignatureMessage((SignatureMessage) m);
-			break;
-		default:
-			throw new UnsupportedOperationException();
+		if (m instanceof AbstractEncodedMessage && validateMessage((AbstractEncodedMessage) m)) {
+			switch (m.messageType) {
+			case AbstractEncodedMessage.MESSAGE_DH_COMMIT:
+				handleDHCommitMessage((DHCommitMessage) m);
+				break;
+			case AbstractEncodedMessage.MESSAGE_DHKEY:
+				handleDHKeyMessage((DHKeyMessage) m);
+				break;
+			case AbstractEncodedMessage.MESSAGE_REVEALSIG:
+				handleRevealSignatureMessage((RevealSignatureMessage) m);
+				break;
+			case AbstractEncodedMessage.MESSAGE_SIGNATURE:
+				handleSignatureMessage((SignatureMessage) m);
+				break;
+			default:
+				throw new UnsupportedOperationException();
+			}
 		}
 	}
 
-	private void handleSignatureMessage(SignatureMessage m) throws OtrException {
-		final String messageTypeName = "Signature";
+	/**
+	 * Returns a simple, human-readable name for a type of message.
+	 * @return this returns <code>getClass().getSimpleName()</code>,
+	 *   removing the string "Message" in the end, if it is present,
+	 *   thus "my.pkg.MyMessage" would return "My"
+	 */
+	private static String extractMessageTypeName(final AbstractMessage msg) {
+		return msg.getClass().getSimpleName().replaceFirst("Message$", "");
+	}
+
+	private boolean validateMessage(final AbstractEncodedMessage m) throws OtrException {
+		final String messageTypeName = extractMessageTypeName(m);
 		Session mySession = getSession();
 		SessionID sessionID = mySession.getSessionID();
 		logger.log(Level.FINEST, "{0} received a {1} message from {2} through {3}.",
@@ -465,17 +477,23 @@ class AuthContextImpl extends AuthContext {
 
 		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
 			logger.finest("ALLOW_V2 is not set, ignore this message.");
-			return;
+			return false;
 		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
 			logger.finest("ALLOW_V3 is not set, ignore this message.");
-			return;
+			return false;
 		} else if (m.protocolVersion == OTRv.THREE
-				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
+				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag
+				&& (m.messageType != AbstractEncodedMessage.MESSAGE_DH_COMMIT || m.receiverInstanceTag != 0)) // from the protocol specification: "For a commit message this will often be 0, since the other party may not have identified their instance tag yet."
 		{
 			logger.log(Level.FINEST, "Received a {0} Message with receiver instance tag that is"
 					+ " different from ours, ignore this message", messageTypeName);
-			return;
+			return false;
+		} else {
+			return true;
 		}
+	}
+
+	private void handleSignatureMessage(SignatureMessage m) throws OtrException {
 
 		switch (this.getAuthenticationState()) {
 		case AWAITING_SIG:
@@ -526,27 +544,6 @@ class AuthContextImpl extends AuthContext {
 	private void handleRevealSignatureMessage(RevealSignatureMessage m)
 			throws OtrException
 	{
-		final String messageTypeName = "Reveal Signature";
-		Session mySession = getSession();
-		SessionID sessionID = mySession.getSessionID();
-		logger.log(Level.FINEST, "{0} received a {1} message from {2} through {3}.",
-				new Object[] {sessionID.getAccountID(), messageTypeName, sessionID.getUserID(),
-					sessionID.getProtocolName()});
-
-		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
-			logger.finest("ALLOW_V2 is not set, ignore this message.");
-			return;
-		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
-			logger.finest("ALLOW_V3 is not set, ignore this message.");
-			return;
-		} else if (m.protocolVersion == OTRv.THREE
-				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
-		{
-			logger.log(Level.FINEST, "Received a {0} Message with receiver instance tag that is"
-					+ " different from ours, ignore this message", messageTypeName);
-			return;
-		}
-
 		switch (this.getAuthenticationState()) {
 		case AWAITING_REVEALSIG:
 			// Use the received value of r to decrypt the value of gx
@@ -643,28 +640,8 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	private void handleDHKeyMessage(DHKeyMessage m) throws OtrException {
-		final String messageTypeName = "D-H key";
-		Session mySession = getSession();
-		SessionID sessionID = mySession.getSessionID();
-		logger.log(Level.FINEST, "{0} received a {1} message from {2} through {3}.",
-				new Object[] {sessionID.getAccountID(), messageTypeName, sessionID.getUserID(),
-					sessionID.getProtocolName()});
 
-		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
-			logger.finest("ALLOW_V2 is not set, ignore this message.");
-			return;
-		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
-			logger.finest("ALLOW_V3 is not set, ignore this message.");
-			return;
-		} else if (m.protocolVersion == OTRv.THREE
-				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
-		{
-			logger.log(Level.FINEST, "Received a {0} Message with receiver instance tag that is"
-					+ " different from ours, ignore this message", messageTypeName);
-			return;
-		}
-
-		mySession.setReceiverInstanceTag(new InstanceTag(m.senderInstanceTag));
+		getSession().setReceiverInstanceTag(new InstanceTag(m.senderInstanceTag));
 		switch (this.getAuthenticationState()) {
 		case NONE:
 		case AWAITING_DHKEY:
@@ -699,29 +676,8 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	private void handleDHCommitMessage(DHCommitMessage m) throws OtrException {
-		final String messageTypeName = "D-H commit";
-		Session mySession = getSession();
-		SessionID sessionID = mySession.getSessionID();
-		logger.log(Level.FINEST, "{0} received a {1} message from {2} through {3}.",
-				new Object[] {sessionID.getAccountID(), messageTypeName, sessionID.getUserID(),
-					sessionID.getProtocolName()});
 
-		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
-			logger.finest("ALLOW_V2 is not set, ignore this message.");
-			return;
-		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
-			logger.finest("ALLOW_V3 is not set, ignore this message.");
-			return;
-		} else if (m.protocolVersion == OTRv.THREE
-				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag
-				&& m.receiverInstanceTag != 0) // from the protocol specification: "For a commit message this will often be 0, since the other party may not have identified their instance tag yet."
-		{
-			logger.log(Level.FINEST, "Received a {0} Message with receiver instance tag that is"
-					+ " different from ours, ignore this message", messageTypeName);
-			return;
-		}
-
-		mySession.setReceiverInstanceTag(new InstanceTag(m.senderInstanceTag));
+		getSession().setReceiverInstanceTag(new InstanceTag(m.senderInstanceTag));
 		switch (this.getAuthenticationState()) {
 		case NONE:
 			// Reply with a D-H Key Message, and transition authstate to
