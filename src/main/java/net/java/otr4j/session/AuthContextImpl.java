@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
@@ -455,23 +456,24 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	private void handleSignatureMessage(SignatureMessage m) throws OtrException {
+		final String messageTypeName = "Signature";
 		Session mySession = getSession();
 		SessionID sessionID = mySession.getSessionID();
-		logger.finest(sessionID.getAccountID()
-				+ " received a signature message from " + sessionID.getUserID()
-				+ " through " + sessionID.getProtocolName() + ".");
+		logger.log(Level.FINEST, "{0} received a {1} message from {2} through {3}.",
+				new Object[] {sessionID.getAccountID(), messageTypeName, sessionID.getUserID(),
+					sessionID.getProtocolName()});
 
 		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
-			logger.finest("If ALLOW_V2 is not set, ignore this message.");
+			logger.finest("ALLOW_V2 is not set, ignore this message.");
 			return;
 		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
-			logger.finest("If ALLOW_V3 is not set, ignore this message.");
+			logger.finest("ALLOW_V3 is not set, ignore this message.");
 			return;
 		} else if (m.protocolVersion == OTRv.THREE
 				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
 		{
-			logger.finest("Received a Signature Message with receiver instance tag"
-							+ " that is different from ours, ignore this message");
+			logger.log(Level.FINEST, "Received a {0} Message with receiver instance tag that is"
+					+ " different from ours, ignore this message", messageTypeName);
 			return;
 		}
 
@@ -524,23 +526,24 @@ class AuthContextImpl extends AuthContext {
 	private void handleRevealSignatureMessage(RevealSignatureMessage m)
 			throws OtrException
 	{
+		final String messageTypeName = "Reveal Signature";
 		Session mySession = getSession();
 		SessionID sessionID = mySession.getSessionID();
-		logger.finest(sessionID.getAccountID()
-				+ " received a reveal signature message from "
-				+ sessionID.getUserID() + " through "
-				+ sessionID.getProtocolName() + ".");
+		logger.log(Level.FINEST, "{0} received a {1} message from {2} through {3}.",
+				new Object[] {sessionID.getAccountID(), messageTypeName, sessionID.getUserID(),
+					sessionID.getProtocolName()});
+
 		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
-			logger.finest("If ALLOW_V2 is not set, ignore this message.");
+			logger.finest("ALLOW_V2 is not set, ignore this message.");
 			return;
 		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
-			logger.finest("If ALLOW_V3 is not set, ignore this message.");
+			logger.finest("ALLOW_V3 is not set, ignore this message.");
 			return;
 		} else if (m.protocolVersion == OTRv.THREE
 				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
 		{
-			logger.finest("Received a Reveal Signature Message with receiver instance tag"
-							+ " that is different from ours, ignore this message");
+			logger.log(Level.FINEST, "Received a {0} Message with receiver instance tag that is"
+					+ " different from ours, ignore this message", messageTypeName);
 			return;
 		}
 
@@ -640,23 +643,24 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	private void handleDHKeyMessage(DHKeyMessage m) throws OtrException {
+		final String messageTypeName = "D-H key";
 		Session mySession = getSession();
 		SessionID sessionID = mySession.getSessionID();
-		logger.finest(sessionID.getAccountID()
-				+ " received a D-H key message from " + sessionID.getUserID()
-				+ " through " + sessionID.getProtocolName() + ".");
+		logger.log(Level.FINEST, "{0} received a {1} message from {2} through {3}.",
+				new Object[] {sessionID.getAccountID(), messageTypeName, sessionID.getUserID(),
+					sessionID.getProtocolName()});
 
 		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
-			logger.finest("If ALLOW_V2 is not set, ignore this message.");
+			logger.finest("ALLOW_V2 is not set, ignore this message.");
 			return;
 		} else if (m.protocolVersion == OTRv.THREE && !mySession.getSessionPolicy().getAllowV3()) {
-			logger.finest("If ALLOW_V3 is not set, ignore this message.");
+			logger.finest("ALLOW_V3 is not set, ignore this message.");
 			return;
 		} else if (m.protocolVersion == OTRv.THREE
 				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag)
 		{
-			logger.finest("Received a D-H Key Message with receiver instance tag"
-							+ " that is different from ours, ignore this message");
+			logger.log(Level.FINEST, "Received a {0} Message with receiver instance tag that is"
+					+ " different from ours, ignore this message", messageTypeName);
 			return;
 		}
 
@@ -695,12 +699,12 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	private void handleDHCommitMessage(DHCommitMessage m) throws OtrException {
+		final String messageTypeName = "D-H commit";
 		Session mySession = getSession();
 		SessionID sessionID = mySession.getSessionID();
-		logger.finest(sessionID.getAccountID()
-				+ " received a D-H commit message from "
-				+ sessionID.getUserID() + " through "
-				+ sessionID.getProtocolName() + ".");
+		logger.log(Level.FINEST, "{0} received a {1} message from {2} through {3}.",
+				new Object[] {sessionID.getAccountID(), messageTypeName, sessionID.getUserID(),
+					sessionID.getProtocolName()});
 
 		if (m.protocolVersion == OTRv.TWO && !mySession.getSessionPolicy().getAllowV2()) {
 			logger.finest("ALLOW_V2 is not set, ignore this message.");
@@ -710,10 +714,10 @@ class AuthContextImpl extends AuthContext {
 			return;
 		} else if (m.protocolVersion == OTRv.THREE
 				&& mySession.getSenderInstanceTag().getValue() != m.receiverInstanceTag
-				&& m.receiverInstanceTag != 0)
+				&& m.receiverInstanceTag != 0) // from the protocol specification: "For a commit message this will often be 0, since the other party may not have identified their instance tag yet."
 		{
-			logger.finest("Received a D-H commit message with receiver instance tag "
-							+ "that is different from ours, ignore this message.");
+			logger.log(Level.FINEST, "Received a {0} Message with receiver instance tag that is"
+					+ " different from ours, ignore this message", messageTypeName);
 			return;
 		}
 
