@@ -430,17 +430,7 @@ public class SessionImpl implements Session {
 													newReceiverTag);
 
 							if (encodedM.messageType == AbstractEncodedMessage.MESSAGE_DHKEY) {
-
-								session.getAuthContext().r =
-										this.getAuthContext().r;
-								session.getAuthContext().localDHKeyPair =
-										this.getAuthContext().localDHKeyPair;
-								session.getAuthContext().localDHPublicKeyBytes =
-										this.getAuthContext().localDHPublicKeyBytes;
-								session.getAuthContext().localDHPublicKeyEncrypted =
-										this.getAuthContext().localDHPublicKeyEncrypted;
-								session.getAuthContext().localDHPublicKeyHash =
-										this.getAuthContext().localDHPublicKeyHash;
+								session.getAuthContext().set(this.getAuthContext());
 							}
 							session.addOtrEngineListener(new OtrEngineListener() {
 
@@ -510,16 +500,7 @@ public class SessionImpl implements Session {
 			if (isMasterSession) {
 				for (SessionImpl session : slaveSessions.values()) {
 					session.getAuthContext().reset();
-					session.getAuthContext().r =
-							this.getAuthContext().r;
-					session.getAuthContext().localDHKeyPair =
-							this.getAuthContext().localDHKeyPair;
-					session.getAuthContext().localDHPublicKeyBytes =
-							this.getAuthContext().localDHPublicKeyBytes;
-					session.getAuthContext().localDHPublicKeyEncrypted =
-							this.getAuthContext().localDHPublicKeyEncrypted;
-					session.getAuthContext().localDHPublicKeyHash =
-							this.getAuthContext().localDHPublicKeyHash;
+					session.getAuthContext().set(this.getAuthContext());
 				}
 			}
 			logger.finest("Sending D-H Commit Message");
@@ -783,16 +764,7 @@ public class SessionImpl implements Session {
 						if (isMasterSession) {
 							for (SessionImpl session : slaveSessions.values()) {
 								session.getAuthContext().reset();
-								session.getAuthContext().r =
-										this.getAuthContext().r;
-								session.getAuthContext().localDHKeyPair =
-										this.getAuthContext().localDHKeyPair;
-								session.getAuthContext().localDHPublicKeyBytes =
-										this.getAuthContext().localDHPublicKeyBytes;
-								session.getAuthContext().localDHPublicKeyEncrypted =
-										this.getAuthContext().localDHPublicKeyEncrypted;
-								session.getAuthContext().localDHPublicKeyHash =
-										this.getAuthContext().localDHPublicKeyHash;
+								session.getAuthContext().set(this.getAuthContext());
 							}
 						}
 						logger.finest("Sending D-H Commit Message");
