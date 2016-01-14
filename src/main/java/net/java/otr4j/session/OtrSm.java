@@ -145,12 +145,12 @@ public class OtrSm {
 
 		// If we've got a question, attach it to the smpmsg
 		if (question != null && initiating){
-			byte[] bytes = null;
+			byte[] bytes;
 			try {
 				bytes = question.getBytes("UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				// Never thrown - all JRE's support UTF-8
-				e.printStackTrace();
+				throw new RuntimeException("Platform does not support encoding", e);
 			}
 			byte[] qsmpmsg = new byte[bytes.length + 1 + smpmsg.length];
 			System.arraycopy(bytes, 0, qsmpmsg, 0, bytes.length);
@@ -225,7 +225,7 @@ public class OtrSm {
 					questionUTF = new String(plainq, "UTF-8");
 				} catch (UnsupportedEncodingException e) {
 					// Never thrown - all JRE's support UTF-8
-					e.printStackTrace();
+					throw new RuntimeException("Platform does not support encoding", e);
 				}
 				engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), questionUTF);
 			} else {
