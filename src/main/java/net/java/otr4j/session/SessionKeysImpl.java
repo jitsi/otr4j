@@ -15,6 +15,7 @@
  */
 package net.java.otr4j.session;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
@@ -144,7 +145,7 @@ class SessionKeysImpl implements SessionKeys {
 			buff.put(secbytes);
 			byte[] result = new OtrCryptoEngineImpl().sha1Hash(buff.array());
 			return result;
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw new OtrException(e);
 		}
 	}
