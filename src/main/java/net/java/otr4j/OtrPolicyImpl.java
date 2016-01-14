@@ -20,6 +20,8 @@ package net.java.otr4j;
  */
 public class OtrPolicyImpl implements OtrPolicy {
 
+	private int policy;
+
 	public OtrPolicyImpl() {
 		this.setPolicy(NEVER);
 	}
@@ -27,8 +29,6 @@ public class OtrPolicyImpl implements OtrPolicy {
 	public OtrPolicyImpl(int policy) {
 		this.setPolicy(policy);
 	}
-
-	private int policy;
 
 	@Override
 	public int getPolicy() {

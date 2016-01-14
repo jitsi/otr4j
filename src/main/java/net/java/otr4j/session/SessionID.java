@@ -21,12 +21,6 @@ package net.java.otr4j.session;
  */
 public final class SessionID {
 
-	public SessionID(String accountID, String userID, String protocolName) {
-		this.accountID = accountID;
-		this.userID = userID;
-		this.protocolName = protocolName;
-	}
-
 	private final String accountID;
 	private final String userID;
 	private final String protocolName;
@@ -34,6 +28,12 @@ public final class SessionID {
 	public static final SessionID EMPTY = new SessionID(null, null, null);
 	/** @deprecated use {@link #EMPTY} instead */
 	public static final SessionID Empty = EMPTY;
+
+	public SessionID(String accountID, String userID, String protocolName) {
+		this.accountID = accountID;
+		this.userID = userID;
+		this.protocolName = protocolName;
+	}
 
 	public String getAccountID() {
 		return accountID;

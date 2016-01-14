@@ -83,6 +83,7 @@ public class SessionImpl implements Session {
 	private final OtrAssembler assembler;
 	private final OtrFragmenter fragmenter;
 	private final List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
+	private PublicKey remotePublicKey;
 
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
 
@@ -955,8 +956,6 @@ public class SessionImpl implements Session {
 		this.endSession();
 		this.startSession();
 	}
-
-	private PublicKey remotePublicKey;
 
 	private void setRemotePublicKey(PublicKey pubKey) {
 		this.remotePublicKey = pubKey;

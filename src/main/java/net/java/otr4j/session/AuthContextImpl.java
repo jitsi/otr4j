@@ -75,6 +75,8 @@ class AuthContextImpl extends AuthContext {
 
 	private final MessageFactory messageFactory = new MessageFactoryImpl();
 
+	private PublicKey remoteLongTermPublicKey;
+
 	AuthContextImpl(Session session) {
 		this.setSession(session);
 		this.reset();
@@ -798,8 +800,6 @@ class AuthContextImpl extends AuthContext {
 	private Session getSession() {
 		return session;
 	}
-
-	private PublicKey remoteLongTermPublicKey;
 
 	@Override
 	public PublicKey getRemoteLongTermPublicKey() {

@@ -51,6 +51,12 @@ import net.java.otr4j.session.Session.OTRv;
  */
 public class SerializationUtils {
 
+	private static final Pattern PATTERN_WHITESPACE = Pattern
+			.compile("( \\t  \\t\\t\\t\\t \\t \\t \\t  )( \\t \\t  \\t )?(  \\t\\t  \\t )?(  \\t\\t  \\t\\t)?");
+	private static final char[] HEX_ENCODER = {'0', '1', '2', '3', '4', '5',
+			'6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+	private static final String HEX_DECODER = "0123456789ABCDEF";
+
 	/** Hide the ctor, because this is an utility class. */
 	private SerializationUtils() {
 	}
@@ -261,9 +267,6 @@ public class SerializationUtils {
 		return writer.toString();
 	}
 
-	private static final Pattern PATTERN_WHITESPACE = Pattern
-			.compile("( \\t  \\t\\t\\t\\t \\t \\t \\t  )( \\t \\t  \\t )?(  \\t\\t  \\t )?(  \\t\\t  \\t\\t)?");
-
 	public static AbstractMessage toMessage(String s) throws IOException {
 		if (s == null || s.length() == 0)
 			return null;
@@ -434,11 +437,7 @@ public class SerializationUtils {
 		}
 
 		return new PlainTextMessage(versions, cleanText);
-
 	}
-
-	private static final char[] HEX_ENCODER = {'0', '1', '2', '3', '4', '5',
-			'6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
 	public static String byteArrayToHexString(byte[] in) {
 
@@ -451,8 +450,6 @@ public class SerializationUtils {
 		}
 		return out.toString();
 	}
-
-	private static final String HEX_DECODER = "0123456789ABCDEF";
 
 	public static byte[] hexStringToByteArray(String value) {
 		value = value.toUpperCase();

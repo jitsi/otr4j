@@ -15,11 +15,6 @@ import java.net.ProtocolException;
  */
 public final class OtrAssembler {
 
-	public OtrAssembler(InstanceTag ownInstance) {
-		this.ownInstance = ownInstance;
-		discard();
-	}
-
 	/**
 	 * Accumulated fragment thus far.
 	 */
@@ -45,6 +40,11 @@ public final class OtrAssembler {
 
 	private static final String HEAD_FRAGMENT_V2 = "?OTR,";
 	private static final String HEAD_FRAGMENT_V3 = "?OTR|";
+
+	public OtrAssembler(InstanceTag ownInstance) {
+		this.ownInstance = ownInstance;
+		discard();
+	}
 
 	/**
 	 * Appends a message fragment to the internal buffer and returns
