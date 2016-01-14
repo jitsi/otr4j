@@ -21,6 +21,13 @@ package net.java.otr4j.io.messages;
  */
 public abstract class AbstractEncodedMessage extends AbstractMessage {
 
+	// Encoded Message Types
+	public static final int MESSAGE_DH_COMMIT = 0x02;
+	public static final int MESSAGE_DATA = 0x03;
+	public static final int MESSAGE_DHKEY = 0x0a;
+	public static final int MESSAGE_REVEALSIG = 0x11;
+	public static final int MESSAGE_SIGNATURE = 0x12;
+
 	public int protocolVersion;
 
 	public int senderInstanceTag;
@@ -74,11 +81,4 @@ public abstract class AbstractEncodedMessage extends AbstractMessage {
 			return false;
 		return true;
 	}
-
-	// Encoded Message Types
-	public static final int MESSAGE_DH_COMMIT = 0x02;
-	public static final int MESSAGE_DATA = 0x03;
-	public static final int MESSAGE_DHKEY = 0x0a;
-	public static final int MESSAGE_REVEALSIG = 0x11;
-	public static final int MESSAGE_SIGNATURE = 0x12;
 }

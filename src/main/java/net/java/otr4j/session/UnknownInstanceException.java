@@ -11,5 +11,4 @@ public class UnknownInstanceException extends ProtocolException {
 	public UnknownInstanceException(String host) {
 		super(host);
 	}
-
 }

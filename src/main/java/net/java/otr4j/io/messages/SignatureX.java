@@ -28,9 +28,8 @@ public class SignatureX {
 	public int dhKeyID;
 	public byte[] signature;
 
-	public SignatureX(PublicKey ourLongTermPublicKey, int ourKeyID,
-			byte[] signature)
-	{
+	public SignatureX(PublicKey ourLongTermPublicKey, int ourKeyID, byte[] signature) {
+
 		this.longTermPublicKey = ourLongTermPublicKey;
 		this.dhKeyID = ourKeyID;
 		this.signature = signature;

@@ -30,15 +30,16 @@ import net.java.otr4j.session.SessionImpl;
  */
 public class OtrSessionManagerImpl implements OtrSessionManager {
 
+	private OtrEngineHost host;
+	private Map<SessionID, Session> sessions;
+	private final List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
+
 	public OtrSessionManagerImpl(OtrEngineHost host) {
 		if (host == null)
 			throw new IllegalArgumentException("OtrEgineHost is required.");
 
 		this.setHost(host);
 	}
-
-	private OtrEngineHost host;
-	private Map<SessionID, Session> sessions;
 
 	@Override
 	public Session getSession(SessionID sessionID) {
@@ -84,8 +85,6 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 	private OtrEngineHost getHost() {
 		return host;
 	}
-
-	private List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
 
 	@Override
 	public void addOtrEngineListener(OtrEngineListener l) {

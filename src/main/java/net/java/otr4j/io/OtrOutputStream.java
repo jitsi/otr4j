@@ -158,6 +158,5 @@ public class OtrOutputStream extends FilterOutputStream implements
 		writeDHPublicKey(t.nextDH);
 		writeCtr(t.ctr);
 		writeData(t.encryptedMessage);
-
 	}
 }

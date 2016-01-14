@@ -26,5 +26,4 @@ public class OtrCryptoException extends OtrException {
 	public OtrCryptoException(Exception e) {
 		super(e);
 	}
-
 }

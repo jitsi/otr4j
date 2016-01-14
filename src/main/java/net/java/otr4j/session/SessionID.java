@@ -90,5 +90,4 @@ public final class SessionID {
 			return false;
 		return true;
 	}
-
 }

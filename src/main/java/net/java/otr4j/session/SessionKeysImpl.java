@@ -34,21 +34,37 @@ import net.java.otr4j.io.SerializationUtils;
  */
 class SessionKeysImpl implements SessionKeys {
 
-	private static Logger logger = Logger.getLogger(SessionKeysImpl.class
-			.getName());
-	private String keyDescription;
+	private static final Logger logger = Logger.getLogger(SessionKeysImpl.class.getName());
+	private final String keyDescription;
+	private final byte[] sendingCtr = new byte[16];
+	private final byte[] receivingCtr = new byte[16];
+
+	private int localKeyID;
+	private int remoteKeyID;
+	private DHPublicKey remoteKey;
+	private KeyPair localPair;
+
+	private byte[] sendingAESKey;
+	private byte[] receivingAESKey;
+	private byte[] sendingMACKey;
+	private byte[] receivingMACKey;
+	private Boolean isUsedReceivingMACKey;
+	private BigInteger s;
+	private Boolean isHigh;
 
 	SessionKeysImpl(int localKeyIndex, int remoteKeyIndex) {
+
+		String tmpKeyDescription;
 		if (localKeyIndex == 0)
-			keyDescription = "(Previous local, ";
+			tmpKeyDescription = "(Previous local, ";
 		else
-			keyDescription = "(Most recent local, ";
+			tmpKeyDescription = "(Most recent local, ";
 
 		if (remoteKeyIndex == 0)
-			keyDescription += "Previous remote)";
+			tmpKeyDescription += "Previous remote)";
 		else
-			keyDescription += "Most recent remote)";
-
+			tmpKeyDescription += "Most recent remote)";
+		this.keyDescription = tmpKeyDescription;
 	}
 
 	@Override
@@ -68,9 +84,6 @@ class SessionKeysImpl implements SessionKeys {
 				+ this.getRemoteKeyID());
 		this.reset();
 	}
-
-	private byte[] sendingCtr = new byte[16];
-	private byte[] receivingCtr = new byte[16];
 
 	@Override
 	public void incrementSendingCtr() {
@@ -249,17 +262,4 @@ class SessionKeysImpl implements SessionKeys {
 	public KeyPair getLocalPair() {
 		return localPair;
 	}
-
-	private int localKeyID;
-	private int remoteKeyID;
-	private DHPublicKey remoteKey;
-	private KeyPair localPair;
-
-	private byte[] sendingAESKey;
-	private byte[] receivingAESKey;
-	private byte[] sendingMACKey;
-	private byte[] receivingMACKey;
-	private Boolean isUsedReceivingMACKey;
-	private BigInteger s;
-	private Boolean isHigh;
 }

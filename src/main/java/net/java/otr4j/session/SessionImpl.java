@@ -72,8 +72,7 @@ public class SessionImpl implements Session {
 	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
-	private static Logger logger = Logger
-			.getLogger(SessionImpl.class.getName());
+	private static final Logger logger = Logger.getLogger(SessionImpl.class.getName());
 	private final OtrSm otrSm;
 	private BigInteger ess;
 	private OfferStatus offerStatus;
@@ -82,6 +81,7 @@ public class SessionImpl implements Session {
 	private int protocolVersion;
 	private final OtrAssembler assembler;
 	private final OtrFragmenter fragmenter;
+	private final List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
 
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
 
@@ -107,10 +107,8 @@ public class SessionImpl implements Session {
 	}
 
 	// A private constructor for instantiating 'slave' sessions.
-	private SessionImpl(SessionID sessionID,
-						OtrEngineHost listener,
-						InstanceTag senderTag,
-						InstanceTag receiverInstanceTag)
+	private SessionImpl(SessionID sessionID, OtrEngineHost listener, InstanceTag senderTag,
+			InstanceTag receiverInstanceTag)
 	{
 		this.setSessionID(sessionID);
 		this.setHost(listener);
@@ -553,8 +551,7 @@ public class SessionImpl implements Session {
 
 		switch (this.getSessionStatus()) {
 		case ENCRYPTED:
-			logger
-					.finest("Message state is ENCRYPTED. Trying to decrypt message.");
+			logger.finest("Message state is ENCRYPTED. Trying to decrypt message.");
 			// Find matching session keys.
 			int senderKeyID = data.senderKeyID;
 			int receipientKeyID = data.recipientKeyID;
@@ -570,8 +567,7 @@ public class SessionImpl implements Session {
 			}
 
 			// Verify received MAC with a locally calculated MAC.
-			logger
-					.finest("Transforming T to byte[] to calculate it's HmacSHA1.");
+			logger.finest("Transforming T to byte[] to calculate it's HmacSHA1.");
 
 			byte[] serializedT;
 			try {
@@ -976,8 +972,6 @@ public class SessionImpl implements Session {
 			return this.slaveSessions.getSelected().getRemotePublicKey();
 		return remotePublicKey;
 	}
-
-	private List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
 
 	@Override
 	public void addOtrEngineListener(OtrEngineListener l) {

@@ -50,11 +50,6 @@ import net.java.otr4j.session.Session.OTRv;
  */
 class AuthContextImpl extends AuthContext {
 
-	AuthContextImpl(Session session) {
-		this.setSession(session);
-		this.reset();
-	}
-
 	private Session session;
 
 	private int authenticationState;
@@ -76,8 +71,14 @@ class AuthContextImpl extends AuthContext {
 	private KeyPair localLongTermKeyPair;
 	private Boolean isSecure = false;
 
-	private static Logger logger = Logger.getLogger(AuthContextImpl.class
-			.getName());
+	private static final Logger logger = Logger.getLogger(AuthContextImpl.class.getName());
+
+	private final MessageFactory messageFactory = new MessageFactoryImpl();
+
+	AuthContextImpl(Session session) {
+		this.setSession(session);
+		this.reset();
+	}
 
 	class MessageFactoryImpl extends MessageFactory {
 
@@ -192,8 +193,6 @@ class AuthContextImpl extends AuthContext {
 			}
 		}
 	}
-
-	private MessageFactory messageFactory = new MessageFactoryImpl();
 
 	@Override
 	public void reset() {

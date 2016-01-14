@@ -169,5 +169,4 @@ public final class OtrAssembler {
 		fragmentCur = 0;
 		fragmentMax = 0;
 	}
-
 }

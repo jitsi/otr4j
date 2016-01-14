@@ -47,7 +47,8 @@ import net.java.otr4j.session.SessionID;
  */
 public class OtrKeyManagerImpl implements OtrKeyManager {
 
-	private OtrKeyManagerStore store;
+	private final OtrKeyManagerStore store;
+	private final List<OtrKeyManagerListener> listeners = new Vector<OtrKeyManagerListener>();
 
 	public OtrKeyManagerImpl(OtrKeyManagerStore store) {
 		this.store = store;
@@ -139,8 +140,6 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 	public OtrKeyManagerImpl(String filepath) throws IOException {
 		this.store = new DefaultPropertiesStore(filepath);
 	}
-
-	private List<OtrKeyManagerListener> listeners = new Vector<OtrKeyManagerListener>();
 
 	@Override
 	public void addListener(OtrKeyManagerListener l) {

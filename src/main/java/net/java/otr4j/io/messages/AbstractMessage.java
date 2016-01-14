@@ -21,6 +21,11 @@ package net.java.otr4j.io.messages;
  */
 public abstract class AbstractMessage {
 
+	// Unencoded
+	public static final int MESSAGE_ERROR = 0xff;
+	public static final int MESSAGE_QUERY = 0x100;
+	public static final int MESSAGE_PLAINTEXT = 0x102;
+
 	public int messageType;
 
 	public AbstractMessage(int messageType) {
@@ -48,9 +53,4 @@ public abstract class AbstractMessage {
 			return false;
 		return true;
 	}
-
-	// Unencoded
-	public static final int MESSAGE_ERROR = 0xff;
-	public static final int MESSAGE_QUERY = 0x100;
-	public static final int MESSAGE_PLAINTEXT = 0x102;
 }

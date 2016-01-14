@@ -22,8 +22,8 @@ import net.java.otr4j.io.OtrOutputStream;
 public class OtrSm {
 
 	private SMState smstate;
-	private OtrEngineHost engineHost;
-	private Session session;
+	private final OtrEngineHost engineHost;
+	private final Session session;
 
 	/**
 	 * Construct an OTR Socialist Millionaire handler object.
