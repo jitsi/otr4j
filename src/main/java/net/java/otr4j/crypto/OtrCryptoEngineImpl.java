@@ -62,6 +62,7 @@ import org.bouncycastle.util.BigIntegers;
  */
 public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 
+	@Override
 	public KeyPair generateDHKeyPair() throws OtrCryptoException {
 
 		// Generate a AsymmetricCipherKeyPair using BC.
@@ -105,6 +106,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		return getDHPublicKey(new BigInteger(mpiBytes));
 	}
 
+	@Override
 	public DHPublicKey getDHPublicKey(BigInteger mpi) throws OtrCryptoException {
 
 		DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(mpi, MODULUS,
@@ -117,10 +119,12 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		}
 	}
 
+	@Override
 	public byte[] sha256Hmac(byte[] b, byte[] key) throws OtrCryptoException {
 		return this.sha256Hmac(b, key, 0);
 	}
 
+	@Override
 	public byte[] sha256Hmac(byte[] b, byte[] key, int length)
 			throws OtrCryptoException
 	{
@@ -149,6 +153,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		}
 	}
 
+	@Override
 	public byte[] sha1Hmac(byte[] b, byte[] key, int length)
 			throws OtrCryptoException
 	{
@@ -172,10 +177,12 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		}
 	}
 
+	@Override
 	public byte[] sha256Hmac160(byte[] b, byte[] key) throws OtrCryptoException {
 		return sha256Hmac(b, key, 20);
 	}
 
+	@Override
 	public byte[] sha256Hash(byte[] b) throws OtrCryptoException {
 		try {
 			MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
@@ -186,6 +193,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		}
 	}
 
+	@Override
 	public byte[] sha1Hash(byte[] b) throws OtrCryptoException {
 		try {
 			MessageDigest sha256 = MessageDigest.getInstance("SHA-1");
@@ -196,6 +204,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		}
 	}
 
+	@Override
 	public byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b)
 			throws OtrCryptoException
 	{
@@ -219,6 +228,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		return aesOutLwDec;
 	}
 
+	@Override
 	public byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b)
 			throws OtrCryptoException
 	{
@@ -241,6 +251,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		return aesOutLwEnc;
 	}
 
+	@Override
 	public BigInteger generateSecret(PrivateKey privKey, PublicKey pubKey)
 			throws OtrCryptoException
 	{
@@ -257,6 +268,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		}
 	}
 
+	@Override
 	public byte[] sign(byte[] b, PrivateKey privatekey)
 			throws OtrCryptoException
 	{
@@ -297,6 +309,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		return sig;
 	}
 
+	@Override
 	public boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
 			throws OtrCryptoException
 	{
@@ -351,11 +364,13 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		return result;
 	}
 
+	@Override
 	public String getFingerprint(PublicKey pubKey) throws OtrCryptoException {
 		byte[] b = getFingerprintRaw(pubKey);
 		return SerializationUtils.byteArrayToHexString(b);
 	}
 
+	@Override
 	public byte[] getFingerprintRaw(PublicKey pubKey)
 			throws OtrCryptoException
 	{

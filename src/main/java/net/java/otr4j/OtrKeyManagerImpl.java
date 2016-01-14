@@ -83,6 +83,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 			return configFile;
 		}
 
+		@Override
 		public void setProperty(String id, boolean value) {
 			properties.setProperty(id, "true");
 			try {
@@ -101,6 +102,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 			}
 		}
 
+		@Override
 		public void setProperty(String id, byte[] value) {
 			properties.setProperty(id, new String(Base64.encode(value)));
 			try {
@@ -110,11 +112,13 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 			}
 		}
 
+		@Override
 		public void removeProperty(String id) {
 			properties.remove(id);
 
 		}
 
+		@Override
 		public byte[] getPropertyBytes(String id) {
 			String value = properties.getProperty(id);
 			if (value == null)
@@ -122,6 +126,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 			return Base64.decode(value);
 		}
 
+		@Override
 		public boolean getPropertyBoolean(String id, boolean defaultValue) {
 			try {
 				return Boolean.valueOf(properties.get(id).toString());
@@ -137,6 +142,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 
 	private List<OtrKeyManagerListener> listeners = new Vector<OtrKeyManagerListener>();
 
+	@Override
 	public void addListener(OtrKeyManagerListener l) {
 		synchronized (listeners) {
 			if (!listeners.contains(l))
@@ -144,12 +150,14 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		}
 	}
 
+	@Override
 	public void removeListener(OtrKeyManagerListener l) {
 		synchronized (listeners) {
 			listeners.remove(l);
 		}
 	}
 
+	@Override
 	public void generateLocalKeyPair(SessionID sessionID) {
 		if (sessionID == null)
 			return;
@@ -180,6 +188,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 				.getEncoded());
 	}
 
+	@Override
 	public String getLocalFingerprint(SessionID sessionID) {
 		KeyPair keyPair = loadLocalKeyPair(sessionID);
 
@@ -196,6 +205,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		}
 	}
 
+	@Override
 	public byte[] getLocalFingerprintRaw(SessionID sessionID) {
 		KeyPair keyPair = loadLocalKeyPair(sessionID);
 
@@ -212,6 +222,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		}
 	}
 
+	@Override
 	public String getRemoteFingerprint(SessionID sessionID) {
 		PublicKey remotePublicKey = loadRemotePublicKey(sessionID);
 		if (remotePublicKey == null)
@@ -224,6 +235,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		}
 	}
 
+	@Override
 	public boolean isVerified(SessionID sessionID) {
 		if (sessionID == null)
 			return false;
@@ -232,6 +244,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 				+ ".publicKey.verified", false);
 	}
 
+	@Override
 	public KeyPair loadLocalKeyPair(SessionID sessionID) {
 		if (sessionID == null)
 			return null;
@@ -273,6 +286,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		return new KeyPair(publicKey, privateKey);
 	}
 
+	@Override
 	public PublicKey loadRemotePublicKey(SessionID sessionID) {
 		if (sessionID == null)
 			return null;
@@ -299,6 +313,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		}
 	}
 
+	@Override
 	public void savePublicKey(SessionID sessionID, PublicKey pubKey) {
 		if (sessionID == null)
 			return;
@@ -313,6 +328,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		this.store.removeProperty(userID + ".publicKey.verified");
 	}
 
+	@Override
 	public void unverify(SessionID sessionID) {
 		if (sessionID == null)
 			return;
@@ -328,6 +344,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 
 	}
 
+	@Override
 	public void verify(SessionID sessionID) {
 		if (sessionID == null)
 			return;
@@ -341,5 +358,4 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		for (OtrKeyManagerListener l : listeners)
 			l.verificationStatusChanged(sessionID);
 	}
-
 }

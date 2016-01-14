@@ -51,6 +51,7 @@ class SessionKeysImpl implements SessionKeys {
 
 	}
 
+	@Override
 	public void setLocalPair(KeyPair keyPair, int localPairKeyID) {
 		this.localPair = keyPair;
 		this.setLocalKeyID(localPairKeyID);
@@ -59,6 +60,7 @@ class SessionKeysImpl implements SessionKeys {
 		this.reset();
 	}
 
+	@Override
 	public void setRemoteDHPublicKey(DHPublicKey pubKey, int remoteKeyID) {
 		this.setRemoteKey(pubKey);
 		this.setRemoteKeyID(remoteKeyID);
@@ -70,6 +72,7 @@ class SessionKeysImpl implements SessionKeys {
 	private byte[] sendingCtr = new byte[16];
 	private byte[] receivingCtr = new byte[16];
 
+	@Override
 	public void incrementSendingCtr() {
 		logger.finest("Incrementing counter for (localkeyID, remoteKeyID) = ("
 				+ getLocalKeyID() + "," + getRemoteKeyID() + ")");
@@ -84,14 +87,17 @@ class SessionKeysImpl implements SessionKeys {
 		// true, 16));
 	}
 
+	@Override
 	public byte[] getSendingCtr() {
 		return sendingCtr;
 	}
 
+	@Override
 	public byte[] getReceivingCtr() {
 		return receivingCtr;
 	}
 
+	@Override
 	public void setReceivingCtr(byte[] ctr) {
 		System.arraycopy(ctr, 0, receivingCtr, 0, ctr.length);
 	}
@@ -129,6 +135,7 @@ class SessionKeysImpl implements SessionKeys {
 		}
 	}
 
+	@Override
 	public byte[] getSendingAESKey() throws OtrException {
 		if (sendingAESKey != null)
 			return sendingAESKey;
@@ -147,6 +154,7 @@ class SessionKeysImpl implements SessionKeys {
 		return sendingAESKey;
 	}
 
+	@Override
 	public byte[] getReceivingAESKey() throws OtrException {
 		if (receivingAESKey != null)
 			return receivingAESKey;
@@ -166,6 +174,7 @@ class SessionKeysImpl implements SessionKeys {
 		return receivingAESKey;
 	}
 
+	@Override
 	public byte[] getSendingMACKey() throws OtrException {
 		if (sendingMACKey != null)
 			return sendingMACKey;
@@ -175,6 +184,7 @@ class SessionKeysImpl implements SessionKeys {
 		return sendingMACKey;
 	}
 
+	@Override
 	public byte[] getReceivingMACKey() throws OtrException {
 		if (receivingMACKey == null) {
 			receivingMACKey = new OtrCryptoEngineImpl()
@@ -193,14 +203,17 @@ class SessionKeysImpl implements SessionKeys {
 		return s;
 	}
 
+	@Override
 	public void setS(BigInteger s) {
 		this.s = s;
 	}
 
+	@Override
 	public void setIsUsedReceivingMACKey(Boolean isUsedReceivingMACKey) {
 		this.isUsedReceivingMACKey = isUsedReceivingMACKey;
 	}
 
+	@Override
 	public Boolean getIsUsedReceivingMACKey() {
 		return isUsedReceivingMACKey;
 	}
@@ -209,6 +222,7 @@ class SessionKeysImpl implements SessionKeys {
 		this.localKeyID = localKeyID;
 	}
 
+	@Override
 	public int getLocalKeyID() {
 		return localKeyID;
 	}
@@ -217,6 +231,7 @@ class SessionKeysImpl implements SessionKeys {
 		this.remoteKeyID = remoteKeyID;
 	}
 
+	@Override
 	public int getRemoteKeyID() {
 		return remoteKeyID;
 	}
@@ -225,10 +240,12 @@ class SessionKeysImpl implements SessionKeys {
 		this.remoteKey = remoteKey;
 	}
 
+	@Override
 	public DHPublicKey getRemoteKey() {
 		return remoteKey;
 	}
 
+	@Override
 	public KeyPair getLocalPair() {
 		return localPair;
 	}

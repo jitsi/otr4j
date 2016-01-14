@@ -130,6 +130,7 @@ public class SessionImpl implements Session {
 		fragmenter = new OtrFragmenter(this, listener);
 	}
 
+	@Override
 	public BigInteger getS() {
 		return ess;
 	}
@@ -298,6 +299,7 @@ public class SessionImpl implements Session {
 			l.sessionStatusChanged(getSessionID());
 	}
 
+	@Override
 	public SessionStatus getSessionStatus() {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
 			return this.slaveSessions.getSelected().getSessionStatus();
@@ -309,6 +311,7 @@ public class SessionImpl implements Session {
 		this.sessionID = sessionID;
 	}
 
+	@Override
 	public SessionID getSessionID() {
 		return sessionID;
 	}
@@ -339,6 +342,7 @@ public class SessionImpl implements Session {
 		return oldMacKeys;
 	}
 
+	@Override
 	public String transformReceiving(String msgText) throws OtrException {
 
 		OtrPolicy policy = getSessionPolicy();
@@ -418,14 +422,16 @@ public class SessionImpl implements Session {
 								session.getAuthContext().set(this.getAuthContext());
 							}
 							session.addOtrEngineListener(new OtrEngineListener() {
-
+								@Override
 								public void sessionStatusChanged(SessionID sessionID) {
 									for (OtrEngineListener l : listeners)
 										l.sessionStatusChanged(sessionID);
 								}
 
+								@Override
 								public void multipleInstancesDetected(SessionID sessionID) {}
 
+								@Override
 								public void outgoingSessionChanged(SessionID sessionID) {}
 							});
 
@@ -669,6 +675,7 @@ public class SessionImpl implements Session {
 		return null;
 	}
 
+	@Override
 	public void injectMessage(AbstractMessage m) throws OtrException {
 		String msg;
 		try {
@@ -764,12 +771,14 @@ public class SessionImpl implements Session {
 		return plainTextMessage.cleanText;
 	}
 
+	@Override
 	public String[] transformSending(String msgText)
 			throws OtrException
 	{
 		return this.transformSending(msgText, null);
 	}
 
+	@Override
 	public String[] transformSending(String msgText, List<TLV> tlvs)
 			throws OtrException
 	{
@@ -906,6 +915,7 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	@Override
 	public void startSession() throws OtrException {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
 			this.slaveSessions.getSelected().startSession();
@@ -920,6 +930,7 @@ public class SessionImpl implements Session {
 		this.getAuthContext().startAuth();
 	}
 
+	@Override
 	public void endSession() throws OtrException {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
 			this.slaveSessions.getSelected().endSession();
@@ -947,6 +958,7 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	@Override
 	public void refreshSession() throws OtrException {
 		this.endSession();
 		this.startSession();
@@ -958,6 +970,7 @@ public class SessionImpl implements Session {
 		this.remotePublicKey = pubKey;
 	}
 
+	@Override
 	public PublicKey getRemotePublicKey() {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE)
 			return this.slaveSessions.getSelected().getRemotePublicKey();
@@ -966,6 +979,7 @@ public class SessionImpl implements Session {
 
 	private List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
 
+	@Override
 	public void addOtrEngineListener(OtrEngineListener l) {
 		synchronized (listeners) {
 			if (!listeners.contains(l))
@@ -973,16 +987,19 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	@Override
 	public void removeOtrEngineListener(OtrEngineListener l) {
 		synchronized (listeners) {
 			listeners.remove(l);
 		}
 	}
 
+	@Override
 	public OtrPolicy getSessionPolicy() {
 		return getHost().getSessionPolicy(getSessionID());
 	}
 
+	@Override
 	public KeyPair getLocalKeyPair() throws OtrException {
 		return getHost().getLocalKeyPair(this.getSessionID());
 	}

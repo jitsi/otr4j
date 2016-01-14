@@ -81,6 +81,7 @@ class AuthContextImpl extends AuthContext {
 
 	class MessageFactoryImpl extends MessageFactory {
 
+		@Override
 		QueryMessage getQueryMessage() {
 			List<Integer> versions = new ArrayList<Integer>(2);
 			versions.add(OTRv.TWO);
@@ -88,6 +89,7 @@ class AuthContextImpl extends AuthContext {
 			return new QueryMessage(versions);
 		}
 
+		@Override
 		DHCommitMessage getDHCommitMessage() throws OtrException {
 			DHCommitMessage message = new DHCommitMessage(getSession().getProtocolVersion(),
 					getLocalDHPublicKeyHash(), getLocalDHPublicKeyEncrypted());
@@ -97,6 +99,7 @@ class AuthContextImpl extends AuthContext {
 			return message;
 		}
 
+		@Override
 		DHKeyMessage getDHKeyMessage() throws OtrException {
 			DHKeyMessage dhKeyMessage =
 					new DHKeyMessage(getSession().getProtocolVersion(),
@@ -108,6 +111,7 @@ class AuthContextImpl extends AuthContext {
 			return dhKeyMessage;
 		}
 
+		@Override
 		RevealSignatureMessage getRevealSignatureMessage()
 				throws OtrException
 		{
@@ -146,6 +150,7 @@ class AuthContextImpl extends AuthContext {
 			}
 		}
 
+		@Override
 		SignatureMessage getSignatureMessage() throws OtrException {
 			SignatureM m = new SignatureM((DHPublicKey) getLocalDHKeyPair()
 					.getPublic(), getRemoteDHPublicKey(),
@@ -190,6 +195,7 @@ class AuthContextImpl extends AuthContext {
 
 	private MessageFactory messageFactory = new MessageFactoryImpl();
 
+	@Override
 	public void reset() {
 		logger.finest("Resetting authentication state.");
 		authenticationState = AuthContext.NONE;
@@ -221,6 +227,7 @@ class AuthContextImpl extends AuthContext {
 		this.isSecure = isSecure;
 	}
 
+	@Override
 	public boolean getIsSecure() {
 		return isSecure;
 	}
@@ -256,6 +263,7 @@ class AuthContextImpl extends AuthContext {
 		this.remoteDHPublicKey = dhPublicKey;
 	}
 
+	@Override
 	public DHPublicKey getRemoteDHPublicKey() {
 		return remoteDHPublicKey;
 	}
@@ -278,6 +286,7 @@ class AuthContextImpl extends AuthContext {
 		return remoteDHPublicKeyHash;
 	}
 
+	@Override
 	public KeyPair getLocalDHKeyPair() throws OtrException {
 		if (localDHKeyPair == null) {
 			localDHKeyPair = new OtrCryptoEngineImpl().generateDHKeyPair();
@@ -308,6 +317,7 @@ class AuthContextImpl extends AuthContext {
 		return localDHPublicKeyEncrypted;
 	}
 
+	@Override
 	public BigInteger getS() throws OtrException {
 		if (s == null) {
 			s = new OtrCryptoEngineImpl().generateSecret(this
@@ -397,6 +407,7 @@ class AuthContextImpl extends AuthContext {
 		return tmpM2p;
 	}
 
+	@Override
 	public KeyPair getLocalLongTermKeyPair() throws OtrException {
 		if (localLongTermKeyPair == null) {
 			localLongTermKeyPair = getSession().getLocalKeyPair();
@@ -435,6 +446,7 @@ class AuthContextImpl extends AuthContext {
 		return localDHPublicKeyBytes;
 	}
 
+	@Override
 	public void handleReceivingMessage(AbstractMessage m) throws OtrException {
 
 		if (m instanceof AbstractEncodedMessage && validateMessage((AbstractEncodedMessage) m)) {
@@ -760,11 +772,13 @@ class AuthContextImpl extends AuthContext {
 		}
 	}
 
+	@Override
 	public void startAuth() throws OtrException {
 		logger.finest("Starting Authenticated Key Exchange, sending query message");
 		getSession().injectMessage(messageFactory.getQueryMessage());
 	}
 
+	@Override
 	public DHCommitMessage respondAuth(Integer version) throws OtrException {
 		if (version != OTRv.TWO && version != OTRv.THREE)
 			throw new OtrException(new Exception("Only allowed versions are: 2, 3"));
@@ -788,6 +802,7 @@ class AuthContextImpl extends AuthContext {
 
 	private PublicKey remoteLongTermPublicKey;
 
+	@Override
 	public PublicKey getRemoteLongTermPublicKey() {
 		return remoteLongTermPublicKey;
 	}
