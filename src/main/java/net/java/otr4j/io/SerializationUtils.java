@@ -243,6 +243,11 @@ public class SerializationUtils {
 						s.writeMac(data.mac);
 						s.writeData(data.oldMACKeys);
 						break;
+					default:
+						// NOTE We should probably move at least part of this method into individual
+						//   toString() methods of the *Message implementations.
+						throw new UnsupportedOperationException("Unsupported message type: "
+								+ m.messageType);
 				}
 
 				writer.write(SerializationConstants.HEAD_ENCODED);
