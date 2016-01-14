@@ -38,12 +38,13 @@ public class Util {
 	}
 
 	public static void checkBytes(String s, byte[] bytes) {
-		String hexString = new String();
+		final StringBuilder hexString = new StringBuilder();
 		for (int i = 0; i < bytes.length; i++) {
-			hexString += Integer.toHexString((bytes[i] >>> 4) & 0x0F);
-			hexString += Integer.toHexString(0x0F & bytes[i]);
+			hexString
+					.append(Integer.toHexString((bytes[i] >>> 4) & 0x0F))
+					.append(Integer.toHexString(0x0F & bytes[i]));
 		}
-		System.out.println(s + ": " + hexString);
+		System.out.println(s + ": " + hexString.toString());
 	}
 
 	static void writeInt(byte[] dst, int index, int src) {
