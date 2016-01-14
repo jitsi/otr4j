@@ -723,15 +723,13 @@ public class SessionImpl implements Session {
 		OtrPolicy policy = getSessionPolicy();
 		List<Integer> versions = plainTextMessage.versions;
 		if (versions == null || versions.size() < 1) {
-			logger
-					.finest("Received plaintext message without the whitespace tag.");
+			logger.finest("Received plaintext message without the whitespace tag.");
 			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
 			case FINISHED:
 				// Display the message to the user, but warn him that the
 				// message was received unencrypted.
-				getHost().unencryptedMessageReceived(sessionID,
-						plainTextMessage.cleanText);
+				getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
 				return plainTextMessage.cleanText;
 			case PLAINTEXT:
 				// Simply display the message to the user. If
@@ -739,16 +737,14 @@ public class SessionImpl implements Session {
 				// is set, warn him that the message was received
 				// unencrypted.
 				if (policy.getRequireEncryption()) {
-					getHost().unencryptedMessageReceived(sessionID,
-							plainTextMessage.cleanText);
+					getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
 				}
 				return plainTextMessage.cleanText;
 			default:
 				throw new UnsupportedOperationException("What to do for this state?");
 			}
 		} else {
-			logger
-					.finest("Received plaintext message with the whitespace tag.");
+			logger.finest("Received plaintext message with the whitespace tag.");
 			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
 				break;
@@ -756,8 +752,7 @@ public class SessionImpl implements Session {
 				// Remove the whitespace tag and display the message to the
 				// user, but warn him that the message was received
 				// unencrypted.
-				getHost().unencryptedMessageReceived(sessionID,
-						plainTextMessage.cleanText);
+				getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
 				break;
 			case PLAINTEXT:
 				// Remove the whitespace tag and display the message to the
@@ -765,8 +760,7 @@ public class SessionImpl implements Session {
 				// message
 				// was received unencrypted.
 				if (policy.getRequireEncryption())
-					getHost().unencryptedMessageReceived(sessionID,
-							plainTextMessage.cleanText);
+					getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
 				break;
 			default:
 				throw new UnsupportedOperationException("What to do for this state?");
@@ -976,7 +970,6 @@ public class SessionImpl implements Session {
 		default:
 			throw new UnsupportedOperationException("What to do for this state?");
 		}
-
 	}
 
 	/*
