@@ -92,6 +92,9 @@
                     <aggregate>true</aggregate>
                     <linkXref>true</linkXref>
                     <sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
+                    <rulesets>
+                        <ruleset>src/main/resources/pmd.xml</ruleset>
+                    </rulesets>
                 </configuration>
             </plugin>
             <plugin>
