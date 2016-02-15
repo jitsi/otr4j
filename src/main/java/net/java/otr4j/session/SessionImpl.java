@@ -961,7 +961,7 @@ public class SessionImpl implements Session {
 		if (this.getSessionStatus() == SessionStatus.ENCRYPTED)
 			return;
 
-		if (!getSessionPolicy().getAllowV2() || !getSessionPolicy().getAllowV3())
+		if (!getSessionPolicy().getAllowV2() && !getSessionPolicy().getAllowV3())
 			throw new UnsupportedOperationException();
 
 		this.getAuthContext().startAuth();
