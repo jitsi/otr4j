@@ -733,7 +733,6 @@ public class SessionImpl implements Session {
 			logger.finest("Received plaintext message with the whitespace tag.");
 			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
-				break;
 			case FINISHED:
 				// Remove the whitespace tag and display the message to the
 				// user, but warn him that the message was received
