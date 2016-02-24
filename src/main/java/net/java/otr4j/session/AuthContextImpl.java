@@ -20,7 +20,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PublicKey;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -86,9 +85,7 @@ class AuthContextImpl extends AuthContext {
 
 		@Override
 		QueryMessage getQueryMessage() {
-			List<Integer> versions = new ArrayList<Integer>(2);
-			versions.add(OTRv.TWO);
-			versions.add(OTRv.THREE);
+			List<Integer> versions = Arrays.asList(OTRv.TWO, OTRv.THREE);
 			return new QueryMessage(versions);
 		}
 
