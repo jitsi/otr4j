@@ -148,7 +148,7 @@ public class OtrSm {
 
 		// If we've got a question, attach it to the smpmsg
 		if (question != null && initiating){
-			byte[] bytes;
+			final byte[] bytes;
 			try {
 				bytes = question.getBytes("UTF-8");
 			} catch (UnsupportedEncodingException e) {
