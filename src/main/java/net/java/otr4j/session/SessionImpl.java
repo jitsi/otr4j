@@ -656,8 +656,8 @@ public class SessionImpl implements Session {
 				}
 			}
 			return decryptedMsgContent;
+
 		case FINISHED:
-			// XXX should we really fall-through to PLAINTEXT here?
 		case PLAINTEXT:
 			getHost().unreadableMessageReceived(this.getSessionID());
 			injectMessage(new ErrorMessage(AbstractMessage.MESSAGE_ERROR,
@@ -711,7 +711,6 @@ public class SessionImpl implements Session {
 			logger.finest("Received plaintext message without the whitespace tag.");
 			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
-				// XXX Does this fall-through make sense? if so, the comment below would be wrong
 			case FINISHED:
 				// Display the message to the user, but warn him that the
 				// message was received unencrypted.
