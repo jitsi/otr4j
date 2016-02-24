@@ -15,6 +15,7 @@
  */
 package net.java.otr4j.io.messages;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,7 +30,8 @@ public class QueryMessage extends AbstractMessage {
 	protected QueryMessage(int messageType, List<Integer> versions) {
 		super(messageType);
 		this.versions = (versions == null) ? versions
-				: Collections.synchronizedList(versions);
+				: Collections.unmodifiableList(
+						new ArrayList<Integer>(versions));
 	}
 
 	public QueryMessage(List<Integer> versions) {
