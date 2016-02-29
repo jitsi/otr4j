@@ -19,15 +19,18 @@ import net.java.otr4j.crypto.SM.SMException;
 import net.java.otr4j.crypto.SM.SMState;
 import net.java.otr4j.io.OtrOutputStream;
 
+/**
+ * Socialist Millionaire Protocol handler.
+ */
 public class OtrSm {
-    
+
 	private SMState smstate;
-    private OtrEngineHost engineHost;
-	private Session session;
+	private final OtrEngineHost engineHost;
+	private final Session session;
 
 	/**
 	 * Construct an OTR Socialist Millionaire handler object.
-	 * 
+	 *
 	 * @param session The session reference.
 	 * @param engineHost The host where we can present messages or ask for the shared secret.
 	 */
@@ -63,26 +66,25 @@ public class OtrSm {
 			throw new SMException("cannot find SHA-256");
 		}
 		byte[] res = sha256.digest(sdata);
-		byte[] secure_session_id = new byte[8];
-		System.arraycopy(res, 0, secure_session_id, 0, 8);
-		return secure_session_id;
-
+		byte[] secureSessionId = new byte[8];
+		System.arraycopy(res, 0, secureSessionId, 0, 8);
+		return secureSessionId;
 	}
 
 	/**
 	 *  Respond to or initiate an SMP negotiation
-	 *  
+	 *
 	 *  @param question
-	 *  	The question to present to the peer, if initiating.
-	 *  	May be <code>null</code> for no question.
+	 *      The question to present to the peer, if initiating.
+	 *      May be <code>null</code> for no question.
 	 *      If not initiating, then it should be received question
 	 *      in order to clarify whether this is shared secret verification.
 	 *  @param secret The secret.
 	 *  @param initiating Whether we are initiating or responding to an initial request.
-	 *  
-	 *  @return TLVs to send to the peer
-     *  @throws OtrException MVN_PASS_JAVADOC_INSPECTION
-	 */
+	 *
+	*  @return TLVs to send to the peer
+	*  @throws OtrException MVN_PASS_JAVADOC_INSPECTION
+	*/
 	public List<TLV> initRespondSmp(String question, String secret, boolean initiating) throws OtrException {
 		if (!initiating && !smstate.asked)
 			throw new OtrException(new IllegalStateException(
@@ -93,12 +95,12 @@ public class OtrSm {
 		 * Version byte (0x01), Initiator fingerprint (20 bytes),
 		 * responder fingerprint (20 bytes), secure session id, input secret
 		 */
-		byte[] our_fp = engineHost.getLocalFingerprintRaw(session
+		byte[] ourFp = engineHost.getLocalFingerprintRaw(session
 				.getSessionID());
-		byte[] their_fp;
+		byte[] theirFp;
 		PublicKey remotePublicKey = session.getRemotePublicKey();
 		try {
-			their_fp = new OtrCryptoEngineImpl()
+			theirFp = new OtrCryptoEngineImpl()
 					.getFingerprintRaw(remotePublicKey);
 		} catch (OtrCryptoException e) {
 			throw new OtrException(e);
@@ -111,19 +113,19 @@ public class OtrSm {
 			throw new OtrException(ex);
 		}
 
-		int combined_buf_len = 41 + sessionId.length + secret.length();
-		byte[] combined_buf = new byte[combined_buf_len];
-		combined_buf[0]=1;
+		int combinedBufLen = 41 + sessionId.length + secret.length();
+		byte[] combinedBuf = new byte[combinedBufLen];
+		combinedBuf[0] = 1;
 		if (initiating){
-			System.arraycopy(our_fp, 0, combined_buf, 1, 20);
-			System.arraycopy(their_fp, 0, combined_buf, 21, 20);
+			System.arraycopy(ourFp, 0, combinedBuf, 1, 20);
+			System.arraycopy(theirFp, 0, combinedBuf, 21, 20);
 		} else {
-			System.arraycopy(their_fp, 0, combined_buf, 1, 20);
-			System.arraycopy(our_fp, 0, combined_buf, 21, 20);
+			System.arraycopy(theirFp, 0, combinedBuf, 1, 20);
+			System.arraycopy(ourFp, 0, combinedBuf, 21, 20);
 		}
-		System.arraycopy(sessionId, 0, combined_buf, 41, sessionId.length);
-		System.arraycopy(secret.getBytes(), 0, 
-				combined_buf, 41 + sessionId.length, secret.length());
+		System.arraycopy(sessionId, 0, combinedBuf, 41, sessionId.length);
+		System.arraycopy(secret.getBytes(), 0,
+				combinedBuf, 41 + sessionId.length, secret.length());
 
 		MessageDigest sha256;
 		try {
@@ -132,26 +134,26 @@ public class OtrSm {
 			throw new OtrException(ex);
 		}
 
-		byte[] combined_secret = sha256.digest(combined_buf);
+		byte[] combinedSecret = sha256.digest(combinedBuf);
 		byte[] smpmsg;
 		try {
 			if (initiating) {
-				smpmsg = SM.step1(smstate, combined_secret);
+				smpmsg = SM.step1(smstate, combinedSecret);
 			} else {
-				smpmsg = SM.step2b(smstate, combined_secret);
+				smpmsg = SM.step2b(smstate, combinedSecret);
 			}
 		} catch (SMException ex) {
 			throw new OtrException(ex);
 		}
 
-		// If we've got a question, attach it to the smpmsg 
+		// If we've got a question, attach it to the smpmsg
 		if (question != null && initiating){
-			byte[] bytes = null;
+			final byte[] bytes;
 			try {
 				bytes = question.getBytes("UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				// Never thrown - all JRE's support UTF-8
-				e.printStackTrace();
+				throw new RuntimeException("Platform does not support encoding", e);
 			}
 			byte[] qsmpmsg = new byte[bytes.length + 1 + smpmsg.length];
 			System.arraycopy(bytes, 0, qsmpmsg, 0, bytes.length);
@@ -159,29 +161,29 @@ public class OtrSm {
 			smpmsg = qsmpmsg;
 		}
 
-		TLV sendtlv = new TLV(initiating? 
-				(question != null ? TLV.SMP1Q:TLV.SMP1) : TLV.SMP2, smpmsg);
-		smstate.nextExpected = initiating? SM.EXPECT2 : SM.EXPECT3;
+		TLV sendtlv = new TLV(initiating
+				? (question != null ? TLV.SMP1Q : TLV.SMP1) : TLV.SMP2, smpmsg);
+		smstate.nextExpected = initiating ? SM.EXPECT2 : SM.EXPECT3;
 		smstate.approved = initiating || question == null;
-        return makeTlvList(sendtlv);
+		return makeTlvList(sendtlv);
 	}
 
 	/**
 	 *  Create an abort TLV and reset our state.
-	 *  
-	 *  @return TLVs to send to the peer
-     *  @throws OtrException MVN_PASS_JAVADOC_INSPECTION
-	 */
+	 *
+	*  @return TLVs to send to the peer
+	*  @throws OtrException MVN_PASS_JAVADOC_INSPECTION
+	*/
 	public List<TLV> abortSmp() throws OtrException {
 		TLV sendtlv = new TLV(TLV.SMP_ABORT, new byte[0]);
 		smstate.nextExpected = SM.EXPECT1;
-        return makeTlvList(sendtlv);
+		return makeTlvList(sendtlv);
 	}
 
 	public boolean isSmpInProgress() {
-	    return smstate.nextExpected > SM.EXPECT1;
+		return smstate.nextExpected > SM.EXPECT1;
 	}
-	
+
 	public boolean doProcessTlv(TLV tlv) throws OtrException {
 		/* If TLVs contain SMP data, process it */
 		int nextMsg = smstate.nextExpected;
@@ -192,20 +194,23 @@ public class OtrSm {
 		String fingerprint = null;
 		try {
 			fingerprint = new OtrCryptoEngineImpl().getFingerprint(pubKey);
-        } catch (OtrCryptoException e) {
-            e.printStackTrace();
-        }
+		} catch (OtrCryptoException e) {
+			e.printStackTrace();
+		}
 
 		if (tlvType == TLV.SMP1Q && nextMsg == SM.EXPECT1) {
 			/* We can only do the verification half now.
 			 * We must wait for the secret to be entered
 			 * to continue. */
 			byte[] question = tlv.getValue();
-			int qlen=0;
-			for(; qlen!=question.length && question[qlen]!=0; qlen++){
+			int qlen = 0;
+			for(; qlen != question.length && question[qlen] != 0; qlen++) {
 			}
-			if (qlen == question.length) qlen=0;
-			else qlen++;
+			if (qlen == question.length) {
+				qlen = 0;
+			} else {
+				qlen++;
+			}
 			byte[] input = new byte[question.length-qlen];
 			System.arraycopy(question, qlen, input, 0, question.length-qlen);
 			try {
@@ -223,15 +228,15 @@ public class OtrSm {
 					questionUTF = new String(plainq, "UTF-8");
 				} catch (UnsupportedEncodingException e) {
 					// Never thrown - all JRE's support UTF-8
-					e.printStackTrace();
+					throw new RuntimeException("Platform does not support encoding", e);
 				}
-			    engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), questionUTF);
+				engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), questionUTF);
 			} else {
-			    engineHost.smpError(session.getSessionID(), tlvType, true);
-			    reset();
+				engineHost.smpError(session.getSessionID(), tlvType, true);
+				reset();
 			}
 		} else if (tlvType == TLV.SMP1Q) {
-		    engineHost.smpError(session.getSessionID(), tlvType, false);
+			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP1 && nextMsg == SM.EXPECT1) {
 			/* We can only do the verification half now.
 			 * We must wait for the secret to be entered
@@ -241,15 +246,15 @@ public class OtrSm {
 			} catch (SMException e) {
 				throw new OtrException(e);
 			}
-			if (smstate.smProgState!=SM.PROG_CHEATED) {
+			if (smstate.smProgState != SM.PROG_CHEATED) {
 				smstate.asked = true;
-                engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), null);
+				engineHost.askForSecret(session.getSessionID(), session.getReceiverInstanceTag(), null);
 			} else {
-			    engineHost.smpError(session.getSessionID(), tlvType, true);
-			    reset();
+				engineHost.smpError(session.getSessionID(), tlvType, true);
+				reset();
 			}
 		} else if (tlvType == TLV.SMP1) {
-		    engineHost.smpError(session.getSessionID(), tlvType, false);
+			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP2 && nextMsg == SM.EXPECT2) {
 			byte[] nextmsg;
 			try {
@@ -266,11 +271,11 @@ public class OtrSm {
 					engineHost.injectMessage(session.getSessionID(), part);
 				}
 			} else {
-			    engineHost.smpError(session.getSessionID(), tlvType, true);
-			    reset();
+				engineHost.smpError(session.getSessionID(), tlvType, true);
+				reset();
 			}
 		} else if (tlvType == TLV.SMP2){
-		    engineHost.smpError(session.getSessionID(), tlvType, false);
+			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP3 && nextMsg == SM.EXPECT3) {
 			byte[] nextmsg;
 			try {
@@ -278,10 +283,10 @@ public class OtrSm {
 			} catch (SMException e) {
 				throw new OtrException(e);
 			}
-			
+
 			/* Set trust level based on result */
 			if (smstate.smProgState == SM.PROG_SUCCEEDED){
-				
+
 				engineHost.verify(session.getSessionID(), fingerprint, smstate.approved);
 			} else {
 				engineHost.unverify(session.getSessionID(), fingerprint);
@@ -294,31 +299,28 @@ public class OtrSm {
 					engineHost.injectMessage(session.getSessionID(), part);
 				}
 			} else {
-			    engineHost.smpError(session.getSessionID(), tlvType, true);
+				engineHost.smpError(session.getSessionID(), tlvType, true);
 			}
 			reset();
-		} else if (tlvType == TLV.SMP3){
-		    engineHost.smpError(session.getSessionID(), tlvType, false);
+		} else if (tlvType == TLV.SMP3) {
+			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP4 && nextMsg == SM.EXPECT4) {
-
 			try {
 				SM.step5(smstate, tlv.getValue());
 			} catch (SMException e) {
 				throw new OtrException(e);
 			}
-			if (smstate.smProgState == SM.PROG_SUCCEEDED){
+			if (smstate.smProgState == SM.PROG_SUCCEEDED) {
 				engineHost.verify(session.getSessionID(), fingerprint, smstate.approved);
 			} else {
 				engineHost.unverify(session.getSessionID(), fingerprint);
 			}
-			if (smstate.smProgState != SM.PROG_CHEATED){
-			} else {
-			    engineHost.smpError(session.getSessionID(), tlvType, true);
+			if (smstate.smProgState == SM.PROG_CHEATED) {
+				engineHost.smpError(session.getSessionID(), tlvType, true);
 			}
 			reset();
-
-		} else if (tlvType == TLV.SMP4){
-		    engineHost.smpError(session.getSessionID(), tlvType, false);
+		} else if (tlvType == TLV.SMP4) {
+			engineHost.smpError(session.getSessionID(), tlvType, false);
 		} else if (tlvType == TLV.SMP_ABORT){
 			engineHost.smpAborted(session.getSessionID());
 			reset();
@@ -328,9 +330,9 @@ public class OtrSm {
 		return true;
 	}
 
-    private List<TLV> makeTlvList(TLV sendtlv) {
-        List<TLV> tlvs = new ArrayList<TLV>(1);
-        tlvs.add(sendtlv);
-        return tlvs;
-    }
+	private List<TLV> makeTlvList(TLV sendtlv) {
+		List<TLV> tlvs = new ArrayList<TLV>(1);
+		tlvs.add(sendtlv);
+		return tlvs;
+	}
 }

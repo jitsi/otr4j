@@ -24,7 +24,6 @@ import java.math.BigInteger;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,6 +50,17 @@ import net.java.otr4j.session.Session.OTRv;
  * @author George Politis
  */
 public class SerializationUtils {
+
+	private static final Pattern PATTERN_WHITESPACE = Pattern
+			.compile("( \\t  \\t\\t\\t\\t \\t \\t \\t  )( \\t \\t  \\t )?(  \\t\\t  \\t )?(  \\t\\t  \\t\\t)?");
+	private static final char[] HEX_ENCODER = {'0', '1', '2', '3', '4', '5',
+			'6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+	private static final String HEX_DECODER = "0123456789ABCDEF";
+
+	/** Hide the ctor, because this is an utility class. */
+	private SerializationUtils() {
+	}
+
 	// Mysterious X IO.
 	public static SignatureX toMysteriousX(byte[] b) throws IOException {
 		ByteArrayInputStream in = new ByteArrayInputStream(b);
@@ -239,6 +249,11 @@ public class SerializationUtils {
 						s.writeMac(data.mac);
 						s.writeData(data.oldMACKeys);
 						break;
+					default:
+						// NOTE We should probably move at least part of this method into individual
+						//   toString() methods of the *Message implementations.
+						throw new UnsupportedOperationException("Unsupported message type: "
+								+ m.messageType);
 				}
 
 				writer.write(SerializationConstants.HEAD_ENCODED);
@@ -251,9 +266,6 @@ public class SerializationUtils {
 
 		return writer.toString();
 	}
-
-	static final Pattern patternWhitespace = Pattern
-			.compile("( \\t  \\t\\t\\t\\t \\t \\t \\t  )( \\t \\t  \\t )?(  \\t\\t  \\t )?(  \\t\\t  \\t\\t)?");
 
 	public static AbstractMessage toMessage(String s) throws IOException {
 		if (s == null || s.length() == 0)
@@ -269,17 +281,19 @@ public class SerializationUtils {
 					.substring(idxHead + SerializationConstants.HEAD.length() + 1);
 
 			if (contentType == SerializationConstants.HEAD_ERROR
-					&& content.startsWith(SerializationConstants.ERROR_PREFIX)) {
+					&& content.startsWith(SerializationConstants.ERROR_PREFIX))
+			{
 				// Error tag found.
 
 				content = content.substring(idxHead + SerializationConstants.ERROR_PREFIX
 						.length());
 				return new ErrorMessage(AbstractMessage.MESSAGE_ERROR, content);
 			} else if (contentType == SerializationConstants.HEAD_QUERY_V
-					|| contentType == SerializationConstants.HEAD_QUERY_Q) {
+					|| contentType == SerializationConstants.HEAD_QUERY_Q)
+			{
 				// Query tag found.
 
-				List<Integer> versions = new Vector<Integer>();
+				List<Integer> versions = new ArrayList<Integer>();
 				String versionString = null;
 				if (SerializationConstants.HEAD_QUERY_Q == contentType) {
 					versions.add(OTRv.ONE);
@@ -304,12 +318,12 @@ public class SerializationUtils {
 			} else if (idxHead == 0 && contentType == SerializationConstants.HEAD_ENCODED) {
 				// Data message found.
 
-                /*
-                 * BC 1.48 added a check to throw an exception if a non-base64 character is encountered.
-                 * An OTR message consists of ?OTR:AbcDefFe. (note the terminating point).
-                 * Otr4j doesn't strip this point before passing the content to the base64 decoder.
-                 * So in order to decode the content string we have to get rid of the '.' first.
-                 */
+				/*
+				 * BC 1.48 added a check to throw an exception if a non-base64 character is encountered.
+				 * An OTR message consists of ?OTR:AbcDefFe. (note the terminating point).
+				 * Otr4j doesn't strip this point before passing the content to the base64 decoder.
+				 * So in order to decode the content string we have to get rid of the '.' first.
+				 */
 				ByteArrayInputStream bin = new ByteArrayInputStream(Base64
 						.decode(content.substring(0, content.length() - 1).getBytes()));
 				OtrInputStream otr = new OtrInputStream(bin);
@@ -391,7 +405,7 @@ public class SerializationUtils {
 
 
 		// Try to detect whitespace tag.
-		final Matcher matcher = patternWhitespace.matcher(s);
+		final Matcher matcher = PATTERN_WHITESPACE.matcher(s);
 
 		boolean v1 = false;
 		boolean v2 = false;
@@ -416,33 +430,26 @@ public class SerializationUtils {
 			versions = new ArrayList<Integer>();
 			if (v1)
 				versions.add(OTRv.ONE);
-			if (v2) 
+			if (v2)
 				versions.add(OTRv.TWO);
 			if (v3)
 				versions.add(OTRv.THREE);
 		}
 
 		return new PlainTextMessage(versions, cleanText);
-
 	}
 
-	private static final char HEX_ENCODER[] = {'0', '1', '2', '3', '4', '5',
-			'6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+	public static String byteArrayToHexString(byte[] in) {
 
-	public static String byteArrayToHexString(byte in[]) {
-		int i = 0;
 		if (in == null || in.length <= 0)
 			return null;
-		StringBuffer out = new StringBuffer(in.length * 2);
-		while (i < in.length) {
+		StringBuilder out = new StringBuilder(in.length * 2);
+		for (int i = 0; i < in.length; i++) {
 			out.append(HEX_ENCODER[(in[i] >>> 4) & 0x0F]);
 			out.append(HEX_ENCODER[in[i] & 0x0F]);
-			i++;
 		}
 		return out.toString();
 	}
-
-	private static final String HEX_DECODER = "0123456789ABCDEF";
 
 	public static byte[] hexStringToByteArray(String value) {
 		value = value.toUpperCase();

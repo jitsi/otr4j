@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.java.otr4j;
 
 import java.util.Hashtable;
@@ -26,11 +25,14 @@ import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionImpl;
 
 /**
- * 
+ *
  * @author George Politis
- * 
  */
 public class OtrSessionManagerImpl implements OtrSessionManager {
+
+	private OtrEngineHost host;
+	private Map<SessionID, Session> sessions;
+	private final List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
 
 	public OtrSessionManagerImpl(OtrEngineHost host) {
 		if (host == null)
@@ -39,9 +41,7 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 		this.setHost(host);
 	}
 
-	private OtrEngineHost host;
-	private Map<SessionID, Session> sessions;
-
+	@Override
 	public Session getSession(SessionID sessionID) {
 
 		if (sessionID == null || sessionID.equals(SessionID.Empty))
@@ -55,17 +55,19 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 			sessions.put(sessionID, session);
 
 			session.addOtrEngineListener(new OtrEngineListener() {
-
+				@Override
 				public void sessionStatusChanged(SessionID sessionID) {
 					for (OtrEngineListener l : listeners)
 						l.sessionStatusChanged(sessionID);
 				}
 
+				@Override
 				public void multipleInstancesDetected(SessionID sessionID) {
 					for (OtrEngineListener l : listeners)
 						l.multipleInstancesDetected(sessionID);
 				}
-				
+
+				@Override
 				public void outgoingSessionChanged(SessionID sessionID) {
 					for (OtrEngineListener l : listeners)
 						l.outgoingSessionChanged(sessionID);
@@ -84,8 +86,7 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 		return host;
 	}
 
-	private List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
-
+	@Override
 	public void addOtrEngineListener(OtrEngineListener l) {
 		synchronized (listeners) {
 			if (!listeners.contains(l))
@@ -93,6 +94,7 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 		}
 	}
 
+	@Override
 	public void removeOtrEngineListener(OtrEngineListener l) {
 		synchronized (listeners) {
 			listeners.remove(l);

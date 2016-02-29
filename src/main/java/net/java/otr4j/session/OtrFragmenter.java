@@ -23,7 +23,7 @@ import net.java.otr4j.OtrPolicy;
 
 /**
  * OTR fragmenter.
- * 
+ *
  * TODO It may be better to separate the v2 and v3 implementations into
  * specialized classes.
  *
@@ -33,7 +33,7 @@ public class OtrFragmenter {
 	/**
 	 * Exception message in cases where only OTRv1 is allowed.
 	 */
-	private static final String OTRv1_NOT_SUPPORTED = "Fragmentation is not supported in OTRv1.";
+	private static final String OTR_V1_NOT_SUPPORTED = "Fragmentation is not supported in OTRv1.";
 
 	/**
 	 * The maximum number of fragments supported by the OTR (v3) protocol.
@@ -43,12 +43,12 @@ public class OtrFragmenter {
 	/**
 	 * The message format of an OTRv3 message fragment.
 	 */
-	private static final String OTRv3_MESSAGE_FRAGMENT_FORMAT = "?OTR|%08x|%08x,%05d,%05d,%s,";
+	private static final String OTR_V3_MESSAGE_FRAGMENT_FORMAT = "?OTR|%08x|%08x,%05d,%05d,%s,";
 
 	/**
 	 * The message format of an OTRv2 message fragment.
 	 */
-	private static final String OTRv2_MESSAGE_FRAGMENT_FORMAT = "?OTR,%d,%d,%s,";
+	private static final String OTR_V2_MESSAGE_FRAGMENT_FORMAT = "?OTR,%d,%d,%s,";
 
 	/**
 	 * Session instance.
@@ -62,7 +62,7 @@ public class OtrFragmenter {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param session session instance (cannot be null)
 	 * @param host OTR engine host calling upon OTR session
 	 */
@@ -76,7 +76,7 @@ public class OtrFragmenter {
 		}
 		this.host = host;
 	}
-	
+
 	/**
 	 * Get instructions for fragmentation behaviour.
 	 *
@@ -99,9 +99,9 @@ public class OtrFragmenter {
 	 *             support fragmentation, for example if only OTRv1 is allowed.
 	 */
 	public int numberOfFragments(final String message) throws IOException {
-		final SessionID session = this.session.getSessionID();
+		final SessionID sessionID = this.session.getSessionID();
 		final FragmenterInstructions requested = this.host
-				.getFragmenterInstructions(session);
+				.getFragmenterInstructions(sessionID);
 		final FragmenterInstructions instructions = FragmenterInstructions
 				.verify(requested);
 		return numberOfFragments(message, instructions);
@@ -122,9 +122,11 @@ public class OtrFragmenter {
 	 *             support fragmentation, for example if only OTRv1 is allowed.
 	 */
 	private int numberOfFragments(final String message,
-			final FragmenterInstructions instructions) throws IOException {
+			final FragmenterInstructions instructions) throws IOException
+	{
 		if (instructions.maxFragmentSize == FragmenterInstructions.UNLIMITED
-				|| instructions.maxFragmentSize >= message.length()) {
+				|| instructions.maxFragmentSize >= message.length())
+		{
 			return 1;
 		}
 		return computeFragmentNumber(message, instructions);
@@ -139,7 +141,8 @@ public class OtrFragmenter {
 	 * @throws IOException throws an IOException if fragment size is too small.
 	 */
 	private int computeFragmentNumber(final String message,
-			final FragmenterInstructions instructions) throws IOException {
+			final FragmenterInstructions instructions) throws IOException
+	{
 		final int overhead = computeHeaderSize();
 		final int payloadSize = instructions.maxFragmentSize - overhead;
 		if (payloadSize <= 0) {
@@ -155,7 +158,7 @@ public class OtrFragmenter {
 	/**
 	 * Fragment the given message into pieces as specified by the
 	 * FragmenterInstructions instance.
-	 * 
+	 *
 	 * @param message
 	 *            the original message
 	 * @return returns an array of message fragments. The array will contain at
@@ -165,9 +168,9 @@ public class OtrFragmenter {
 	 *             the maximum number of fragments is exceeded.
 	 */
 	public String[] fragment(final String message) throws IOException {
-		final SessionID session = this.session.getSessionID();
+		final SessionID sessionID = this.session.getSessionID();
 		final FragmenterInstructions requested = this.host
-				.getFragmenterInstructions(session);
+				.getFragmenterInstructions(sessionID);
 		final FragmenterInstructions instructions = FragmenterInstructions
 				.verify(requested);
 		return fragment(message, instructions);
@@ -175,7 +178,7 @@ public class OtrFragmenter {
 
 	/**
 	 * Fragment a message according to the specified instructions.
-	 * 
+	 *
 	 * @param message
 	 *            the message
 	 * @param instructions
@@ -187,14 +190,17 @@ public class OtrFragmenter {
 	 *             message according to the specified instructions.
 	 */
 	private String[] fragment(final String message,
-			final FragmenterInstructions instructions) throws IOException {
+			final FragmenterInstructions instructions) throws IOException
+	{
 		if (instructions.maxFragmentSize == FragmenterInstructions.UNLIMITED
-				|| instructions.maxFragmentSize >= message.length()) {
+				|| instructions.maxFragmentSize >= message.length())
+		{
 			return new String[] { message };
 		}
 		final int num = numberOfFragments(message, instructions);
 		if (instructions.maxFragmentsAllowed != FragmenterInstructions.UNLIMITED
-				&& instructions.maxFragmentsAllowed < num) {
+				&& instructions.maxFragmentsAllowed < num)
+		{
 			throw new IOException("Need more fragments to store full message.");
 		}
 		if (num > MAXIMUM_NUMBER_OF_FRAGMENTS) {
@@ -232,7 +238,8 @@ public class OtrFragmenter {
 	 *             in case v1 is only allowed in policy
 	 */
 	private String createMessageFragment(final int count, final int total,
-			final String partialContent) {
+			final String partialContent)
+	{
 		if (getPolicy().getAllowV3()) {
 			return createV3MessageFragment(count, total, partialContent);
 		} else {
@@ -249,8 +256,9 @@ public class OtrFragmenter {
 	 * @return returns the full message fragment
 	 */
 	private String createV3MessageFragment(final int count, final int total,
-			final String partialContent) {
-		final String msg = String.format(OTRv3_MESSAGE_FRAGMENT_FORMAT,
+			final String partialContent)
+	{
+		final String msg = String.format(OTR_V3_MESSAGE_FRAGMENT_FORMAT,
 				getSenderInstance(), getReceiverInstance(), count + 1, total,
 				partialContent);
 		return msg;
@@ -265,8 +273,9 @@ public class OtrFragmenter {
 	 * @return returns the full message fragment
 	 */
 	private String createV2MessageFragment(final int count, final int total,
-			final String partialContent) {
-		final String msg = String.format(OTRv2_MESSAGE_FRAGMENT_FORMAT,
+			final String partialContent)
+	{
+		final String msg = String.format(OTR_V2_MESSAGE_FRAGMENT_FORMAT,
 				count + 1, total, partialContent);
 		return msg;
 	}
@@ -284,7 +293,7 @@ public class OtrFragmenter {
 		} else if (getPolicy().getAllowV2()) {
 			return computeHeaderV2Size();
 		} else {
-			throw new UnsupportedOperationException(OTRv1_NOT_SUPPORTED);
+			throw new UnsupportedOperationException(OTR_V1_NOT_SUPPORTED);
 		}
 	}
 
@@ -326,7 +335,7 @@ public class OtrFragmenter {
 	private OtrPolicy getPolicy() {
 		return this.session.getSessionPolicy();
 	}
-	
+
 	/**
 	 * Get the sender instance.
 	 *
@@ -335,7 +344,7 @@ public class OtrFragmenter {
 	private int getSenderInstance() {
 		return this.session.getSenderInstanceTag().getValue();
 	}
-	
+
 	/**
 	 * Get the receiver instance.
 	 *

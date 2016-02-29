@@ -35,8 +35,8 @@ import org.bouncycastle.util.BigIntegers;
  * @author George Politis
  */
 public class OtrOutputStream extends FilterOutputStream implements
-		SerializationConstants {
-
+		SerializationConstants
+{
 	public OtrOutputStream(OutputStream out) {
 		super(out);
 	}
@@ -60,7 +60,7 @@ public class OtrOutputStream extends FilterOutputStream implements
 	}
 
 	public void writeData(byte[] b) throws IOException {
-		int len = (b == null || b.length < 0) ? 0 : b.length;
+		int len = (b == null) ? 0 : b.length;
 		writeNumber(len, DATA_LEN);
 		if (len > 0)
 			write(b);
@@ -117,14 +117,15 @@ public class OtrOutputStream extends FilterOutputStream implements
 	}
 
 	public void writeTlvData(byte[] b) throws IOException {
-		int len = (b == null || b.length < 0) ? 0 : b.length;
+		int len = (b == null) ? 0 : b.length;
 		writeNumber(len, TLV_LEN);
 		if (len > 0)
 			write(b);
 	}
 
 	public void writeSignature(byte[] signature, PublicKey pubKey)
-			throws IOException {
+			throws IOException
+	{
 		if (!pubKey.getAlgorithm().equals("DSA"))
 			throw new UnsupportedOperationException();
 		out.write(signature);
@@ -157,6 +158,5 @@ public class OtrOutputStream extends FilterOutputStream implements
 		writeDHPublicKey(t.nextDH);
 		writeCtr(t.ctr);
 		writeData(t.encryptedMessage);
-
 	}
 }

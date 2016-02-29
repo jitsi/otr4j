@@ -19,24 +19,22 @@ import java.security.PublicKey;
 import java.util.Arrays;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class SignatureX {
-	// Fields.
+
 	public PublicKey longTermPublicKey;
 	public int dhKeyID;
 	public byte[] signature;
 
-	// Ctor.
-	public SignatureX(PublicKey ourLongTermPublicKey, int ourKeyID,
-			byte[] signature) {
+	public SignatureX(PublicKey ourLongTermPublicKey, int ourKeyID, byte[] signature) {
+
 		this.longTermPublicKey = ourLongTermPublicKey;
 		this.dhKeyID = ourKeyID;
 		this.signature = signature;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		// TODO: Needs work.
@@ -72,5 +70,4 @@ public class SignatureX {
 			return false;
 		return true;
 	}
-
 }

@@ -18,24 +18,22 @@ package net.java.otr4j.io.messages;
 import java.util.Arrays;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class DHCommitMessage extends AbstractEncodedMessage {
 
-	// Fields.
 	public byte[] dhPublicKeyEncrypted;
 	public byte[] dhPublicKeyHash;
 
-	// Ctor.
 	public DHCommitMessage(int protocolVersion, byte[] dhPublicKeyHash,
-			byte[] dhPublicKeyEncrypted) {
+			byte[] dhPublicKeyEncrypted)
+	{
 		super(MESSAGE_DH_COMMIT, protocolVersion);
 		this.dhPublicKeyEncrypted = dhPublicKeyEncrypted;
 		this.dhPublicKeyHash = dhPublicKeyHash;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -60,5 +58,4 @@ public class DHCommitMessage extends AbstractEncodedMessage {
 			return false;
 		return true;
 	}
-
 }

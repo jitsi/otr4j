@@ -15,11 +15,6 @@ import java.net.ProtocolException;
  */
 public final class OtrAssembler {
 
-	public OtrAssembler(InstanceTag ownInstance) {
-		this.ownInstance = ownInstance;
-		discard();
-	}
-
 	/**
 	 * Accumulated fragment thus far.
 	 */
@@ -46,6 +41,11 @@ public final class OtrAssembler {
 	private static final String HEAD_FRAGMENT_V2 = "?OTR,";
 	private static final String HEAD_FRAGMENT_V3 = "?OTR|";
 
+	public OtrAssembler(InstanceTag ownInstance) {
+		this.ownInstance = ownInstance;
+		discard();
+	}
+
 	/**
 	 * Appends a message fragment to the internal buffer and returns
 	 * the full message if msgText was no fragmented message or all
@@ -62,10 +62,14 @@ public final class OtrAssembler {
 	 * @return String with the accumulated message or
 	 *         null if the message was incomplete or malformed
      * @throws ProtocolException MVN_PASS_JAVADOC_INSPECTION
+	 * XXX ProtocolException might not be a good choice for this,
+	 *   as it is meant to be used for network related things,
+	 *   and does not allow to add either a message or cause
      * @throws UnknownInstanceException MVN_PASS_JAVADOC_INSPECTION
 	 */
 	public String accumulate(String msgText)
-		throws ProtocolException, UnknownInstanceException {
+		throws ProtocolException, UnknownInstanceException
+	{
 		// if it's a fragment, remove everything before "k,n,piece-k"
 		if (msgText.startsWith(HEAD_FRAGMENT_V2)) {
 			// v2
@@ -93,13 +97,14 @@ public final class OtrAssembler {
 				discard();
 				throw new ProtocolException();
 			}
-			if (receiverInstance != 0 &&
-					receiverInstance != ownInstance.getValue()) {
+			if (receiverInstance != 0
+					&& receiverInstance != ownInstance.getValue())
+			{
 				// discard message for different instance id
 				throw new UnknownInstanceException(
-						"Message for unknown instance tag " +
-						String.valueOf(receiverInstance) +
-						" received: " + msgText);
+						"Message for unknown instance tag "
+						+ String.valueOf(receiverInstance)
+						+ " received: " + msgText);
 			}
 
 			// continue with v2 part of fragment
@@ -164,5 +169,4 @@ public final class OtrAssembler {
 		fragmentCur = 0;
 		fragmentMax = 0;
 	}
-
 }

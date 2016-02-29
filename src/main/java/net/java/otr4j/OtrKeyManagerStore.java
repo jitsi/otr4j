@@ -19,13 +19,13 @@ package net.java.otr4j;
  * @author George Politis
  */
 public interface OtrKeyManagerStore {
-	public abstract byte[] getPropertyBytes(String id);
+	byte[] getPropertyBytes(String id);
 
-	public abstract boolean getPropertyBoolean(String id, boolean defaultValue);
+	boolean getPropertyBoolean(String id, boolean defaultValue);
 
-	public abstract void setProperty(String id, byte[] value);
+	void setProperty(String id, byte[] value);
 
-	public abstract void setProperty(String id, boolean value);
+	void setProperty(String id, boolean value);
 
-	public abstract void removeProperty(String id);
+	void removeProperty(String id);
 }

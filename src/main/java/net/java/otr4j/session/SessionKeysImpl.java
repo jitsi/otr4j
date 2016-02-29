@@ -15,10 +15,12 @@
  */
 package net.java.otr4j.session;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.util.Arrays;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
@@ -29,50 +31,66 @@ import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.io.SerializationUtils;
 
 /**
- * 
+ *
  * @author George Politis
  */
 class SessionKeysImpl implements SessionKeys {
 
-	private static Logger logger = Logger.getLogger(SessionKeysImpl.class
-			.getName());
-	private String keyDescription;
+	private static final Logger logger = Logger.getLogger(SessionKeysImpl.class.getName());
+	private final String keyDescription;
+	private final byte[] sendingCtr = new byte[16];
+	private final byte[] receivingCtr = new byte[16];
 
-	public SessionKeysImpl(int localKeyIndex, int remoteKeyIndex) {
+	private int localKeyID;
+	private int remoteKeyID;
+	private DHPublicKey remoteKey;
+	private KeyPair localPair;
+
+	private byte[] sendingAESKey;
+	private byte[] receivingAESKey;
+	private byte[] sendingMACKey;
+	private byte[] receivingMACKey;
+	private Boolean isUsedReceivingMACKey;
+	private BigInteger s;
+	private Boolean isHigh;
+
+	SessionKeysImpl(int localKeyIndex, int remoteKeyIndex) {
+
+		String tmpKeyDescription;
 		if (localKeyIndex == 0)
-			keyDescription = "(Previous local, ";
+			tmpKeyDescription = "(Previous local, ";
 		else
-			keyDescription = "(Most recent local, ";
+			tmpKeyDescription = "(Most recent local, ";
 
 		if (remoteKeyIndex == 0)
-			keyDescription += "Previous remote)";
+			tmpKeyDescription += "Previous remote)";
 		else
-			keyDescription += "Most recent remote)";
-
+			tmpKeyDescription += "Most recent remote)";
+		this.keyDescription = tmpKeyDescription;
 	}
 
+	@Override
 	public void setLocalPair(KeyPair keyPair, int localPairKeyID) {
 		this.localPair = keyPair;
 		this.setLocalKeyID(localPairKeyID);
-		logger.finest(keyDescription + " current local key ID: "
-				+ this.getLocalKeyID());
+		logger.log(Level.FINEST, "{0} current local key ID: {1}",
+				new Object[] {keyDescription, this.getLocalKeyID()});
 		this.reset();
 	}
 
+	@Override
 	public void setRemoteDHPublicKey(DHPublicKey pubKey, int remoteKeyID) {
 		this.setRemoteKey(pubKey);
 		this.setRemoteKeyID(remoteKeyID);
-		logger.finest(keyDescription + " current remote key ID: "
-				+ this.getRemoteKeyID());
+		logger.log(Level.FINEST, "{0} current remote key ID: {1}",
+				new Object[] {keyDescription, this.getRemoteKeyID()});
 		this.reset();
 	}
 
-	private byte[] sendingCtr = new byte[16];
-	private byte[] receivingCtr = new byte[16];
-
+	@Override
 	public void incrementSendingCtr() {
-		logger.finest("Incrementing counter for (localkeyID, remoteKeyID) = ("
-				+ getLocalKeyID() + "," + getRemoteKeyID() + ")");
+		logger.log(Level.FINEST, "Incrementing counter for (localkeyID, remoteKeyID) = ({0},{1})",
+				new Object[] {getLocalKeyID(), getRemoteKeyID()});
 		// logger.debug("Counter prior increament: " +
 		// Utils.dump(sendingCtr,
 		// true, 16));
@@ -84,20 +102,23 @@ class SessionKeysImpl implements SessionKeys {
 		// true, 16));
 	}
 
+	@Override
 	public byte[] getSendingCtr() {
 		return sendingCtr;
 	}
 
+	@Override
 	public byte[] getReceivingCtr() {
 		return receivingCtr;
 	}
 
+	@Override
 	public void setReceivingCtr(byte[] ctr) {
 		System.arraycopy(ctr, 0, receivingCtr, 0, ctr.length);
 	}
 
 	private void reset() {
-		logger.finest("Resetting " + keyDescription + " session keys.");
+		logger.log(Level.FINEST, "Resetting {0} session keys.", keyDescription);
 		Arrays.fill(this.sendingCtr, (byte) 0x00);
 		Arrays.fill(this.receivingCtr, (byte) 0x00);
 		this.sendingAESKey = null;
@@ -124,11 +145,12 @@ class SessionKeysImpl implements SessionKeys {
 			buff.put(secbytes);
 			byte[] result = new OtrCryptoEngineImpl().sha1Hash(buff.array());
 			return result;
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw new OtrException(e);
 		}
 	}
 
+	@Override
 	public byte[] getSendingAESKey() throws OtrException {
 		if (sendingAESKey != null)
 			return sendingAESKey;
@@ -147,6 +169,7 @@ class SessionKeysImpl implements SessionKeys {
 		return sendingAESKey;
 	}
 
+	@Override
 	public byte[] getReceivingAESKey() throws OtrException {
 		if (receivingAESKey != null)
 			return receivingAESKey;
@@ -166,6 +189,7 @@ class SessionKeysImpl implements SessionKeys {
 		return receivingAESKey;
 	}
 
+	@Override
 	public byte[] getSendingMACKey() throws OtrException {
 		if (sendingMACKey != null)
 			return sendingMACKey;
@@ -175,6 +199,7 @@ class SessionKeysImpl implements SessionKeys {
 		return sendingMACKey;
 	}
 
+	@Override
 	public byte[] getReceivingMACKey() throws OtrException {
 		if (receivingMACKey == null) {
 			receivingMACKey = new OtrCryptoEngineImpl()
@@ -193,14 +218,17 @@ class SessionKeysImpl implements SessionKeys {
 		return s;
 	}
 
+	@Override
 	public void setS(BigInteger s) {
 		this.s = s;
 	}
 
+	@Override
 	public void setIsUsedReceivingMACKey(Boolean isUsedReceivingMACKey) {
 		this.isUsedReceivingMACKey = isUsedReceivingMACKey;
 	}
 
+	@Override
 	public Boolean getIsUsedReceivingMACKey() {
 		return isUsedReceivingMACKey;
 	}
@@ -209,6 +237,7 @@ class SessionKeysImpl implements SessionKeys {
 		this.localKeyID = localKeyID;
 	}
 
+	@Override
 	public int getLocalKeyID() {
 		return localKeyID;
 	}
@@ -217,6 +246,7 @@ class SessionKeysImpl implements SessionKeys {
 		this.remoteKeyID = remoteKeyID;
 	}
 
+	@Override
 	public int getRemoteKeyID() {
 		return remoteKeyID;
 	}
@@ -225,24 +255,13 @@ class SessionKeysImpl implements SessionKeys {
 		this.remoteKey = remoteKey;
 	}
 
+	@Override
 	public DHPublicKey getRemoteKey() {
 		return remoteKey;
 	}
 
+	@Override
 	public KeyPair getLocalPair() {
 		return localPair;
 	}
-
-	private int localKeyID;
-	private int remoteKeyID;
-	private DHPublicKey remoteKey;
-	private KeyPair localPair;
-
-	private byte[] sendingAESKey;
-	private byte[] receivingAESKey;
-	private byte[] sendingMACKey;
-	private byte[] receivingMACKey;
-	private Boolean isUsedReceivingMACKey;
-	private BigInteger s;
-	private Boolean isHigh;
 }

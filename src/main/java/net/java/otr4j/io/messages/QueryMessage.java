@@ -15,27 +15,29 @@
  */
 package net.java.otr4j.io.messages;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class QueryMessage extends AbstractMessage {
-	// Fields.
+
 	public List<Integer> versions;
 
-	// Ctor.
 	protected QueryMessage(int messageType, List<Integer> versions) {
 		super(messageType);
-		this.versions = versions;
+		this.versions = (versions == null) ? versions
+				: Collections.unmodifiableList(
+						new ArrayList<Integer>(versions));
 	}
 
 	public QueryMessage(List<Integer> versions) {
 		this(MESSAGE_QUERY, versions);
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -61,5 +63,4 @@ public class QueryMessage extends AbstractMessage {
 			return false;
 		return true;
 	}
-
 }

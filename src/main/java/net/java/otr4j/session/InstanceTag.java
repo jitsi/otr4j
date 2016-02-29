@@ -22,7 +22,7 @@ import java.util.Random;
  */
 public class InstanceTag {
 
-	private static final Random r = new Random();
+	private static final Random RANDOM = new Random();
 
 	public static final int ZERO_VALUE = 0;
 
@@ -65,7 +65,7 @@ public class InstanceTag {
 	}
 
 	public InstanceTag() {
-		final long val = (long)(r.nextDouble()*RANGE) + SMALLEST_VALUE;
+		final long val = (long)(RANDOM.nextDouble() * RANGE) + SMALLEST_VALUE;
 		// Because 0xffffffff is the maximum value for both the tag and
 		// the 32 bit integer range, we are able to cast to int without
 		// loss. The (decimal) interpretation changes, though, because
@@ -80,8 +80,7 @@ public class InstanceTag {
 	}
 
 	InstanceTag(final int value) {
-		if (!isValidInstanceTag(value))
-		{
+		if (!isValidInstanceTag(value)) {
 			throw new IllegalArgumentException("Invalid tag value.");
 		}
 		this.value = value;

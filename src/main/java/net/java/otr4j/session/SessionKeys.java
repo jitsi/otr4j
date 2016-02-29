@@ -27,46 +27,48 @@ import net.java.otr4j.OtrException;
  */
 public interface SessionKeys {
 
-	public static final int Previous = 0;
-	public static final int Current = 1;
-	public static final byte HIGH_SEND_BYTE = (byte) 0x01;
-	public static final byte HIGH_RECEIVE_BYTE = (byte) 0x02;
-	public static final byte LOW_SEND_BYTE = (byte) 0x02;
-	public static final byte LOW_RECEIVE_BYTE = (byte) 0x01;
+	int PREVIOUS = 0;
+	int CURRENT = 1;
+	/** @deprecated use {@link #PREVIOUS} instead */
+	int Previous = PREVIOUS;
+	/** @deprecated use {@link #CURRENT} instead */
+	int Current = CURRENT;
+	byte HIGH_SEND_BYTE = (byte) 0x01;
+	byte HIGH_RECEIVE_BYTE = (byte) 0x02;
+	byte LOW_SEND_BYTE = (byte) 0x02;
+	byte LOW_RECEIVE_BYTE = (byte) 0x01;
 
-	public abstract void setLocalPair(KeyPair keyPair, int localPairKeyID);
+	void setLocalPair(KeyPair keyPair, int localPairKeyID);
 
-	public abstract void setRemoteDHPublicKey(DHPublicKey pubKey,
-			int remoteKeyID);
+	void setRemoteDHPublicKey(DHPublicKey pubKey, int remoteKeyID);
 
-	public abstract void incrementSendingCtr();
+	void incrementSendingCtr();
 
-	public abstract byte[] getSendingCtr();
+	byte[] getSendingCtr();
 
-	public abstract byte[] getReceivingCtr();
+	byte[] getReceivingCtr();
 
-	public abstract void setReceivingCtr(byte[] ctr);
+	void setReceivingCtr(byte[] ctr);
 
-	public abstract byte[] getSendingAESKey() throws OtrException;
+	byte[] getSendingAESKey() throws OtrException;
 
-	public abstract byte[] getReceivingAESKey() throws OtrException;
+	byte[] getReceivingAESKey() throws OtrException;
 
-	public abstract byte[] getSendingMACKey() throws OtrException;
+	byte[] getSendingMACKey() throws OtrException;
 
-	public abstract byte[] getReceivingMACKey() throws OtrException;
+	byte[] getReceivingMACKey() throws OtrException;
 
-	public abstract void setS(BigInteger s);
+	void setS(BigInteger s);
 
-	public abstract void setIsUsedReceivingMACKey(Boolean isUsedReceivingMACKey);
+	void setIsUsedReceivingMACKey(Boolean isUsedReceivingMACKey);
 
-	public abstract Boolean getIsUsedReceivingMACKey();
+	Boolean getIsUsedReceivingMACKey();
 
-	public abstract int getLocalKeyID();
+	int getLocalKeyID();
 
-	public abstract int getRemoteKeyID();
+	int getRemoteKeyID();
 
-	public abstract DHPublicKey getRemoteKey();
+	DHPublicKey getRemoteKey();
 
-	public abstract KeyPair getLocalPair();
-
+	KeyPair getLocalPair();
 }

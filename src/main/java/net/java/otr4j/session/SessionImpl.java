@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.java.otr4j.session;
 
 import java.io.ByteArrayInputStream;
@@ -29,8 +28,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.crypto.interfaces.DHPublicKey;
@@ -56,7 +57,7 @@ import net.java.otr4j.io.messages.QueryMessage;
 import net.java.otr4j.util.SelectableMap;
 
 /**
- * 
+ *
  * @author George Politis
  * @author Danny van Heumen
  */
@@ -72,16 +73,17 @@ public class SessionImpl implements Session {
 	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
 	private Vector<byte[]> oldMacKeys;
-	private static Logger logger = Logger
-			.getLogger(SessionImpl.class.getName());
+	private static final Logger logger = Logger.getLogger(SessionImpl.class.getName());
 	private final OtrSm otrSm;
 	private BigInteger ess;
 	private OfferStatus offerStatus;
 	private final InstanceTag senderTag;
-	private InstanceTag receiverTag;
+	private InstanceTag receiverInstanceTag;
 	private int protocolVersion;
 	private final OtrAssembler assembler;
 	private final OtrFragmenter fragmenter;
+	private final List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
+	private PublicKey remotePublicKey;
 
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
 
@@ -97,7 +99,7 @@ public class SessionImpl implements Session {
 
 		otrSm = new OtrSm(this, listener);
 		this.senderTag = new InstanceTag();
-		this.receiverTag = InstanceTag.ZERO_TAG;
+		this.receiverInstanceTag = InstanceTag.ZERO_TAG;
 
 		this.slaveSessions = new SelectableMap<InstanceTag, SessionImpl>(new HashMap<InstanceTag, SessionImpl>());
 		isMasterSession = true;
@@ -105,13 +107,11 @@ public class SessionImpl implements Session {
 		assembler = new OtrAssembler(getSenderInstanceTag());
 		fragmenter = new OtrFragmenter(this, listener);
 	}
-	
-	// A private constructor for instantiating 'slave' sessions.
-	private SessionImpl(SessionID sessionID,
-						OtrEngineHost listener,
-						InstanceTag senderTag,
-						InstanceTag receiverTag) {
 
+	// A private constructor for instantiating 'slave' sessions.
+	private SessionImpl(SessionID sessionID, OtrEngineHost listener, InstanceTag senderTag,
+			InstanceTag receiverInstanceTag)
+	{
 		this.setSessionID(sessionID);
 		this.setHost(listener);
 
@@ -120,7 +120,7 @@ public class SessionImpl implements Session {
 
 		otrSm = new OtrSm(this, listener);
 		this.senderTag = senderTag;
-		this.receiverTag = receiverTag;
+		this.receiverInstanceTag = receiverInstanceTag;
 
 		this.slaveSessions = new SelectableMap<InstanceTag, SessionImpl>(Collections.<InstanceTag, SessionImpl>emptyMap());
 		isMasterSession = false;
@@ -130,10 +130,11 @@ public class SessionImpl implements Session {
 		fragmenter = new OtrFragmenter(this, listener);
 	}
 
+	@Override
 	public BigInteger getS() {
 		return ess;
 	}
-	
+
 	private SessionKeys getEncryptionSessionKeys() {
 		logger.finest("Getting encryption keys");
 		return getSessionKeysByIndex(SessionKeys.Previous, SessionKeys.Current);
@@ -145,15 +146,16 @@ public class SessionImpl implements Session {
 	}
 
 	private SessionKeys getSessionKeysByID(int localKeyID, int remoteKeyID) {
-		logger
-				.finest("Searching for session keys with (localKeyID, remoteKeyID) = ("
-						+ localKeyID + "," + remoteKeyID + ")");
+		logger.log(Level.FINEST,
+				"Searching for session keys with (localKeyID, remoteKeyID) = ({0},{1})",
+				new Object[] {localKeyID, remoteKeyID});
 
 		for (int i = 0; i < getSessionKeys().length; i++) {
 			for (int j = 0; j < getSessionKeys()[i].length; j++) {
 				SessionKeys current = getSessionKeysByIndex(i, j);
 				if (current.getLocalKeyID() == localKeyID
-						&& current.getRemoteKeyID() == remoteKeyID) {
+						&& current.getRemoteKeyID() == remoteKeyID)
+				{
 					logger.finest("Matching keys found.");
 					return current;
 				}
@@ -164,7 +166,8 @@ public class SessionImpl implements Session {
 	}
 
 	private SessionKeys getSessionKeysByIndex(int localKeyIndex,
-			int remoteKeyIndex) {
+			int remoteKeyIndex)
+	{
 		if (getSessionKeys()[localKeyIndex][remoteKeyIndex] == null)
 			getSessionKeys()[localKeyIndex][remoteKeyIndex] = new SessionKeysImpl(
 					localKeyIndex, remoteKeyIndex);
@@ -173,8 +176,8 @@ public class SessionImpl implements Session {
 	}
 
 	private void rotateRemoteSessionKeys(DHPublicKey pubKey)
-			throws OtrException {
-
+			throws OtrException
+	{
 		logger.finest("Rotating remote keys.");
 		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.Current,
 				SessionKeys.Previous);
@@ -254,8 +257,8 @@ public class SessionImpl implements Session {
 	}
 
 	private void setSessionStatus(SessionStatus sessionStatus)
-			throws OtrException {
-
+			throws OtrException
+	{
 		switch (sessionStatus) {
 		case ENCRYPTED:
 			AuthContext auth = this.getAuthContext();
@@ -283,10 +286,12 @@ public class SessionImpl implements Session {
 		case FINISHED:
 		case PLAINTEXT:
 			break;
+		default:
+			throw new UnsupportedOperationException("What to do for this state?");
 		}
 
-        if (sessionStatus == this.sessionStatus)
-            return;
+		if (sessionStatus == this.sessionStatus)
+			return;
 
 		this.sessionStatus = sessionStatus;
 
@@ -294,11 +299,7 @@ public class SessionImpl implements Session {
 			l.sessionStatusChanged(getSessionID());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see net.java.otr4j.session.ISession#getSessionStatus()
-	 */
+	@Override
 	public SessionStatus getSessionStatus() {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
 			return this.slaveSessions.getSelected().getSessionStatus();
@@ -310,13 +311,9 @@ public class SessionImpl implements Session {
 		this.sessionID = sessionID;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see net.java.otr4j.session.ISession#getSessionID()
-	 */
+	@Override
 	public SessionID getSessionID() {
-            return sessionID;
+		return sessionID;
 	}
 
 	private void setHost(OtrEngineHost host) {
@@ -345,14 +342,9 @@ public class SessionImpl implements Session {
 		return oldMacKeys;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * net.java.otr4j.session.ISession#handleReceivingMessage(java.lang.String)
-	 */
+	@Override
 	public String transformReceiving(String msgText) throws OtrException {
-		
+
 		OtrPolicy policy = getSessionPolicy();
 		if (!policy.getAllowV1() && !policy.getAllowV2() && !policy.getAllowV3()) {
 			logger
@@ -388,33 +380,32 @@ public class SessionImpl implements Session {
 			offerStatus = OfferStatus.accepted;
 		else if (offerStatus == OfferStatus.sent)
 			offerStatus = OfferStatus.rejected;
-		
+
 		if (m instanceof AbstractEncodedMessage && isMasterSession) {
 
 			AbstractEncodedMessage encodedM = (AbstractEncodedMessage) m;
 
 			if (encodedM.protocolVersion == OTRv.THREE) {
-				
-				if (encodedM.receiverInstanceTag != this.getSenderInstanceTag().getValue()) {
-					if (!(	encodedM.messageType == AbstractEncodedMessage.MESSAGE_DH_COMMIT
-							&& encodedM.receiverInstanceTag == 0)) {
 
-						// The message is not intended for us. Discarding...
-						logger.finest("Received an encoded message with receiver instance tag" +
-										" that is different from ours, ignore this message");
-						getHost().messageFromAnotherInstanceReceived(getSessionID());
-						return null;
-					}
+				if (encodedM.receiverInstanceTag != this.getSenderInstanceTag().getValue()
+						&& !(encodedM.messageType == AbstractEncodedMessage.MESSAGE_DH_COMMIT
+						&& encodedM.receiverInstanceTag == 0))
+				{
+					// The message is not intended for us. Discarding...
+					logger.finest("Received an encoded message with receiver instance tag"
+							+ " that is different from ours, ignore this message");
+					getHost().messageFromAnotherInstanceReceived(getSessionID());
+					return null;
 				}
 
 				if (encodedM.senderInstanceTag != this.getReceiverInstanceTag().getValue()
-					&& this.getReceiverInstanceTag().getValue() != 0) {
-
+					&& this.getReceiverInstanceTag().getValue() != 0)
+				{
 					// Message is intended for us but is coming from a different instance.
 					// We relay this message to the appropriate session for transforming.
 
-					logger.finest("Received an encoded message from a different instance. Our buddy" +
-									"may be logged from multiple locations.");
+					logger.finest("Received an encoded message from a different instance. Our buddy"
+							+ "may be logged from multiple locations."); // XXX missing a space at the string connection point
 
 					InstanceTag newReceiverTag = new InstanceTag(encodedM.senderInstanceTag);
 					synchronized (slaveSessions) {
@@ -428,32 +419,24 @@ public class SessionImpl implements Session {
 													newReceiverTag);
 
 							if (encodedM.messageType == AbstractEncodedMessage.MESSAGE_DHKEY) {
-
-								session.getAuthContext().r =
-										this.getAuthContext().r;
-								session.getAuthContext().localDHKeyPair =
-										this.getAuthContext().localDHKeyPair;
-								session.getAuthContext().localDHPublicKeyBytes =
-										this.getAuthContext().localDHPublicKeyBytes;
-								session.getAuthContext().localDHPublicKeyEncrypted =
-										this.getAuthContext().localDHPublicKeyEncrypted;
-								session.getAuthContext().localDHPublicKeyHash =
-										this.getAuthContext().localDHPublicKeyHash;
+								session.getAuthContext().set(this.getAuthContext());
 							}
 							session.addOtrEngineListener(new OtrEngineListener() {
-
-								public void sessionStatusChanged(SessionID sessionID) {								
+								@Override
+								public void sessionStatusChanged(SessionID sessionID) {
 									for (OtrEngineListener l : listeners)
 										l.sessionStatusChanged(sessionID);
 								}
 
+								@Override
 								public void multipleInstancesDetected(SessionID sessionID) {}
 
+								@Override
 								public void outgoingSessionChanged(SessionID sessionID) {}
 							});
 
 							slaveSessions.put(newReceiverTag, session);
-							
+
 							getHost().multipleInstancesDetected(sessionID);
 							for (OtrEngineListener l : listeners)
 								l.multipleInstancesDetected(sessionID);
@@ -479,7 +462,7 @@ public class SessionImpl implements Session {
 		case AbstractEncodedMessage.MESSAGE_DHKEY:
 		case AbstractEncodedMessage.MESSAGE_REVEALSIG:
 		case AbstractEncodedMessage.MESSAGE_SIGNATURE:
-			AuthContext auth = this.getAuthContext();				
+			AuthContext auth = this.getAuthContext();
 			auth.handleReceivingMessage(m);
 
 			if (auth.getIsSecure()) {
@@ -493,57 +476,60 @@ public class SessionImpl implements Session {
 		}
 	}
 
-	private void handleQueryMessage(QueryMessage queryMessage)
-			throws OtrException {
-		logger.finest(getSessionID().getAccountID()
-				+ " received a query message from "
-				+ getSessionID().getUserID() + " through "
-				+ getSessionID().getProtocolName() + ".");
-		
+	private void sendingDHCommitMessage(final QueryMessage queryMessage, final boolean supportV1)
+			throws OtrException
+	{
 		OtrPolicy policy = getSessionPolicy();
 		if (queryMessage.versions.contains(OTRv.THREE) && policy.getAllowV3()) {
-			logger.finest("Query message with V3 support found.");
+			logger.finest("V3 message tag found and supported.");
 			DHCommitMessage dhCommit = getAuthContext().respondAuth(OTRv.THREE);
 			if (isMasterSession) {
 				for (SessionImpl session : slaveSessions.values()) {
 					session.getAuthContext().reset();
-					session.getAuthContext().r =
-							this.getAuthContext().r;
-					session.getAuthContext().localDHKeyPair =
-							this.getAuthContext().localDHKeyPair;
-					session.getAuthContext().localDHPublicKeyBytes =
-							this.getAuthContext().localDHPublicKeyBytes;
-					session.getAuthContext().localDHPublicKeyEncrypted =
-							this.getAuthContext().localDHPublicKeyEncrypted;
-					session.getAuthContext().localDHPublicKeyHash =
-							this.getAuthContext().localDHPublicKeyHash;
+					session.getAuthContext().set(this.getAuthContext());
 				}
 			}
+			logger.finest("Sending D-H Commit Message");
 			injectMessage(dhCommit);
 		}
 		else if (queryMessage.versions.contains(OTRv.TWO) && policy.getAllowV2()) {
-			logger.finest("Query message with V2 support found.");
+			logger.finest("V2 message tag found and supported.");
 			DHCommitMessage dhCommit = getAuthContext().respondAuth(OTRv.TWO);
 			logger.finest("Sending D-H Commit Message");
 			injectMessage(dhCommit);
 		} else if (queryMessage.versions.contains(OTRv.ONE) && policy.getAllowV1()) {
-			logger.finest("Query message with V1 support found - ignoring.");
+			if (supportV1) {
+				logger.finest("V1 message tag found and supported. - ignoring.");
+			} else {
+				logger.finest("V1 message tag found but not supported.");
+				throw new UnsupportedOperationException();
+			}
 		}
 	}
 
+	private void handleQueryMessage(QueryMessage queryMessage)
+			throws OtrException
+	{
+		logger.log(Level.FINEST, "{0} received a query message from {1} through {2}.",
+				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID(),
+					getSessionID().getProtocolName()});
+
+		sendingDHCommitMessage(queryMessage, true);
+	}
+
 	private void handleErrorMessage(ErrorMessage errorMessage)
-			throws OtrException {
-		logger.finest(getSessionID().getAccountID()
-				+ " received an error message from "
-				+ getSessionID().getUserID() + " through "
-				+ getSessionID().getUserID() + ".");
+			throws OtrException
+	{
+		logger.log(Level.FINEST, "{0} received an error message from {1} through {2}.",
+				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID(),
+					getSessionID().getProtocolName()});
 
 		getHost().showError(this.getSessionID(), errorMessage.error);
 
 		OtrPolicy policy = getSessionPolicy();
 		if (policy.getErrorStartAKE()) {
 			logger.finest("Error message starts AKE.");
-			Vector<Integer> versions = new Vector<Integer>();
+			List<Integer> versions = new ArrayList<Integer>();
 			if (policy.getAllowV1())
 				versions.add(OTRv.ONE);
 
@@ -559,14 +545,12 @@ public class SessionImpl implements Session {
 	}
 
 	private String handleDataMessage(DataMessage data) throws OtrException {
-		logger.finest(getSessionID().getAccountID()
-				+ " received a data message from " + getSessionID().getUserID()
-				+ ".");
-	
+		logger.log(Level.FINEST, "{0} received a data message from {1}.",
+				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID()});
+
 		switch (this.getSessionStatus()) {
 		case ENCRYPTED:
-			logger
-					.finest("Message state is ENCRYPTED. Trying to decrypt message.");
+			logger.finest("Message state is ENCRYPTED. Trying to decrypt message.");
 			// Find matching session keys.
 			int senderKeyID = data.senderKeyID;
 			int receipientKeyID = data.recipientKeyID;
@@ -582,8 +566,7 @@ public class SessionImpl implements Session {
 			}
 
 			// Verify received MAC with a locally calculated MAC.
-			logger
-					.finest("Transforming T to byte[] to calculate it's HmacSHA1.");
+			logger.finest("Transforming T to byte[] to calculate it's HmacSHA1.");
 
 			byte[] serializedT;
 			try {
@@ -623,7 +606,7 @@ public class SessionImpl implements Session {
 				throw new OtrException(e);
 			}
 
-			logger.finest("Decrypted message: \"" + decryptedMsgContent + "\"");
+			logger.log(Level.FINEST, "Decrypted message: \"{0}\"", decryptedMsgContent);
 
 			// Rotate keys if necessary.
 			SessionKeys mostRecent = this.getMostRecentSessionKeys();
@@ -643,7 +626,7 @@ public class SessionImpl implements Session {
 				byte[] tlvsb = new byte[dmc.length - tlvIndex];
 				System.arraycopy(dmc, tlvIndex, tlvsb, 0, tlvsb.length);
 
-				tlvs = new Vector<TLV>();
+				tlvs = new LinkedList<TLV>();
 				ByteArrayInputStream tin = new ByteArrayInputStream(tlvsb);
 				while (tin.available() > 0) {
 					int type;
@@ -680,11 +663,14 @@ public class SessionImpl implements Session {
 			injectMessage(new ErrorMessage(AbstractMessage.MESSAGE_ERROR,
 					getHost().getReplyForUnreadableMessage(getSessionID())));
 			break;
+		default:
+			throw new UnsupportedOperationException("What to do for this state?");
 		}
 
 		return null;
 	}
 
+	@Override
 	public void injectMessage(AbstractMessage m) throws OtrException {
 		String msg;
 		try {
@@ -694,7 +680,7 @@ public class SessionImpl implements Session {
 		}
 		if (m instanceof QueryMessage)
 			msg += getHost().getFallbackMessage(getSessionID());
-		
+
 		if (SerializationUtils.otrEncoded(msg)) {
 			// Content is OTR encoded, so we are allowed to partition.
 			String[] fragments;
@@ -713,24 +699,22 @@ public class SessionImpl implements Session {
 	}
 
 	private String handlePlainTextMessage(PlainTextMessage plainTextMessage)
-			throws OtrException {
-		logger.finest(getSessionID().getAccountID()
-				+ " received a plaintext message from "
-				+ getSessionID().getUserID() + " through "
-				+ getSessionID().getProtocolName() + ".");
+			throws OtrException
+	{
+		logger.log(Level.FINEST, "{0} received a plaintext message from {1} through {2}.",
+				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID(),
+					getSessionID().getProtocolName()});
 
 		OtrPolicy policy = getSessionPolicy();
 		List<Integer> versions = plainTextMessage.versions;
 		if (versions == null || versions.size() < 1) {
-			logger
-					.finest("Received plaintext message without the whitespace tag.");
+			logger.finest("Received plaintext message without the whitespace tag.");
 			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
 			case FINISHED:
 				// Display the message to the user, but warn him that the
 				// message was received unencrypted.
-				getHost().unencryptedMessageReceived(sessionID,
-						plainTextMessage.cleanText);
+				getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
 				return plainTextMessage.cleanText;
 			case PLAINTEXT:
 				// Simply display the message to the user. If
@@ -738,87 +722,61 @@ public class SessionImpl implements Session {
 				// is set, warn him that the message was received
 				// unencrypted.
 				if (policy.getRequireEncryption()) {
-					getHost().unencryptedMessageReceived(sessionID,
-							plainTextMessage.cleanText);
+					getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
 				}
 				return plainTextMessage.cleanText;
+			default:
+				throw new UnsupportedOperationException("What to do for this state?");
 			}
 		} else {
-			logger
-					.finest("Received plaintext message with the whitespace tag.");
+			logger.finest("Received plaintext message with the whitespace tag.");
 			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
 			case FINISHED:
 				// Remove the whitespace tag and display the message to the
 				// user, but warn him that the message was received
 				// unencrypted.
-				getHost().unencryptedMessageReceived(sessionID,
-						plainTextMessage.cleanText);
+				getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
+				break;
 			case PLAINTEXT:
 				// Remove the whitespace tag and display the message to the
 				// user. If REQUIRE_ENCRYPTION is set, warn him that the
 				// message
 				// was received unencrypted.
 				if (policy.getRequireEncryption())
-					getHost().unencryptedMessageReceived(sessionID,
-							plainTextMessage.cleanText);
+					getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
+				break;
+			default:
+				throw new UnsupportedOperationException("What to do for this state?");
 			}
 
 			if (policy.getWhitespaceStartAKE()) {
 				logger.finest("WHITESPACE_START_AKE is set");
 
-				if (plainTextMessage.versions.contains(OTRv.THREE)
-						&& policy.getAllowV3()) {
-					logger.finest("V3 tag found.");
-					try {
-						DHCommitMessage dhCommit = getAuthContext().respondAuth(OTRv.THREE);
-						if (isMasterSession) {
-							for (SessionImpl session : slaveSessions.values()) {
-								session.getAuthContext().reset();
-								session.getAuthContext().r =
-										this.getAuthContext().r;
-								session.getAuthContext().localDHKeyPair =
-										this.getAuthContext().localDHKeyPair;
-								session.getAuthContext().localDHPublicKeyBytes =
-										this.getAuthContext().localDHPublicKeyBytes;
-								session.getAuthContext().localDHPublicKeyEncrypted =
-										this.getAuthContext().localDHPublicKeyEncrypted;
-								session.getAuthContext().localDHPublicKeyHash =
-										this.getAuthContext().localDHPublicKeyHash;
-							}
-						}
-						logger.finest("Sending D-H Commit Message");
-						injectMessage(dhCommit);
-					} catch (OtrException e) {
-					}
-				} else if (plainTextMessage.versions.contains(OTRv.TWO)
-						&& policy.getAllowV2()) {
-					logger.finest("V2 tag found.");
-					try {
-						DHCommitMessage dhCommit = getAuthContext().respondAuth(OTRv.TWO);
-						logger.finest("Sending D-H Commit Message");
-						injectMessage(dhCommit);
-					} catch (OtrException e) {
-					}
-				} else if (plainTextMessage.versions.contains(1)
-						&& policy.getAllowV1()) {
-					throw new UnsupportedOperationException();
+				try {
+					sendingDHCommitMessage(plainTextMessage, false);
+				} catch (OtrException ex) {
 				}
 			}
 		}
 
 		return plainTextMessage.cleanText;
 	}
-	
+
+	@Override
 	public String[] transformSending(String msgText)
-			throws OtrException {
+			throws OtrException
+	{
 		return this.transformSending(msgText, null);
 	}
 
+	@Override
 	public String[] transformSending(String msgText, List<TLV> tlvs)
-			throws OtrException {
-
-		if (isMasterSession && this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
+			throws OtrException
+	{
+		if (isMasterSession && this.slaveSessions.isSelected()
+				&& getProtocolVersion() == OTRv.THREE)
+		{
 			return this.slaveSessions.getSelected().transformSending(msgText, tlvs);
 		}
 
@@ -831,9 +789,10 @@ public class SessionImpl implements Session {
 				return null;
 			} else {
 				if (otrPolicy.getSendWhitespaceTag()
-						&& offerStatus != OfferStatus.rejected) {
+						&& offerStatus != OfferStatus.rejected)
+				{
 					offerStatus = OfferStatus.sent;
-					List<Integer> versions = new Vector<Integer>();
+					List<Integer> versions = new ArrayList<Integer>(3);
 					if (otrPolicy.getAllowV1())
 						versions.add(OTRv.ONE);
 					if (otrPolicy.getAllowV2())
@@ -854,10 +813,9 @@ public class SessionImpl implements Session {
 				}
 			}
 		case ENCRYPTED:
-			logger.finest(getSessionID().getAccountID()
-					+ " sends an encrypted message to "
-					+ getSessionID().getUserID() + " through "
-					+ getSessionID().getProtocolName() + ".");
+			logger.log(Level.FINEST, "{0} sends an encrypted message to {1} through {2}.",
+					new Object[] {getSessionID().getAccountID(), getSessionID().getUserID(),
+						getSessionID().getProtocolName()});
 
 			// Get encryption keys.
 			SessionKeys encryptionKeys = this.getEncryptionSessionKeys();
@@ -895,9 +853,9 @@ public class SessionImpl implements Session {
 
 			byte[] data = out.toByteArray();
 			// Encrypt message.
-			logger
-					.finest("Encrypting message with keyids (localKeyID, remoteKeyID) = ("
-							+ senderKeyID + ", " + receipientKeyID + ")");
+			logger.log(Level.FINEST,
+					"Encrypting message with keyids (localKeyID, remoteKeyID) = ({0}, {1})",
+					new Object[] {senderKeyID, receipientKeyID});
 			byte[] encryptedMsg = otrCryptoEngine.aesEncrypt(encryptionKeys
 					.getSendingAESKey(), ctr, data);
 
@@ -948,11 +906,7 @@ public class SessionImpl implements Session {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see net.java.otr4j.session.ISession#startSession()
-	 */
+	@Override
 	public void startSession() throws OtrException {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
 			this.slaveSessions.getSelected().startSession();
@@ -967,11 +921,7 @@ public class SessionImpl implements Session {
 		this.getAuthContext().startAuth();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see net.java.otr4j.session.ISession#endSession()
-	 */
+	@Override
 	public void endSession() throws OtrException {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE) {
 			this.slaveSessions.getSelected().endSession();
@@ -980,7 +930,7 @@ public class SessionImpl implements Session {
 		SessionStatus status = this.getSessionStatus();
 		switch (status) {
 		case ENCRYPTED:
-			Vector<TLV> tlvs = new Vector<TLV>();
+			List<TLV> tlvs = new ArrayList<TLV>(1);
 			tlvs.add(new TLV(TLV.DISCONNECTED, null));
 
 			String[] msg = this.transformSending(null, tlvs);
@@ -993,35 +943,30 @@ public class SessionImpl implements Session {
 			this.setSessionStatus(SessionStatus.PLAINTEXT);
 			break;
 		case PLAINTEXT:
-			return;
+			break;
+		default:
+			throw new UnsupportedOperationException("What to do for this state?");
 		}
-
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see net.java.otr4j.session.ISession#refreshSession()
-	 */
+	@Override
 	public void refreshSession() throws OtrException {
 		this.endSession();
 		this.startSession();
 	}
 
-	private PublicKey remotePublicKey;
-
 	private void setRemotePublicKey(PublicKey pubKey) {
 		this.remotePublicKey = pubKey;
 	}
 
+	@Override
 	public PublicKey getRemotePublicKey() {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE)
 			return this.slaveSessions.getSelected().getRemotePublicKey();
 		return remotePublicKey;
 	}
 
-	private List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
-
+	@Override
 	public void addOtrEngineListener(OtrEngineListener l) {
 		synchronized (listeners) {
 			if (!listeners.contains(l))
@@ -1029,16 +974,19 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	@Override
 	public void removeOtrEngineListener(OtrEngineListener l) {
 		synchronized (listeners) {
 			listeners.remove(l);
 		}
 	}
 
+	@Override
 	public OtrPolicy getSessionPolicy() {
 		return getHost().getSessionPolicy(getSessionID());
 	}
 
+	@Override
 	public KeyPair getLocalKeyPair() throws OtrException {
 		return getHost().getLocalKeyPair(this.getSessionID());
 	}
@@ -1092,7 +1040,7 @@ public class SessionImpl implements Session {
 	public boolean isSmpInProgress() {
 		if (this.slaveSessions.isSelected() && getProtocolVersion() == OTRv.THREE)
 			return this.slaveSessions.getSelected().isSmpInProgress();
-	    return otrSm.isSmpInProgress();
+		return otrSm.isSmpInProgress();
 	}
 
 	@Override
@@ -1102,15 +1050,15 @@ public class SessionImpl implements Session {
 
 	@Override
 	public InstanceTag getReceiverInstanceTag() {
-		return receiverTag;
+		return receiverInstanceTag;
 	}
 
 	@Override
-	public void setReceiverInstanceTag(InstanceTag receiverTag) {
+	public void setReceiverInstanceTag(InstanceTag receiverInstanceTag) {
 		// ReceiverInstanceTag of a slave session is not supposed to change
 		if (!isMasterSession)
 			return;
-		this.receiverTag = receiverTag;
+		this.receiverInstanceTag = receiverInstanceTag;
 	}
 
 	@Override
@@ -1160,13 +1108,9 @@ public class SessionImpl implements Session {
 	public void respondSmp(InstanceTag receiverTag, String question, String secret)
 		throws OtrException
 	{
-		if (receiverTag.equals(getReceiverInstanceTag()))
-		{
+		if (receiverTag.equals(getReceiverInstanceTag())) {
 			respondSmp(question, secret);
-			return;
-		}
-		else
-		{
+		} else {
 			Session slave = slaveSessions.get(receiverTag);
 			if (slave != null)
 				slave.respondSmp(question, secret);
@@ -1179,8 +1123,7 @@ public class SessionImpl implements Session {
 	public SessionStatus getSessionStatus(InstanceTag tag) {
 		if (tag.equals(getReceiverInstanceTag()))
 			return sessionStatus;
-		else
-		{
+		else {
 			Session slave = slaveSessions.get(tag);
 			return slave != null ? slave.getSessionStatus() : sessionStatus;
 		}
@@ -1190,8 +1133,7 @@ public class SessionImpl implements Session {
 	public PublicKey getRemotePublicKey(InstanceTag tag) {
 		if (tag.equals(getReceiverInstanceTag()))
 			return remotePublicKey;
-		else
-		{
+		else {
 			Session slave = slaveSessions.get(tag);
 			return slave != null ? slave.getRemotePublicKey() : remotePublicKey;
 		}
@@ -1199,13 +1141,10 @@ public class SessionImpl implements Session {
 
 	@Override
 	public Session getOutgoingInstance() {
-		if (this.slaveSessions.isSelected())
-		{
+		if (this.slaveSessions.isSelected()) {
 			return this.slaveSessions.getSelected();
-		}
-		else
-		{
+		} else {
 			return this;
 		}
-	}		
+	}
 }

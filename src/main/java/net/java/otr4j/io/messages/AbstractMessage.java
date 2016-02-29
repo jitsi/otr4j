@@ -16,19 +16,22 @@
 package net.java.otr4j.io.messages;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public abstract class AbstractMessage {
-	// Fields.
+
+	// Unencoded
+	public static final int MESSAGE_ERROR = 0xff;
+	public static final int MESSAGE_QUERY = 0x100;
+	public static final int MESSAGE_PLAINTEXT = 0x102;
+
 	public int messageType;
 
-	// Ctor.
 	public AbstractMessage(int messageType) {
 		this.messageType = messageType;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -50,9 +53,4 @@ public abstract class AbstractMessage {
 			return false;
 		return true;
 	}
-
-	// Unencoded
-	public static final int MESSAGE_ERROR = 0xff;
-	public static final int MESSAGE_QUERY = 0x100;
-	public static final int MESSAGE_PLAINTEXT = 0x102;
 }

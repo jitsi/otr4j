@@ -36,8 +36,8 @@ import net.java.otr4j.io.messages.SignatureX;
  * @author George Politis
  */
 public class OtrInputStream extends FilterInputStream implements
-		SerializationConstants {
-
+		SerializationConstants
+{
 	public OtrInputStream(InputStream in) {
 		super(in);
 	}

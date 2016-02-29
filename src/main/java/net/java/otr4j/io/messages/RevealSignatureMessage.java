@@ -18,22 +18,21 @@ package net.java.otr4j.io.messages;
 import java.util.Arrays;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class RevealSignatureMessage extends SignatureMessage {
-	// Fields.
+
 	public byte[] revealedKey;
 
-	// Ctor.
 	public RevealSignatureMessage(int protocolVersion, byte[] xEncrypted,
-			byte[] xEncryptedMAC, byte[] revealedKey) {
+			byte[] xEncryptedMAC, byte[] revealedKey)
+	{
 		super(MESSAGE_REVEALSIG, protocolVersion, xEncrypted, xEncryptedMAC);
 
 		this.revealedKey = revealedKey;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;

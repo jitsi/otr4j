@@ -20,27 +20,25 @@ import java.security.PublicKey;
 import javax.crypto.interfaces.DHPublicKey;
 
 /**
- * 
+ *
  * @author George Politis
  */
 public class SignatureM {
-	// Fields.
+
 	public DHPublicKey localPubKey;
 	public DHPublicKey remotePubKey;
 	public PublicKey localLongTermPubKey;
 	public int keyPairID;
-	
-	// Ctor.
-	public SignatureM(DHPublicKey localPubKey, DHPublicKey remotePublicKey,
-			PublicKey localLongTermPublicKey, int keyPairID) {
 
+	public SignatureM(DHPublicKey localPubKey, DHPublicKey remotePublicKey,
+			PublicKey localLongTermPublicKey, int keyPairID)
+	{
 		this.localPubKey = localPubKey;
 		this.remotePubKey = remotePublicKey;
 		this.localLongTermPubKey = localLongTermPublicKey;
 		this.keyPairID = keyPairID;
 	}
 
-	// Methods.
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -87,5 +85,4 @@ public class SignatureM {
 			return false;
 		return true;
 	}
-
 }
