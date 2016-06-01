@@ -31,7 +31,7 @@ update your settings!
 
 Want to hack on otr4j? Awesome! Here are the guidelines we'd like you to follow:
 
-* _All_ contributors submit code via pull requests. NOTE that before we can accept any patches from you, we need you to sign our contributor agreement available [here](http://bluejimp.com/bca.pdf).
+* _All_ contributors submit code via pull requests. NOTE that before we can accept any patches from you, we need you to sign our contributor agreement available [here](https://github.com/jitsi/jitsi/blob/master/CONTRIBUTING.md#contributor-license-agreement).
 * New commits must be pushed by the reviewer of the pull request, not the author.
 * Any developer can request push access and become a committer, regardless of project or organization affiliation.
 * We choose committers primarily on the Hippocratic Principle. You can find out more about the exact procedure [here][bca].
