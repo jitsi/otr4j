@@ -591,7 +591,7 @@ public class SessionImpl implements Session {
 			case AbstractEncodedMessage.MESSAGE_DATA:
 				return handleDataMessageWithoutInject((DataMessage) m);
 			case AbstractMessage.MESSAGE_PLAINTEXT:
-				return handlePlainTextMessage((PlainTextMessage) m);
+				return handlePlainTextMessageWithoutInject((PlainTextMessage) m);
 			default:
 				throw new UnsupportedOperationException(
 						"Received an uknown message type.");
