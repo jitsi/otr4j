@@ -582,7 +582,7 @@ public class SessionImpl implements Session {
 								l.multipleInstancesDetected(sessionID);
 						}
 					}
-					return slaveSessions.get(newReceiverTag).transformReceivingWithoutInject(msgText);
+					return ((SessionImpl)slaveSessions.get(newReceiverTag)).transformReceivingWithoutInject(msgText);
 				}
 			}
 		}
