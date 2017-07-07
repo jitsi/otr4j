@@ -476,6 +476,121 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	public String transformReceivingWithoutInject(String msgText) throws OtrException {
+
+		OtrPolicy policy = getSessionPolicy();
+		if (!policy.getAllowV1() && !policy.getAllowV2() && !policy.getAllowV3()) {
+			logger
+					.finest("Policy does not allow neither V1 nor V2 & V3, ignoring message.");
+			return msgText;
+		}
+
+		try {
+			msgText = assembler.accumulate(msgText);
+		} catch (UnknownInstanceException e) {
+			// The fragment is not intended for us
+			logger.finest(e.getMessage());
+			getHost().messageFromAnotherInstanceReceived(getSessionID());
+			return null;
+		} catch (ProtocolException e) {
+			logger.warning("An invalid message fragment was discarded.");
+			return null;
+		}
+
+		if (msgText == null)
+			return null; // Not a complete message (yet).
+
+		AbstractMessage m;
+		try {
+			m = SerializationUtils.toMessage(msgText);
+		} catch (IOException e) {
+			throw new OtrException(e);
+		}
+		if (m == null)
+			return msgText; // Propably null or empty.
+
+		if (m.messageType != AbstractMessage.MESSAGE_PLAINTEXT)
+			offerStatus = OfferStatus.accepted;
+		else if (offerStatus == OfferStatus.sent)
+			offerStatus = OfferStatus.rejected;
+
+		if (m instanceof AbstractEncodedMessage && isMasterSession) {
+
+			AbstractEncodedMessage encodedM = (AbstractEncodedMessage) m;
+
+			if (encodedM.protocolVersion == OTRv.THREE) {
+
+				if (encodedM.receiverInstanceTag != this.getSenderInstanceTag().getValue()
+						&& !(encodedM.messageType == AbstractEncodedMessage.MESSAGE_DH_COMMIT
+						&& encodedM.receiverInstanceTag == 0))
+				{
+					// The message is not intended for us. Discarding...
+					logger.finest("Received an encoded message with receiver instance tag"
+							+ " that is different from ours, ignore this message");
+					getHost().messageFromAnotherInstanceReceived(getSessionID());
+					return null;
+				}
+
+				if (encodedM.senderInstanceTag != this.getReceiverInstanceTag().getValue()
+						&& this.getReceiverInstanceTag().getValue() != 0)
+				{
+					// Message is intended for us but is coming from a different instance.
+					// We relay this message to the appropriate session for transforming.
+
+					logger.finest("Received an encoded message from a different instance. Our buddy"
+							+ "may be logged from multiple locations."); // XXX missing a space at the string connection point
+
+					InstanceTag newReceiverTag = new InstanceTag(encodedM.senderInstanceTag);
+					synchronized (slaveSessions) {
+
+						if (!slaveSessions.containsKey(newReceiverTag)) {
+
+							final SessionImpl session =
+									new SessionImpl(sessionID,
+											getHost(),
+											getSenderInstanceTag(),
+											newReceiverTag);
+
+							if (encodedM.messageType == AbstractEncodedMessage.MESSAGE_DHKEY) {
+								session.getAuthContext().set(this.getAuthContext());
+							}
+							session.addOtrEngineListener(new OtrEngineListener() {
+								@Override
+								public void sessionStatusChanged(SessionID sessionID) {
+									for (OtrEngineListener l : listeners)
+										l.sessionStatusChanged(sessionID);
+								}
+
+								@Override
+								public void multipleInstancesDetected(SessionID sessionID) {}
+
+								@Override
+								public void outgoingSessionChanged(SessionID sessionID) {}
+							});
+
+							slaveSessions.put(newReceiverTag, session);
+
+							getHost().multipleInstancesDetected(sessionID);
+							for (OtrEngineListener l : listeners)
+								l.multipleInstancesDetected(sessionID);
+						}
+					}
+					return slaveSessions.get(newReceiverTag).transformReceiving(msgText);
+				}
+			}
+		}
+
+		switch (m.messageType) {
+			case AbstractEncodedMessage.MESSAGE_DATA:
+				return handleDataMessageWithoutInject((DataMessage) m);
+			case AbstractMessage.MESSAGE_PLAINTEXT:
+				return handlePlainTextMessage((PlainTextMessage) m);
+			default:
+				throw new UnsupportedOperationException(
+						"Received an uknown message type.");
+		}
+	}
+
 	private void sendingDHCommitMessage(final QueryMessage queryMessage, final boolean supportV1)
 			throws OtrException
 	{
@@ -665,6 +780,132 @@ public class SessionImpl implements Session {
 			break;
 		default:
 			throw new UnsupportedOperationException("What to do for this state?");
+		}
+
+		return null;
+	}
+
+	private String handleDataMessageWithoutInject(DataMessage data) throws OtrException {
+		logger.log(Level.FINEST, "{0} received a data message from {1}.",
+				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID()});
+
+		switch (this.getSessionStatus()) {
+			case ENCRYPTED:
+				logger.finest("Message state is ENCRYPTED. Trying to decrypt message.");
+				// Find matching session keys.
+				int senderKeyID = data.senderKeyID;
+				int receipientKeyID = data.recipientKeyID;
+				SessionKeys matchingKeys = this.getSessionKeysByID(receipientKeyID,
+						senderKeyID);
+
+				if (matchingKeys == null) {
+					logger.finest("No matching keys found.");
+//					getHost().unreadableMessageReceived(this.getSessionID());
+//				injectMessage(new ErrorMessage(AbstractMessage.MESSAGE_ERROR,
+//						getHost().getReplyForUnreadableMessage(getSessionID())));
+					return null;
+				}
+
+				// Verify received MAC with a locally calculated MAC.
+				logger.finest("Transforming T to byte[] to calculate it's HmacSHA1.");
+
+				byte[] serializedT;
+				try {
+					serializedT = SerializationUtils.toByteArray(data.getT());
+				} catch (IOException e) {
+					throw new OtrException(e);
+				}
+
+				OtrCryptoEngine otrCryptoEngine = new OtrCryptoEngineImpl();
+
+				byte[] computedMAC = otrCryptoEngine.sha1Hmac(serializedT,
+						matchingKeys.getReceivingMACKey(),
+						SerializationConstants.TYPE_LEN_MAC);
+				if (!Arrays.equals(computedMAC, data.mac)) {
+					logger.finest("MAC verification failed, ignoring message");
+//					getHost().unreadableMessageReceived(this.getSessionID());
+//				injectMessage(new ErrorMessage(AbstractMessage.MESSAGE_ERROR,
+//						getHost().getReplyForUnreadableMessage(getSessionID())));
+					return null;
+				}
+
+				logger.finest("Computed HmacSHA1 value matches sent one.");
+
+				// Mark this MAC key as old to be revealed.
+				matchingKeys.setIsUsedReceivingMACKey(true);
+
+				matchingKeys.setReceivingCtr(data.ctr);
+
+				byte[] dmc = otrCryptoEngine.aesDecrypt(matchingKeys
+								.getReceivingAESKey(), matchingKeys.getReceivingCtr(),
+						data.encryptedMessage);
+				String decryptedMsgContent;
+				try {
+					// Expect bytes to be text encoded in UTF-8.
+					decryptedMsgContent = new String(dmc, "UTF-8");
+				} catch (UnsupportedEncodingException e) {
+					throw new OtrException(e);
+				}
+
+				logger.log(Level.FINEST, "Decrypted message: \"{0}\"", decryptedMsgContent);
+
+				// Rotate keys if necessary.
+				SessionKeys mostRecent = this.getMostRecentSessionKeys();
+				if (mostRecent.getLocalKeyID() == receipientKeyID)
+					this.rotateLocalSessionKeys();
+
+				if (mostRecent.getRemoteKeyID() == senderKeyID)
+					this.rotateRemoteSessionKeys(data.nextDH);
+
+				// Handle TLVs
+				List<TLV> tlvs = null;
+				int tlvIndex = decryptedMsgContent.indexOf((char) 0x0);
+				if (tlvIndex > -1) {
+					decryptedMsgContent = decryptedMsgContent
+							.substring(0, tlvIndex);
+					tlvIndex++;
+					byte[] tlvsb = new byte[dmc.length - tlvIndex];
+					System.arraycopy(dmc, tlvIndex, tlvsb, 0, tlvsb.length);
+
+					tlvs = new LinkedList<TLV>();
+					ByteArrayInputStream tin = new ByteArrayInputStream(tlvsb);
+					while (tin.available() > 0) {
+						int type;
+						byte[] tdata;
+						OtrInputStream eois = new OtrInputStream(tin);
+						try {
+							type = eois.readShort();
+							tdata = eois.readTlvData();
+							eois.close();
+						} catch (IOException e) {
+							throw new OtrException(e);
+						}
+
+						tlvs.add(new TLV(type, tdata));
+					}
+				}
+				if (tlvs != null && tlvs.size() > 0) {
+					for (TLV tlv : tlvs) {
+						switch (tlv.getType()) {
+							case TLV.DISCONNECTED:
+								this.setSessionStatus(SessionStatus.FINISHED);
+								return null;
+							default:
+								if (otrSm.doProcessTlv(tlv))
+									return null;
+						}
+					}
+				}
+				return decryptedMsgContent;
+
+			case FINISHED:
+			case PLAINTEXT:
+//				getHost().unreadableMessageReceived(this.getSessionID());
+//			injectMessage(new ErrorMessage(AbstractMessage.MESSAGE_ERROR,
+//					getHost().getReplyForUnreadableMessage(getSessionID())));
+				break;
+			default:
+				throw new UnsupportedOperationException("What to do for this state?");
 		}
 
 		return null;
