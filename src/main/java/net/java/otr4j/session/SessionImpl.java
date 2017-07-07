@@ -60,6 +60,7 @@ import net.java.otr4j.util.SelectableMap;
  *
  * @author George Politis
  * @author Danny van Heumen
+ * Modified by Valery Miller
  */
 public class SessionImpl implements Session {
 
@@ -476,6 +477,12 @@ public class SessionImpl implements Session {
 		}
 	}
 
+	/*
+	 * Copy of @transformReceiving method
+	 * Not calls any @injectMessage methods to not interact with OTR-session
+	 * Used for transforming message from offline (archived)
+	 * Modified by Valery Miller
+	 */
 	public String transformReceivingWithoutInject(String msgText) throws OtrException {
 
 		OtrPolicy policy = getSessionPolicy();
@@ -575,7 +582,7 @@ public class SessionImpl implements Session {
 								l.multipleInstancesDetected(sessionID);
 						}
 					}
-					return slaveSessions.get(newReceiverTag).transformReceiving(msgText);
+					return slaveSessions.get(newReceiverTag).transformReceivingWithoutInject(msgText);
 				}
 			}
 		}
@@ -785,6 +792,12 @@ public class SessionImpl implements Session {
 		return null;
 	}
 
+	/*
+	 * Copy of @handleDataMessage method
+	 * Not calls any @injectMessage methods to not interact with OTR-session
+	 * Used for transforming message from offline (archived)
+	 * Modified by Valery Miller
+	 */
 	private String handleDataMessageWithoutInject(DataMessage data) throws OtrException {
 		logger.log(Level.FINEST, "{0} received a data message from {1}.",
 				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID()});
@@ -999,6 +1012,77 @@ public class SessionImpl implements Session {
 				} catch (OtrException ex) {
 				}
 			}
+		}
+
+		return plainTextMessage.cleanText;
+	}
+
+	/*
+	 * Copy of @handlePlainTextMessage method
+	 * Not calls any @injectMessage methods to not interact with OTR-session
+	 * Used for transforming message from offline (archived)
+	 * Modified by Valery Miller
+	 */
+	private String handlePlainTextMessageWithoutInject(PlainTextMessage plainTextMessage)
+			throws OtrException
+	{
+		logger.log(Level.FINEST, "{0} received a plaintext message from {1} through {2}.",
+				new Object[] {getSessionID().getAccountID(), getSessionID().getUserID(),
+						getSessionID().getProtocolName()});
+
+		OtrPolicy policy = getSessionPolicy();
+		List<Integer> versions = plainTextMessage.versions;
+		if (versions == null || versions.size() < 1) {
+			logger.finest("Received plaintext message without the whitespace tag.");
+			switch (this.getSessionStatus()) {
+				case ENCRYPTED:
+				case FINISHED:
+					// Display the message to the user, but warn him that the
+					// message was received unencrypted.
+					getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
+					return plainTextMessage.cleanText;
+				case PLAINTEXT:
+					// Simply display the message to the user. If
+					// REQUIRE_ENCRYPTION
+					// is set, warn him that the message was received
+					// unencrypted.
+					if (policy.getRequireEncryption()) {
+						getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
+					}
+					return plainTextMessage.cleanText;
+				default:
+					throw new UnsupportedOperationException("What to do for this state?");
+			}
+		} else {
+			logger.finest("Received plaintext message with the whitespace tag.");
+			switch (this.getSessionStatus()) {
+				case ENCRYPTED:
+				case FINISHED:
+					// Remove the whitespace tag and display the message to the
+					// user, but warn him that the message was received
+					// unencrypted.
+					getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
+					break;
+				case PLAINTEXT:
+					// Remove the whitespace tag and display the message to the
+					// user. If REQUIRE_ENCRYPTION is set, warn him that the
+					// message
+					// was received unencrypted.
+					if (policy.getRequireEncryption())
+						getHost().unencryptedMessageReceived(sessionID, plainTextMessage.cleanText);
+					break;
+				default:
+					throw new UnsupportedOperationException("What to do for this state?");
+			}
+
+//			if (policy.getWhitespaceStartAKE()) {
+//				logger.finest("WHITESPACE_START_AKE is set");
+//
+//				try {
+//					sendingDHCommitMessage(plainTextMessage, false);
+//				} catch (OtrException ex) {
+//				}
+//			}
 		}
 
 		return plainTextMessage.cleanText;
