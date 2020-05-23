@@ -45,6 +45,8 @@ public interface OtrCryptoEngine {
 
 	int DSA_PUB_TYPE = 0;
 
+	int DSA_KEY_LENGTH = 1024;
+
 	KeyPair generateDHKeyPair() throws OtrCryptoException;
 
 	DHPublicKey getDHPublicKey(byte[] mpiBytes) throws OtrCryptoException;

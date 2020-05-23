@@ -41,7 +41,7 @@ import net.java.otr4j.io.SerializationUtils;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.BufferedBlockCipher;
-import org.bouncycastle.crypto.engines.AESFastEngine;
+import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.generators.DHKeyPairGenerator;
 import org.bouncycastle.crypto.modes.SICBlockCipher;
 import org.bouncycastle.crypto.params.DHKeyGenerationParameters;
@@ -208,7 +208,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	public byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b)
 			throws OtrCryptoException
 	{
-		AESFastEngine aesDec = new AESFastEngine();
+		AESEngine aesDec = new AESEngine();
 		SICBlockCipher sicAesDec = new SICBlockCipher(aesDec);
 		BufferedBlockCipher bufSicAesDec = new BufferedBlockCipher(sicAesDec);
 
@@ -232,7 +232,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	public byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b)
 			throws OtrCryptoException
 	{
-		AESFastEngine aesEnc = new AESFastEngine();
+		AESEngine aesEnc = new AESEngine();
 		SICBlockCipher sicAesEnc = new SICBlockCipher(aesEnc);
 		BufferedBlockCipher bufSicAesEnc = new BufferedBlockCipher(sicAesEnc);
 
