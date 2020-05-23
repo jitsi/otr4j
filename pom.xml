@@ -45,6 +45,7 @@
     </scm>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>1.6</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -204,6 +205,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <source>${java.version}</source>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
