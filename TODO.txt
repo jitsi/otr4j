@@ -1,2 +1,3 @@
-- Replace all the MVN_PASS_JAVADOC_INSPECTION occurrences with proper JavaDoc.
--
+Merging:
+- Update licenses for remaining files necessary, after aligning with authors.
+- ...
