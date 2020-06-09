@@ -4,7 +4,7 @@
     <groupId>org.jitsi</groupId>
     <artifactId>org.otr4j</artifactId>
     <version>0.23-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <name>otr4j library</name>
     <url>http://github.com/jitsi/otr4j</url>
     <description>
@@ -207,6 +207,31 @@
                         <arg>--pinentry-mode</arg>
                         <arg>loopback</arg>
                     </gpgArguments>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>4.2.1</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Name>OTR for Java</Bundle-Name>
+                        <Bundle-SymbolicName>org.otr4j</Bundle-SymbolicName>
+                        <Automatic-Module-Name>org.otr4j</Automatic-Module-Name>
+                        <Bundle-RequiredExecutionEnvironment>JavaSE-1.8
+                        </Bundle-RequiredExecutionEnvironment>
+                        <Bundle-License>
+                            Apache-2.0;link="https://github.com/jitsi/otr4j/raw/master/LICENSE"
+                        </Bundle-License>
+                        <_removeheaders>Bnd-*, Tool, Require-Capability, Include-Resource
+                        </_removeheaders>
+                        <Include-Resource>
+                            {maven-resources},
+                            META-INF/LICENSE=LICENSE
+                        </Include-Resource>
+                    </instructions>
                 </configuration>
             </plugin>
         </plugins>
