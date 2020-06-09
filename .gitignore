@@ -6,3 +6,4 @@ target/
 *.orig
 otr.properties
 *.iml
+.idea/

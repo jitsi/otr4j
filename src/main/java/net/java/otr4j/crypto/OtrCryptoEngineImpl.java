@@ -21,33 +21,26 @@ import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.security.interfaces.DSAParams;
 import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.DSAPublicKey;
 
 import javax.crypto.KeyAgreement;
-import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
-import javax.crypto.spec.DHPrivateKeySpec;
+import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import net.java.otr4j.io.SerializationUtils;
 
-import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.BufferedBlockCipher;
-import org.bouncycastle.crypto.engines.AESFastEngine;
-import org.bouncycastle.crypto.generators.DHKeyPairGenerator;
+import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.modes.SICBlockCipher;
-import org.bouncycastle.crypto.params.DHKeyGenerationParameters;
-import org.bouncycastle.crypto.params.DHParameters;
-import org.bouncycastle.crypto.params.DHPrivateKeyParameters;
-import org.bouncycastle.crypto.params.DHPublicKeyParameters;
 import org.bouncycastle.crypto.params.DSAParameters;
 import org.bouncycastle.crypto.params.DSAPrivateKeyParameters;
 import org.bouncycastle.crypto.params.DSAPublicKeyParameters;
@@ -64,37 +57,10 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 
 	@Override
 	public KeyPair generateDHKeyPair() throws OtrCryptoException {
-
-		// Generate a AsymmetricCipherKeyPair using BC.
-		DHParameters dhParams = new DHParameters(MODULUS, GENERATOR, null,
-				DH_PRIVATE_KEY_MINIMUM_BIT_LENGTH);
-		DHKeyGenerationParameters params = new DHKeyGenerationParameters(
-				new SecureRandom(), dhParams);
-		DHKeyPairGenerator kpGen = new DHKeyPairGenerator();
-
-		kpGen.init(params);
-		AsymmetricCipherKeyPair pair = kpGen.generateKeyPair();
-
-		// Convert this AsymmetricCipherKeyPair to a standard JCE KeyPair.
-		DHPublicKeyParameters pub = (DHPublicKeyParameters) pair.getPublic();
-		DHPrivateKeyParameters priv = (DHPrivateKeyParameters) pair
-				.getPrivate();
-
 		try {
-			KeyFactory keyFac = KeyFactory.getInstance("DH");
-
-			DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(pub.getY(),
-					MODULUS, GENERATOR);
-			DHPublicKey pubKey = (DHPublicKey) keyFac
-					.generatePublic(pubKeySpecs);
-
-			DHParameters dhParameters = priv.getParameters();
-			DHPrivateKeySpec privKeySpecs = new DHPrivateKeySpec(priv.getX(),
-					dhParameters.getP(), dhParameters.getG());
-			DHPrivateKey privKey = (DHPrivateKey) keyFac
-					.generatePrivate(privKeySpecs);
-
-			return new KeyPair(pubKey, privKey);
+			KeyPairGenerator gen = KeyPairGenerator.getInstance("DH");
+			gen.initialize(new DHParameterSpec(MODULUS, GENERATOR, DH_PRIVATE_KEY_MINIMUM_BIT_LENGTH));
+			return gen.generateKeyPair();
 		} catch (Exception e) {
 			throw new OtrCryptoException(e);
 		}
@@ -208,7 +174,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	public byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b)
 			throws OtrCryptoException
 	{
-		AESFastEngine aesDec = new AESFastEngine();
+		AESEngine aesDec = new AESEngine();
 		SICBlockCipher sicAesDec = new SICBlockCipher(aesDec);
 		BufferedBlockCipher bufSicAesDec = new BufferedBlockCipher(sicAesDec);
 
@@ -232,7 +198,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	public byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b)
 			throws OtrCryptoException
 	{
-		AESFastEngine aesEnc = new AESFastEngine();
+		AESEngine aesEnc = new AESEngine();
 		SICBlockCipher sicAesEnc = new SICBlockCipher(aesEnc);
 		BufferedBlockCipher bufSicAesEnc = new BufferedBlockCipher(sicAesEnc);
 

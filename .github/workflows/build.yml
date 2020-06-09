@@ -1,0 +1,43 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  mac:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.1.0
+      - name: Set up JDK
+        uses: actions/setup-java@v1.3.0
+        with:
+          java-version: 8
+          server-id: ossrh
+          server-username: SONATYPE_USER
+          server-password: SONATYPE_PW
+
+      - name: Build
+        run: mvn -B package
+
+      - name: Attach jars
+        uses: actions/upload-artifact@v2
+        with:
+          name: jar
+          path: target/otr4j-*
+
+      - name: Extract Branch Name
+        run: echo "::set-env name=BRANCH::$(echo ${GITHUB_REF#refs/heads/})"
+
+      - name: Release to Maven Central
+        if: env.BRANCH == 'master'
+        env:
+          SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
+          SONATYPE_PW: ${{ secrets.SONATYPE_PW }}
+        run: |
+          cat <(echo -e "${{ secrets.GPG_KEY }}") | gpg --batch --import
+          gpg --list-secret-keys --keyid-format LONG
+          mvn \
+            --no-transfer-progress \
+            --batch-mode \
+            -Dgpg.passphrase="${{ secrets.GPG_PW }}" \
+            -DperformRelease=true \
+            deploy
