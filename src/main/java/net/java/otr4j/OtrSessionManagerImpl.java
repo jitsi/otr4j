@@ -15,10 +15,10 @@
  */
 package net.java.otr4j;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionID;
@@ -32,7 +32,7 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 
 	private OtrEngineHost host;
 	private Map<SessionID, Session> sessions;
-	private final List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
+	private final List<OtrEngineListener> listeners = new ArrayList<>();
 
 	public OtrSessionManagerImpl(OtrEngineHost host) {
 		if (host == null)
@@ -44,7 +44,7 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 	@Override
 	public Session getSession(SessionID sessionID) {
 
-		if (sessionID == null || sessionID.equals(SessionID.Empty))
+		if (sessionID == null || sessionID.equals(SessionID.EMPTY))
 			throw new IllegalArgumentException();
 
 		if (sessions == null)
