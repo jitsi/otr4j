@@ -26,6 +26,7 @@ public interface OtrSessionManager {
 
 	/**
      * Get an OTR session.
+     * @param sessionID the session to retrieve
      * @return MVN_PASS_JAVADOC_INSPECTION
      */
 	Session getSession(SessionID sessionID);
