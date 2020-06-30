@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -61,6 +62,19 @@ import org.bouncycastle.util.BigIntegers;
  * @author George Politis
  */
 public class OtrCryptoEngineImpl implements OtrCryptoEngine {
+
+	private static final int DSA_KEY_LENGTH = 1024;
+
+	@Override
+	public KeyPair generateDSAKeyPair() {
+		try {
+			final KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
+			kg.initialize(DSA_KEY_LENGTH);
+			return kg.genKeyPair();
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("DSA algorithm is not supported.", e);
+		}
+	}
 
 	@Override
 	public KeyPair generateDHKeyPair() throws OtrCryptoException {

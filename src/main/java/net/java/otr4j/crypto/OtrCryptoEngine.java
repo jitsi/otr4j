@@ -44,7 +44,7 @@ public interface OtrCryptoEngine {
 
 	int DSA_PUB_TYPE = 0;
 
-	int DSA_KEY_LENGTH = 1024;
+	KeyPair generateDSAKeyPair();
 
 	KeyPair generateDHKeyPair() throws OtrCryptoException;
 
