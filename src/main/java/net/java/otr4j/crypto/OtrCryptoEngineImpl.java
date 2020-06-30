@@ -108,9 +108,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 
 	@Override
 	public DHPublicKey getDHPublicKey(BigInteger mpi) throws OtrCryptoException {
-
-		DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(mpi, MODULUS,
-				GENERATOR);
+		DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(mpi, MODULUS, GENERATOR);
 		try {
 			KeyFactory keyFac = KeyFactory.getInstance("DH");
 			return (DHPublicKey) keyFac.generatePublic(pubKeySpecs);
@@ -214,7 +212,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 
 		// Create initial counter value 0.
 		if (ctr == null)
-			ctr = ZERO_CTR;
+			ctr = new byte[AES_CTR_BYTE_LENGTH];
 		bufSicAesDec.init(false, new ParametersWithIV(new KeyParameter(key),
 				ctr));
 		byte[] aesOutLwDec = new byte[b.length];
@@ -238,7 +236,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 
 		// Create initial counter value 0.
 		if (ctr == null)
-			ctr = ZERO_CTR;
+			ctr = new byte[AES_CTR_BYTE_LENGTH];
 		bufSicAesEnc.init(true,
 				new ParametersWithIV(new KeyParameter(key), ctr));
 		byte[] aesOutLwEnc = new byte[b.length];

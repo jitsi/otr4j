@@ -30,6 +30,8 @@ import net.java.otr4j.crypto.OtrCryptoEngine;
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.io.SerializationUtils;
 
+import static net.java.otr4j.crypto.OtrCryptoEngine.AES_CTR_BYTE_LENGTH;
+
 /**
  *
  * @author George Politis
@@ -38,8 +40,8 @@ class SessionKeysImpl implements SessionKeys {
 
 	private static final Logger logger = Logger.getLogger(SessionKeysImpl.class.getName());
 	private final String keyDescription;
-	private final byte[] sendingCtr = new byte[16];
-	private final byte[] receivingCtr = new byte[16];
+	private final byte[] sendingCtr = new byte[AES_CTR_BYTE_LENGTH];
+	private final byte[] receivingCtr = new byte[AES_CTR_BYTE_LENGTH];
 
 	private int localKeyID;
 	private int remoteKeyID;

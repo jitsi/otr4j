@@ -34,14 +34,13 @@ public interface OtrCryptoEngine {
 	BigInteger MODULUS_MINUS_TWO = MODULUS
 			.subtract(BIGINTEGER_TWO);
 
-	String GENERATOR_TEXT = "2";
-	BigInteger GENERATOR = new BigInteger(GENERATOR_TEXT, 10);
+	BigInteger GENERATOR = new BigInteger("2", 10);
 
 	int AES_KEY_BYTE_LENGTH = 16;
+	int AES_CTR_BYTE_LENGTH = 16;
+
 	int SHA256_HMAC_KEY_BYTE_LENGTH = 32;
 	int DH_PRIVATE_KEY_MINIMUM_BIT_LENGTH = 320;
-	byte[] ZERO_CTR = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	int DSA_PUB_TYPE = 0;
 

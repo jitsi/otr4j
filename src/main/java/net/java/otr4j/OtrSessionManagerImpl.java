@@ -44,7 +44,7 @@ public class OtrSessionManagerImpl implements OtrSessionManager {
 	@Override
 	public Session getSession(SessionID sessionID) {
 
-		if (sessionID == null || sessionID.equals(SessionID.Empty))
+		if (sessionID == null || sessionID.equals(SessionID.EMPTY))
 			throw new IllegalArgumentException();
 
 		if (sessions == null)
