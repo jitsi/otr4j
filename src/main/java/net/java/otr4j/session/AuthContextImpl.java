@@ -100,7 +100,7 @@ class AuthContextImpl extends AuthContext {
 		}
 
 		@Override
-		DHKeyMessage getDHKeyMessage() throws OtrException {
+		DHKeyMessage getDHKeyMessage() {
 			DHKeyMessage dhKeyMessage =
 					new DHKeyMessage(getSession().getProtocolVersion(),
 					(DHPublicKey) getLocalDHKeyPair().getPublic());
@@ -286,7 +286,7 @@ class AuthContextImpl extends AuthContext {
 	}
 
 	@Override
-	public KeyPair getLocalDHKeyPair() throws OtrException {
+	public KeyPair getLocalDHKeyPair() {
 		if (localDHKeyPair == null) {
 			localDHKeyPair = new OtrCryptoEngineImpl().generateDHKeyPair();
 			logger.finest("Generated local D-H key pair.");

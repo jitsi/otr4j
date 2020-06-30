@@ -18,6 +18,7 @@ package net.java.otr4j.crypto;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -26,35 +27,23 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.interfaces.DSAParams;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.DSAPublicKey;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyAgreement;
-import javax.crypto.interfaces.DHPrivateKey;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.interfaces.DHPublicKey;
-import javax.crypto.spec.DHPrivateKeySpec;
+import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import net.java.otr4j.io.SerializationUtils;
-
-import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.crypto.BufferedBlockCipher;
-import org.bouncycastle.crypto.engines.AESEngine;
-import org.bouncycastle.crypto.generators.DHKeyPairGenerator;
-import org.bouncycastle.crypto.modes.SICBlockCipher;
-import org.bouncycastle.crypto.params.DHKeyGenerationParameters;
-import org.bouncycastle.crypto.params.DHParameters;
-import org.bouncycastle.crypto.params.DHPrivateKeyParameters;
-import org.bouncycastle.crypto.params.DHPublicKeyParameters;
-import org.bouncycastle.crypto.params.DSAParameters;
-import org.bouncycastle.crypto.params.DSAPrivateKeyParameters;
-import org.bouncycastle.crypto.params.DSAPublicKeyParameters;
-import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.bouncycastle.crypto.signers.DSASigner;
 import org.bouncycastle.util.BigIntegers;
 
 /**
@@ -62,6 +51,19 @@ import org.bouncycastle.util.BigIntegers;
  * @author George Politis
  */
 public class OtrCryptoEngineImpl implements OtrCryptoEngine {
+
+	private static final String KEY_PAIR_GENERATOR_ALGORITHM_DH = "DH";
+
+	private static final String CIPHER_ALGORITHM = "AES/CTR/NoPadding";
+	private static final String CIPHER_NAME = "AES";
+
+	private static final String DSA_SIGNATURE_ALGORITHM = "NONEwithDSAinP1363Format";
+
+	/**
+	 * DSA signing is used without first computing a digest of the data, so there is a prescribed length for such input
+	 * data.
+	 */
+	private static final int DSA_RAW_DATA_LENGTH = 20;
 
 	private static final int DSA_KEY_LENGTH = 1024;
 
@@ -77,40 +79,15 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	@Override
-	public KeyPair generateDHKeyPair() throws OtrCryptoException {
-
-		// Generate a AsymmetricCipherKeyPair using BC.
-		DHParameters dhParams = new DHParameters(MODULUS, GENERATOR, null,
-				DH_PRIVATE_KEY_MINIMUM_BIT_LENGTH);
-		DHKeyGenerationParameters params = new DHKeyGenerationParameters(
-				new SecureRandom(), dhParams);
-		DHKeyPairGenerator kpGen = new DHKeyPairGenerator();
-
-		kpGen.init(params);
-		AsymmetricCipherKeyPair pair = kpGen.generateKeyPair();
-
-		// Convert this AsymmetricCipherKeyPair to a standard JCE KeyPair.
-		DHPublicKeyParameters pub = (DHPublicKeyParameters) pair.getPublic();
-		DHPrivateKeyParameters priv = (DHPrivateKeyParameters) pair
-				.getPrivate();
-
+	public KeyPair generateDHKeyPair() {
 		try {
-			KeyFactory keyFac = KeyFactory.getInstance("DH");
-
-			DHPublicKeySpec pubKeySpecs = new DHPublicKeySpec(pub.getY(),
-					MODULUS, GENERATOR);
-			DHPublicKey pubKey = (DHPublicKey) keyFac
-					.generatePublic(pubKeySpecs);
-
-			DHParameters dhParameters = priv.getParameters();
-			DHPrivateKeySpec privKeySpecs = new DHPrivateKeySpec(priv.getX(),
-					dhParameters.getP(), dhParameters.getG());
-			DHPrivateKey privKey = (DHPrivateKey) keyFac
-					.generatePrivate(privKeySpecs);
-
-			return new KeyPair(pubKey, privKey);
-		} catch (Exception e) {
-			throw new OtrCryptoException(e);
+			KeyPairGenerator gen = KeyPairGenerator.getInstance(KEY_PAIR_GENERATOR_ALGORITHM_DH);
+			gen.initialize(new DHParameterSpec(MODULUS, GENERATOR, DH_PRIVATE_KEY_MINIMUM_BIT_LENGTH));
+			return gen.generateKeyPair();
+		} catch (InvalidAlgorithmParameterException e) {
+			throw new IllegalStateException("BUG: invalid algorithm parameter provided.", e);
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("BUG: DH algorithm is unavailable (for keypair generation).", e);
 		}
 	}
 
@@ -216,51 +193,54 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		}
 	}
 
+	/**
+	 * Decrypt AES-encrypted ciphertext.
+	 *
+	 * @param key the secret key
+	 * @param ctr the counter value
+	 * @param b   the ciphertext
+	 * @return Returns the plaintext message.
+	 * @throws OtrCryptoException Invalid or illegal key or counter provided.
+	 */
 	@Override
-	public byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b)
-			throws OtrCryptoException
+	public byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b) throws OtrCryptoException
 	{
-		AESEngine aesDec = new AESEngine();
-		SICBlockCipher sicAesDec = new SICBlockCipher(aesDec);
-		BufferedBlockCipher bufSicAesDec = new BufferedBlockCipher(sicAesDec);
-
-		// Create initial counter value 0.
-		if (ctr == null)
-			ctr = new byte[AES_CTR_BYTE_LENGTH];
-		bufSicAesDec.init(false, new ParametersWithIV(new KeyParameter(key),
-				ctr));
-		byte[] aesOutLwDec = new byte[b.length];
-		int done = bufSicAesDec.processBytes(b, 0, b.length, aesOutLwDec, 0);
 		try {
-			bufSicAesDec.doFinal(aesOutLwDec, done);
-		} catch (Exception e) {
-			throw new OtrCryptoException(e);
+			return aesCipher(Cipher.DECRYPT_MODE, key, ctr).doFinal(b);
+		} catch (IllegalBlockSizeException e) {
+			throw new IllegalStateException("BUG: invalid block size specified.", e);
+		} catch (BadPaddingException e) {
+			throw new IllegalStateException("BUG: no padding is supposed to be used.", e);
 		}
-
-		return aesOutLwDec;
 	}
 
 	@Override
-	public byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b)
-			throws OtrCryptoException
+	public byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b) throws OtrCryptoException
 	{
-		AESEngine aesEnc = new AESEngine();
-		SICBlockCipher sicAesEnc = new SICBlockCipher(aesEnc);
-		BufferedBlockCipher bufSicAesEnc = new BufferedBlockCipher(sicAesEnc);
-
-		// Create initial counter value 0.
-		if (ctr == null)
-			ctr = new byte[AES_CTR_BYTE_LENGTH];
-		bufSicAesEnc.init(true,
-				new ParametersWithIV(new KeyParameter(key), ctr));
-		byte[] aesOutLwEnc = new byte[b.length];
-		int done = bufSicAesEnc.processBytes(b, 0, b.length, aesOutLwEnc, 0);
 		try {
-			bufSicAesEnc.doFinal(aesOutLwEnc, done);
-		} catch (Exception e) {
+			return aesCipher(Cipher.ENCRYPT_MODE, key, ctr).doFinal(b);
+		} catch (IllegalBlockSizeException e) {
+			throw new IllegalStateException("BUG: invalid block size specified.", e);
+		} catch (BadPaddingException e) {
+			throw new IllegalStateException("BUG: no padding is supposed to be used.", e);
+		}
+	}
+
+	private Cipher aesCipher(final int mode, final byte[] key, final byte[] ctr) throws OtrCryptoException {
+		try {
+			final Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+			cipher.init(mode, new SecretKeySpec(key, CIPHER_NAME),
+					new IvParameterSpec(ctr == null ? new byte[AES_CTR_BYTE_LENGTH] : ctr));
+			return cipher;
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("BUG: AES cipher is not supported by Java run-time.", e);
+		} catch (NoSuchPaddingException e) {
+			throw new IllegalStateException("BUG: no padding is supposed to be used.", e);
+		} catch (InvalidKeyException e) {
+			throw new OtrCryptoException(e);
+		} catch (InvalidAlgorithmParameterException e) {
 			throw new OtrCryptoException(e);
 		}
-		return aesOutLwEnc;
 	}
 
 	@Override
@@ -281,99 +261,49 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	@Override
-	public byte[] sign(byte[] b, PrivateKey privatekey)
-			throws OtrCryptoException
+	public byte[] sign(byte[] b, PrivateKey privatekey) throws OtrCryptoException
 	{
 		if (!(privatekey instanceof DSAPrivateKey))
-			throw new IllegalArgumentException();
-
-		DSAParams dsaParams = ((DSAPrivateKey) privatekey).getParams();
-		DSAParameters bcDSAParameters = new DSAParameters(dsaParams.getP(),
-				dsaParams.getQ(), dsaParams.getG());
-
-		DSAPrivateKey dsaPrivateKey = (DSAPrivateKey) privatekey;
-		DSAPrivateKeyParameters bcDSAPrivateKeyParms = new DSAPrivateKeyParameters(
-				dsaPrivateKey.getX(), bcDSAParameters);
-
-		DSASigner dsaSigner = new DSASigner();
-		dsaSigner.init(true, bcDSAPrivateKeyParms);
-
-		BigInteger q = dsaParams.getQ();
-
-		// Ian: Note that if you can get the standard DSA implementation you're
-		// using to not hash its input, you should be able to pass it ((256-bit
-		// value) mod q), (rather than truncating the 256-bit value) and all
-		// should be well.
-		// ref: Interop problems with libotr - DSA signature
-		BigInteger bmpi = new BigInteger(1, b);
-		BigInteger[] rs = dsaSigner.generateSignature(BigIntegers
-				.asUnsignedByteArray(bmpi.mod(q)));
-
-		int siglen = q.bitLength() / 4;
-		int rslen = siglen / 2;
-		byte[] rb = BigIntegers.asUnsignedByteArray(rs[0]);
-		byte[] sb = BigIntegers.asUnsignedByteArray(rs[1]);
-
-		// Create the final signature array, padded with zeros if necessary.
-		byte[] sig = new byte[siglen];
-		System.arraycopy(rb, 0, sig, rslen - rb.length, rb.length);
-		System.arraycopy(sb, 0, sig, sig.length - sb.length, sb.length);
-		return sig;
+			throw new IllegalArgumentException("Illegal type of private key provided. Only DSA private keys are supported.");
+		try {
+			Signature signer = Signature.getInstance(DSA_SIGNATURE_ALGORITHM);
+			signer.initSign(privatekey);
+			final byte[] data = b.length == DSA_RAW_DATA_LENGTH ? b
+					: bytesModQ(((DSAPrivateKey) privatekey).getParams().getQ(), b);
+			signer.update(data);
+			return signer.sign();
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("DSA signature algorithm is not available.", e);
+		} catch (InvalidKeyException e) {
+			throw new OtrCryptoException(e);
+		} catch (SignatureException e) {
+			throw new OtrCryptoException(e);
+		}
 	}
 
 	@Override
-	public boolean verify(byte[] b, PublicKey pubKey, byte[] rs)
-			throws OtrCryptoException
+	public boolean verify(byte[] b, PublicKey pubKey, byte[] rs) throws OtrCryptoException
 	{
 		if (!(pubKey instanceof DSAPublicKey))
-			throw new IllegalArgumentException();
-
-		DSAParams dsaParams = ((DSAPublicKey) pubKey).getParams();
-		int qlen = dsaParams.getQ().bitLength() / 8;
-		ByteBuffer buff = ByteBuffer.wrap(rs);
-		byte[] r = new byte[qlen];
-		buff.get(r);
-		byte[] s = new byte[qlen];
-		buff.get(s);
-		return verify(b, pubKey, r, s);
+			throw new IllegalArgumentException("Illegal type of public key provided. Only DSA public keys are supported.");
+		try {
+			Signature signer = Signature.getInstance(DSA_SIGNATURE_ALGORITHM);
+			signer.initVerify(pubKey);
+			final byte[] data = b.length == DSA_RAW_DATA_LENGTH ? b
+					: bytesModQ(((DSAPublicKey)pubKey).getParams().getQ(), b);
+			signer.update(data);
+			return signer.verify(rs);
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("DSA signature algorithm is not available.", e);
+		} catch (InvalidKeyException e) {
+			throw new OtrCryptoException(e);
+		} catch (SignatureException e) {
+			throw new OtrCryptoException(e);
+		}
 	}
 
-	private Boolean verify(byte[] b, PublicKey pubKey, byte[] r, byte[] s)
-			throws OtrCryptoException
-	{
-		Boolean result = verify(b, pubKey, new BigInteger(1, r),
-				new BigInteger(1, s));
-		return result;
-	}
-
-	private Boolean verify(byte[] b, PublicKey pubKey, BigInteger r,
-			BigInteger s) throws OtrCryptoException
-	{
-		if (!(pubKey instanceof DSAPublicKey))
-			throw new IllegalArgumentException();
-
-		DSAParams dsaParams = ((DSAPublicKey) pubKey).getParams();
-
-		BigInteger q = dsaParams.getQ();
-		DSAParameters bcDSAParams = new DSAParameters(dsaParams.getP(), q,
-				dsaParams.getG());
-
-		DSAPublicKey dsaPrivateKey = (DSAPublicKey) pubKey;
-		DSAPublicKeyParameters dsaPrivParms = new DSAPublicKeyParameters(
-				dsaPrivateKey.getY(), bcDSAParams);
-
-		// Ian: Note that if you can get the standard DSA implementation you're
-		// using to not hash its input, you should be able to pass it ((256-bit
-		// value) mod q), (rather than truncating the 256-bit value) and all
-		// should be well.
-		// ref: Interop problems with libotr - DSA signature
-		DSASigner dsaSigner = new DSASigner();
-		dsaSigner.init(false, dsaPrivParms);
-
-		BigInteger bmpi = new BigInteger(1, b);
-		Boolean result = dsaSigner.verifySignature(BigIntegers
-				.asUnsignedByteArray(bmpi.mod(q)), r, s);
-		return result;
+	private byte[] bytesModQ(final BigInteger q, final byte[] data) {
+		return BigIntegers.asUnsignedByteArray(DSA_RAW_DATA_LENGTH, new BigInteger(1, data).mod(q));
 	}
 
 	@Override
