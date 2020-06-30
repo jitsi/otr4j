@@ -16,13 +16,14 @@
 package net.java.otr4j.session;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.regex.Pattern;
 
 import net.java.otr4j.OtrEngineHost;
 import net.java.otr4j.OtrPolicy;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.bouncycastle.util.encoders.Base64;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -295,25 +296,25 @@ public class OtrFragmenterTest {
 	@Test
 	public void testFragmentNullInstructionsCompute() throws IOException {
 		final OtrEngineHost host = Mockito.mock(OtrEngineHost.class);
-		Mockito.when(host.getFragmenterInstructions(Mockito.any(SessionID.class))).thenReturn(null);
+		Mockito.when(host.getFragmenterInstructions(Mockito.nullable(SessionID.class))).thenReturn(null);
 		final String message = "Some message that shouldn't be fragmented.";
 		
 		final OtrFragmenter fragmenter = new OtrFragmenter(this.createSessionMock(POLICY_V3, 0, 0), host);
 		final int number = fragmenter.numberOfFragments(message);
 		Assert.assertEquals(1, number);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test
 	public void testFragmentNullInstructionsFragment() throws IOException {
 		final OtrEngineHost host = Mockito.mock(OtrEngineHost.class);
-		Mockito.when(host.getFragmenterInstructions(Mockito.any(SessionID.class))).thenReturn(null);
+		Mockito.when(host.getFragmenterInstructions(Mockito.nullable(SessionID.class))).thenReturn(null);
 		final String message = "Some message that shouldn't be fragmented.";
 		
 		final OtrFragmenter fragmenter = new OtrFragmenter(this.createSessionMock(POLICY_V3, 0, 0), host);
 		final String[] fragments = fragmenter.fragment(message);
 		Assert.assertArrayEquals(new String[] {message}, fragments);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test
@@ -325,7 +326,7 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		String[] msg = fragmenter.fragment(specV3MessageFull);
 		Assert.assertArrayEquals(new String[] {specV3MessageFull}, msg);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test
@@ -337,7 +338,7 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		String[] msg = fragmenter.fragment(specV2MessageFull);
 		Assert.assertArrayEquals(new String[] {specV2MessageFull}, msg);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test
@@ -349,7 +350,7 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		String[] msg = fragmenter.fragment(specV3MessageFull);
 		Assert.assertArrayEquals(new String[] {specV3MessageFull}, msg);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test
@@ -361,7 +362,7 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		String[] msg = fragmenter.fragment(specV2MessageFull);
 		Assert.assertArrayEquals(new String[] {specV2MessageFull}, msg);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test
@@ -373,7 +374,7 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		int num = fragmenter.numberOfFragments(specV3MessageFull);
 		Assert.assertEquals(1, num);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test
@@ -385,36 +386,36 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		int num = fragmenter.numberOfFragments(specV3MessageFull);
 		Assert.assertEquals(1, num);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test
 	public void testCalculateNumberOfFragmentsNumFragmentsSmallFragmentSize() throws IOException {
-		final Session session = createSessionMock(POLICY_V3, 0, 0);;
+		final Session session = createSessionMock(POLICY_V3, 0, 0);
 		final FragmenterInstructions instructions = new FragmenterInstructions(-1, 199);
 		final OtrEngineHost host = host(instructions);
 
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		int num = fragmenter.numberOfFragments(specV3MessageFull);
 		Assert.assertEquals(3, num);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test
 	public void testCalculateNumberOfFragmentsNumFragmentsSmallFragmentSize2() throws IOException {
-		final Session session = createSessionMock(POLICY_V3, 0, 0);;
+		final Session session = createSessionMock(POLICY_V3, 0, 0);
 		final FragmenterInstructions instructions = new FragmenterInstructions(-1, 80);
 		final OtrEngineHost host = host(instructions);
 
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		int num = fragmenter.numberOfFragments(specV3MessageFull);
 		Assert.assertEquals(9, num);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test(expected = IOException.class)
 	public void testFragmentSizeTooSmallForOverhead() throws IOException {
-		final Session session = createSessionMock(POLICY_V3, 0, 0);;
+		final Session session = createSessionMock(POLICY_V3, 0, 0);
 		final FragmenterInstructions instructions = new FragmenterInstructions(-1, 35);
 		final OtrEngineHost host = host(instructions);
 
@@ -448,7 +449,7 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		String[] msg = fragmenter.fragment(specV3MessageFull);
 		Assert.assertArrayEquals(specV3MessageParts199, msg);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test
@@ -460,7 +461,7 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		String[] msg = fragmenter.fragment(specV2MessageFull);
 		Assert.assertArrayEquals(specV2MessageParts318, msg);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 
 	@Test(expected = UnsupportedOperationException.class)
@@ -488,7 +489,7 @@ public class OtrFragmenterTest {
 		OtrFragmenter fragmenter = new OtrFragmenter(session, host);
 		String[] msg = fragmenter.fragment(specV3MessageFull);
 		Assert.assertArrayEquals(specV3MessageParts199, msg);
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 	
 	@Test(expected = IOException.class)
@@ -504,7 +505,7 @@ public class OtrFragmenterTest {
 	@Test
 	public void testFragmentPatternsV3() throws IOException {		
 		final Pattern OTRv3_FRAGMENT_PATTERN = Pattern.compile("^\\?OTR\\|[0-9abcdef]{8}\\|[0-9abcdef]{8},\\d{5},\\d{5},[a-zA-Z0-9\\+/=\\?:]+,$");
-		final String payload = new String(Base64.encode(RandomStringUtils.random(1700).getBytes("UTF-8")));
+		final String payload = Base64.getEncoder().encodeToString(RandomStringUtils.random(1700).getBytes(StandardCharsets.UTF_8));
 		final Session session = createSessionMock(POLICY_V3, 0x0a73a599, 0x00000007);
 		final FragmenterInstructions instructions = new FragmenterInstructions(
 				-1, 150);
@@ -520,13 +521,13 @@ public class OtrFragmenterTest {
 			Assert.assertEquals(count, partNumber);
 			count++;
 		}
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 	
 	@Test
 	public void testFragmentPatternsV2() throws IOException {		
 		final Pattern OTRv2_FRAGMENT_PATTERN = Pattern.compile("^\\?OTR,\\d{1,5},\\d{1,5},[a-zA-Z0-9\\+/=\\?:]+,$");
-		final String payload = new String(Base64.encode(RandomStringUtils.random(700).getBytes("UTF-8")));
+		final String payload = Base64.getEncoder().encodeToString(RandomStringUtils.random(700).getBytes(StandardCharsets.UTF_8));
 		final Session session = createSessionMock(POLICY_V2, 0, 0);
 		final FragmenterInstructions instructions = new FragmenterInstructions(-1, 150);
 		final OtrEngineHost host = host(instructions);
@@ -542,7 +543,7 @@ public class OtrFragmenterTest {
 			Assert.assertEquals(count, partNumber);
 			count++;
 		}
-		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.any(SessionID.class));
+		Mockito.verify(host, Mockito.times(1)).getFragmenterInstructions(Mockito.nullable(SessionID.class));
 	}
 	
 	/**
@@ -554,7 +555,7 @@ public class OtrFragmenterTest {
 	private OtrEngineHost host(final FragmenterInstructions instructions) {
 		final OtrEngineHost host = Mockito.mock(OtrEngineHost.class);
 		Mockito.when(
-				host.getFragmenterInstructions(Mockito.any(SessionID.class)))
+				host.getFragmenterInstructions(Mockito.nullable(SessionID.class)))
 				.thenReturn(instructions);
 		return host;
 	}

@@ -23,13 +23,12 @@ import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.crypto.interfaces.DHPublicKey;
-
-import org.bouncycastle.util.encoders.Base64;
 
 import net.java.otr4j.io.messages.AbstractEncodedMessage;
 import net.java.otr4j.io.messages.AbstractMessage;
@@ -257,7 +256,7 @@ public class SerializationUtils {
 				}
 
 				writer.write(SerializationConstants.HEAD_ENCODED);
-				writer.write(new String(Base64.encode(o.toByteArray())));
+				writer.write(Base64.getEncoder().encodeToString(o.toByteArray()));
 				writer.write(".");
 				break;
 			default:
@@ -325,7 +324,7 @@ public class SerializationUtils {
 				 * So in order to decode the content string we have to get rid of the '.' first.
 				 */
 				ByteArrayInputStream bin = new ByteArrayInputStream(Base64
-						.decode(content.substring(0, content.length() - 1).getBytes()));
+						.getDecoder().decode(content.substring(0, content.length() - 1).getBytes()));
 				OtrInputStream otr = new OtrInputStream(bin);
 				// We have an encoded message.
 				int protocolVersion = otr.readShort();

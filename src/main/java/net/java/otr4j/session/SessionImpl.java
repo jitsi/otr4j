@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -72,7 +71,7 @@ public class SessionImpl implements Session {
 	private SessionStatus sessionStatus;
 	private AuthContext authContext;
 	private SessionKeys[][] sessionKeys;
-	private Vector<byte[]> oldMacKeys;
+	private List<byte[]> oldMacKeys;
 	private static final Logger logger = Logger.getLogger(SessionImpl.class.getName());
 	private final OtrSm otrSm;
 	private BigInteger ess;
@@ -82,7 +81,7 @@ public class SessionImpl implements Session {
 	private int protocolVersion;
 	private final OtrAssembler assembler;
 	private final OtrFragmenter fragmenter;
-	private final List<OtrEngineListener> listeners = new Vector<OtrEngineListener>();
+	private final List<OtrEngineListener> listeners = new ArrayList<>();
 	private PublicKey remotePublicKey;
 
 	public SessionImpl(SessionID sessionID, OtrEngineHost listener) {
@@ -336,9 +335,9 @@ public class SessionImpl implements Session {
 		return authContext;
 	}
 
-	private Vector<byte[]> getOldMacKeys() {
+	private List<byte[]> getOldMacKeys() {
 		if (oldMacKeys == null)
-			oldMacKeys = new Vector<byte[]>();
+			oldMacKeys = new ArrayList<>();
 		return oldMacKeys;
 	}
 

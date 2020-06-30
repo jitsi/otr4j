@@ -4,7 +4,7 @@
     <groupId>org.jitsi</groupId>
     <artifactId>org.otr4j</artifactId>
     <version>0.23-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <name>otr4j library</name>
     <url>http://github.com/jitsi/otr4j</url>
     <description>
@@ -23,7 +23,7 @@
             <name>George Politis</name>
             <email>gp@jitsi.org</email>
             <organization>Jitsi</organization>
-            <organizationUrl>http://www.jitsi.org</organizationUrl>
+            <organizationUrl>https://jitsi.org</organizationUrl>
             <roles>
                 <role>Project-Administrator</role>
                 <role>Developer</role>
@@ -45,31 +45,31 @@
     </scm>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version.oldstyle>1.6</java.version.oldstyle>
-        <java.version.newstyle>6</java.version.newstyle>
+        <java.version.oldstyle>1.8</java.version.oldstyle>
+        <java.version.newstyle>8</java.version.newstyle>
     </properties>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.9</version>
+            <version>4.13</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
-            <version>[1.56,)</version>
+            <version>1.65</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.9.5</version>
+            <artifactId>mockito-core</artifactId>
+            <version>3.3.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.3.2</version>
+            <version>3.10</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -99,9 +99,9 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.5</version>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.0.0</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -121,7 +121,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.8.1</version>
+                <version>3.1.0</version>
             </plugin>
         </plugins>
     </reporting>
@@ -140,7 +140,7 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>3.0.5</version>
+                                    <version>3.5.0</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
@@ -191,7 +191,7 @@
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.3</version>
+                <version>1.6.8</version>
                 <extensions>true</extensions>
                 <configuration>
                     <serverId>ossrh</serverId>
@@ -203,14 +203,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>3.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -225,19 +217,64 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>4.2.1</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Name>OTR for Java</Bundle-Name>
+                        <Bundle-SymbolicName>org.otr4j</Bundle-SymbolicName>
+                        <Automatic-Module-Name>org.otr4j</Automatic-Module-Name>
+                        <Bundle-RequiredExecutionEnvironment>JavaSE-1.8
+                        </Bundle-RequiredExecutionEnvironment>
+                        <Bundle-License>
+                            Apache-2.0;link="https://github.com/jitsi/otr4j/raw/master/LICENSE"
+                        </Bundle-License>
+                        <_removeheaders>Bnd-*, Tool, Require-Capability, Include-Resource
+                        </_removeheaders>
+                        <Include-Resource>
+                            {maven-resources},
+                            META-INF/LICENSE=LICENSE
+                        </Include-Resource>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    
+    <profiles>
+        <profile>
+            <id>signing</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.5</version>
+                        <version>1.6</version>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
-                        <phase>install</phase>
+                                <phase>verify</phase>
                         <goals>
                             <goal>sign</goal>
                         </goals>
                     </execution>
                 </executions>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -271,10 +308,17 @@
             </plugin>
         </plugins>
     </build>
+        </profile>
+    </profiles>
+
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
     </distributionManagement>
 </project>
