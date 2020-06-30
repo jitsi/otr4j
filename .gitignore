@@ -1,9 +1,10 @@
 bin/
 target/
-.classpath
-.project
-.settings/
 *.orig
 otr.properties
-*.iml
+
+/.classpath
+/.project
+/.settings/
+/*.iml
 /.idea

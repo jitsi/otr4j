@@ -32,11 +32,10 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
-import java.util.Vector;
-
-import org.bouncycastle.util.encoders.Base64;
 
 import net.java.otr4j.crypto.OtrCryptoEngineImpl;
 import net.java.otr4j.crypto.OtrCryptoException;
@@ -48,7 +47,7 @@ import net.java.otr4j.session.SessionID;
 public class OtrKeyManagerImpl implements OtrKeyManager {
 
 	private final OtrKeyManagerStore store;
-	private final List<OtrKeyManagerListener> listeners = new Vector<OtrKeyManagerListener>();
+	private final List<OtrKeyManagerListener> listeners = new ArrayList<>();
 
 	public OtrKeyManagerImpl(OtrKeyManagerStore store) {
 		this.store = store;
@@ -60,7 +59,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 	 */
 	public static class DefaultPropertiesStore implements OtrKeyManagerStore {
 		private final Properties properties = new Properties();
-		private String filepath;
+		private final String filepath;
 
 		public DefaultPropertiesStore(String filepath) throws IOException {
 			if (filepath == null || filepath.length() < 1)
@@ -68,12 +67,9 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 			this.filepath = filepath;
 			properties.clear();
 
-			InputStream in = new BufferedInputStream(new FileInputStream(
-					getConfigurationFile()));
-			try {
+			try (InputStream in = new BufferedInputStream(new FileInputStream(
+					getConfigurationFile()))) {
 				properties.load(in);
-			} finally {
-				in.close();
 			}
 		}
 
@@ -95,17 +91,14 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		}
 
 		private void store() throws FileNotFoundException, IOException {
-			OutputStream out = new FileOutputStream(getConfigurationFile());
-			try {
+			try (OutputStream out = new FileOutputStream(getConfigurationFile())) {
 				properties.store(out, null);
-			} finally {
-				out.close();
 			}
 		}
 
 		@Override
 		public void setProperty(String id, byte[] value) {
-			properties.setProperty(id, new String(Base64.encode(value)));
+			properties.setProperty(id, Base64.getEncoder().encodeToString(value));
 			try {
 				this.store();
 			} catch (Exception e) {
@@ -124,13 +117,13 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 			String value = properties.getProperty(id);
 			if (value == null)
 				return null;
-			return Base64.decode(value);
+			return Base64.getDecoder().decode(value);
 		}
 
 		@Override
 		public boolean getPropertyBoolean(String id, boolean defaultValue) {
 			try {
-				return Boolean.valueOf(properties.get(id).toString());
+				return Boolean.parseBoolean(properties.get(id).toString());
 			} catch (Exception e) {
 				return defaultValue;
 			}
@@ -274,10 +267,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 			keyFactory = KeyFactory.getInstance("DSA");
 			publicKey = keyFactory.generatePublic(publicKeySpec);
 			privateKey = keyFactory.generatePrivate(privateKeySpec);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-			return null;
-		} catch (InvalidKeySpecException e) {
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -303,10 +293,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		try {
 			keyFactory = KeyFactory.getInstance("DSA");
 			return keyFactory.generatePublic(publicKeySpec);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-			return null;
-		} catch (InvalidKeySpecException e) {
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
 			e.printStackTrace();
 			return null;
 		}
