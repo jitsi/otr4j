@@ -31,6 +31,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.DSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -92,9 +93,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		}
 	}
 
-	public DHPublicKey getDHPublicKey(byte[] mpiBytes)
-			throws OtrCryptoException
-	{
+	public DHPublicKey getDHPublicKey(byte[] mpiBytes) throws OtrCryptoException {
 		return getDHPublicKey(new BigInteger(mpiBytes));
 	}
 
@@ -104,7 +103,9 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		try {
 			KeyFactory keyFac = KeyFactory.getInstance("DH");
 			return (DHPublicKey) keyFac.generatePublic(pubKeySpecs);
-		} catch (Exception e) {
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("DH algorithm is unavailable.", e);
+		} catch (InvalidKeySpecException e) {
 			throw new OtrCryptoException(e);
 		}
 	}
@@ -115,9 +116,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	@Override
-	public byte[] sha256Hmac(byte[] b, byte[] key, int length)
-			throws OtrCryptoException
-	{
+	public byte[] sha256Hmac(byte[] b, byte[] key, int length) throws OtrCryptoException {
 		SecretKeySpec keyspec = new SecretKeySpec(key, "HmacSHA256");
 		javax.crypto.Mac mac;
 		try {
@@ -144,13 +143,10 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	@Override
-	public byte[] sha1Hmac(byte[] b, byte[] key, int length)
-			throws OtrCryptoException
-	{
+	public byte[] sha1Hmac(byte[] b, byte[] key, int length) throws OtrCryptoException {
 		try {
-			SecretKeySpec keyspec = new SecretKeySpec(key, "HmacSHA1");
 			javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA1");
-			mac.init(keyspec);
+			mac.init(new SecretKeySpec(key, "HmacSHA1"));
 
 			byte[] macBytes = mac.doFinal(b);
 
@@ -162,7 +158,9 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 			} else {
 				return macBytes;
 			}
-		} catch (Exception e) {
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("HmacSHA1 algorithm support is unavailable.", e);
+		} catch (InvalidKeyException e) {
 			throw new OtrCryptoException(e);
 		}
 	}
@@ -173,24 +171,24 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	@Override
-	public byte[] sha256Hash(byte[] b) throws OtrCryptoException {
+	public byte[] sha256Hash(byte[] b) {
 		try {
 			MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
 			sha256.update(b, 0, b.length);
 			return sha256.digest();
-		} catch (Exception e) {
-			throw new OtrCryptoException(e);
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("SHA-256 support is unavailable.", e);
 		}
 	}
 
 	@Override
-	public byte[] sha1Hash(byte[] b) throws OtrCryptoException {
+	public byte[] sha1Hash(byte[] b) {
 		try {
 			MessageDigest sha256 = MessageDigest.getInstance("SHA-1");
 			sha256.update(b, 0, b.length);
 			return sha256.digest();
-		} catch (Exception e) {
-			throw new OtrCryptoException(e);
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("SHA-1 support is unavailable.", e);
 		}
 	}
 
@@ -204,8 +202,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	 * @throws OtrCryptoException Invalid or illegal key or counter provided.
 	 */
 	@Override
-	public byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b) throws OtrCryptoException
-	{
+	public byte[] aesDecrypt(byte[] key, byte[] ctr, byte[] b) throws OtrCryptoException {
 		try {
 			return aesCipher(Cipher.DECRYPT_MODE, key, ctr).doFinal(b);
 		} catch (IllegalBlockSizeException e) {
@@ -216,8 +213,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	@Override
-	public byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b) throws OtrCryptoException
-	{
+	public byte[] aesEncrypt(byte[] key, byte[] ctr, byte[] b) throws OtrCryptoException {
 		try {
 			return aesCipher(Cipher.ENCRYPT_MODE, key, ctr).doFinal(b);
 		} catch (IllegalBlockSizeException e) {
@@ -237,33 +233,28 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 			throw new IllegalStateException("BUG: AES cipher is not supported by Java run-time.", e);
 		} catch (NoSuchPaddingException e) {
 			throw new IllegalStateException("BUG: no padding is supposed to be used.", e);
-		} catch (InvalidKeyException e) {
-			throw new OtrCryptoException(e);
-		} catch (InvalidAlgorithmParameterException e) {
+		} catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
 			throw new OtrCryptoException(e);
 		}
 	}
 
 	@Override
-	public BigInteger generateSecret(PrivateKey privKey, PublicKey pubKey)
-			throws OtrCryptoException
-	{
+	public BigInteger generateSecret(PrivateKey privKey, PublicKey pubKey) throws OtrCryptoException {
 		try {
 			KeyAgreement ka = KeyAgreement.getInstance("DH");
 			ka.init(privKey);
 			ka.doPhase(pubKey, true);
 			byte[] sb = ka.generateSecret();
-			BigInteger s = new BigInteger(1, sb);
-			return s;
-
-		} catch (Exception e) {
+			return new BigInteger(1, sb);
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("DH key agreement algorithm is unavailable.", e);
+		} catch (InvalidKeyException e) {
 			throw new OtrCryptoException(e);
 		}
 	}
 
 	@Override
-	public byte[] sign(byte[] b, PrivateKey privatekey) throws OtrCryptoException
-	{
+	public byte[] sign(byte[] b, PrivateKey privatekey) throws OtrCryptoException {
 		if (!(privatekey instanceof DSAPrivateKey))
 			throw new IllegalArgumentException("Illegal type of private key provided. Only DSA private keys are supported.");
 		try {
@@ -275,16 +266,13 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 			return signer.sign();
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException("DSA signature algorithm is not available.", e);
-		} catch (InvalidKeyException e) {
-			throw new OtrCryptoException(e);
-		} catch (SignatureException e) {
+		} catch (InvalidKeyException | SignatureException e) {
 			throw new OtrCryptoException(e);
 		}
 	}
 
 	@Override
-	public boolean verify(byte[] b, PublicKey pubKey, byte[] rs) throws OtrCryptoException
-	{
+	public boolean verify(byte[] b, PublicKey pubKey, byte[] rs) throws OtrCryptoException {
 		if (!(pubKey instanceof DSAPublicKey))
 			throw new IllegalArgumentException("Illegal type of public key provided. Only DSA public keys are supported.");
 		try {
@@ -296,9 +284,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 			return signer.verify(rs);
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException("DSA signature algorithm is not available.", e);
-		} catch (InvalidKeyException e) {
-			throw new OtrCryptoException(e);
-		} catch (SignatureException e) {
+		} catch (InvalidKeyException | SignatureException e) {
 			throw new OtrCryptoException(e);
 		}
 	}
@@ -314,9 +300,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	@Override
-	public byte[] getFingerprintRaw(PublicKey pubKey)
-			throws OtrCryptoException
-	{
+	public byte[] getFingerprintRaw(PublicKey pubKey) throws OtrCryptoException {
 		byte[] b;
 		try {
 			byte[] bRemotePubKey = SerializationUtils.writePublicKey(pubKey);
@@ -324,9 +308,10 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 			if (pubKey.getAlgorithm().equals("DSA")) {
 				byte[] trimmed = new byte[bRemotePubKey.length - 2];
 				System.arraycopy(bRemotePubKey, 2, trimmed, 0, trimmed.length);
-				b = new OtrCryptoEngineImpl().sha1Hash(trimmed);
-			} else
-				b = new OtrCryptoEngineImpl().sha1Hash(bRemotePubKey);
+				b = sha1Hash(trimmed);
+			} else {
+				b = sha1Hash(bRemotePubKey);
+			}
 		} catch (IOException e) {
 			throw new OtrCryptoException(e);
 		}
