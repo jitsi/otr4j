@@ -46,8 +46,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 import net.java.otr4j.io.SerializationUtils;
 
-import org.bouncycastle.util.BigIntegers;
-
 /**
  * 
  * @author George Politis
@@ -290,7 +288,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	private byte[] bytesModQ(final BigInteger q, final byte[] data) {
-		return BigIntegers.asUnsignedByteArray(DSA_RAW_DATA_LENGTH, new BigInteger(1, data).mod(q));
+		return Util.asUnsignedByteArray(DSA_RAW_DATA_LENGTH, new BigInteger(1, data).mod(q));
 	}
 
 	@Override
