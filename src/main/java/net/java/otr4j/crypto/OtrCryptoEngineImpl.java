@@ -120,7 +120,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		try {
 			mac = javax.crypto.Mac.getInstance("HmacSHA256");
 		} catch (NoSuchAlgorithmException e) {
-			throw new OtrCryptoException(e);
+			throw new IllegalStateException("HmacSHA256 is unavailable.");
 		}
 		try {
 			mac.init(keyspec);
