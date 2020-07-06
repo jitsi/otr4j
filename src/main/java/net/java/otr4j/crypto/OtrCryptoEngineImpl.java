@@ -256,9 +256,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		try {
 			Signature signer = Signature.getInstance(DSA_SIGNATURE_ALGORITHM);
 			signer.initSign(privatekey);
-			final byte[] data = b.length == DSA_RAW_DATA_LENGTH_BYTES ? b
-					: bytesModQ(((DSAPrivateKey) privatekey).getParams().getQ(), b);
-			signer.update(data);
+			signer.update(bytesModQ(((DSAPrivateKey) privatekey).getParams().getQ(), b));
 			return signer.sign();
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException("DSA signature algorithm is not available.", e);
@@ -274,9 +272,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		try {
 			Signature signer = Signature.getInstance(DSA_SIGNATURE_ALGORITHM);
 			signer.initVerify(pubKey);
-			final byte[] data = b.length == DSA_RAW_DATA_LENGTH_BYTES ? b
-					: bytesModQ(((DSAPublicKey)pubKey).getParams().getQ(), b);
-			signer.update(data);
+			signer.update(bytesModQ(((DSAPublicKey)pubKey).getParams().getQ(), b));
 			return signer.verify(rs);
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException("DSA signature algorithm is not available.", e);
@@ -286,7 +282,8 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	private byte[] bytesModQ(final BigInteger q, final byte[] data) {
-		return Util.asUnsignedByteArray(DSA_RAW_DATA_LENGTH_BYTES, new BigInteger(1, data).mod(q));
+		return data.length == DSA_RAW_DATA_LENGTH_BYTES ? data
+				: Util.asUnsignedByteArray(DSA_RAW_DATA_LENGTH_BYTES, new BigInteger(1, data).mod(q));
 	}
 
 	@Override
