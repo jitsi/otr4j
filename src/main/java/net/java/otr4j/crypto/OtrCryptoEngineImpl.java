@@ -52,8 +52,6 @@ import net.java.otr4j.io.SerializationUtils;
  */
 public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 
-	private static final String KEY_PAIR_GENERATOR_ALGORITHM_DH = "DH";
-
 	private static final String CIPHER_ALGORITHM = "AES/CTR/NoPadding";
 	private static final String CIPHER_NAME = "AES";
 
@@ -63,15 +61,15 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	 * DSA signing is used without first computing a digest of the data, so there is a prescribed length for such input
 	 * data.
 	 */
-	private static final int DSA_RAW_DATA_LENGTH = 20;
+	private static final int DSA_RAW_DATA_LENGTH_BYTES = 20;
 
-	private static final int DSA_KEY_LENGTH = 1024;
+	private static final int DSA_KEY_LENGTH_BITS = 1024;
 
 	@Override
 	public KeyPair generateDSAKeyPair() {
 		try {
 			final KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
-			kg.initialize(DSA_KEY_LENGTH);
+			kg.initialize(DSA_KEY_LENGTH_BITS);
 			return kg.genKeyPair();
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException("DSA algorithm is not supported.", e);
@@ -81,7 +79,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	@Override
 	public KeyPair generateDHKeyPair() {
 		try {
-			KeyPairGenerator gen = KeyPairGenerator.getInstance(KEY_PAIR_GENERATOR_ALGORITHM_DH);
+			KeyPairGenerator gen = KeyPairGenerator.getInstance("DH");
 			gen.initialize(new DHParameterSpec(MODULUS, GENERATOR, DH_PRIVATE_KEY_MINIMUM_BIT_LENGTH));
 			return gen.generateKeyPair();
 		} catch (InvalidAlgorithmParameterException e) {
@@ -258,7 +256,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		try {
 			Signature signer = Signature.getInstance(DSA_SIGNATURE_ALGORITHM);
 			signer.initSign(privatekey);
-			final byte[] data = b.length == DSA_RAW_DATA_LENGTH ? b
+			final byte[] data = b.length == DSA_RAW_DATA_LENGTH_BYTES ? b
 					: bytesModQ(((DSAPrivateKey) privatekey).getParams().getQ(), b);
 			signer.update(data);
 			return signer.sign();
@@ -276,7 +274,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 		try {
 			Signature signer = Signature.getInstance(DSA_SIGNATURE_ALGORITHM);
 			signer.initVerify(pubKey);
-			final byte[] data = b.length == DSA_RAW_DATA_LENGTH ? b
+			final byte[] data = b.length == DSA_RAW_DATA_LENGTH_BYTES ? b
 					: bytesModQ(((DSAPublicKey)pubKey).getParams().getQ(), b);
 			signer.update(data);
 			return signer.verify(rs);
@@ -288,7 +286,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	}
 
 	private byte[] bytesModQ(final BigInteger q, final byte[] data) {
-		return Util.asUnsignedByteArray(DSA_RAW_DATA_LENGTH, new BigInteger(1, data).mod(q));
+		return Util.asUnsignedByteArray(DSA_RAW_DATA_LENGTH_BYTES, new BigInteger(1, data).mod(q));
 	}
 
 	@Override
