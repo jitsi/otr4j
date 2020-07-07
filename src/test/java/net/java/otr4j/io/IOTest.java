@@ -15,6 +15,8 @@
  */
 package net.java.otr4j.io;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
@@ -83,7 +85,7 @@ public class IOTest extends junit.framework.TestCase {
 		OtrInputStream ois = new OtrInputStream(bin);
 		byte[] result = ois.readData();
 
-		assertTrue(java.util.Arrays.equals(source, result));
+		assertArrayEquals(source, result);
 	}
 
 	public void testIOBigInt() throws Exception {
@@ -101,7 +103,7 @@ public class IOTest extends junit.framework.TestCase {
 		OtrInputStream ois = new OtrInputStream(bin);
 		BigInteger result = ois.readBigInt();
 
-		assertTrue(source.compareTo(result) == 0);
+		assertEquals(0, source.compareTo(result));
 	}
 
 	public void testIODHPublicKey() throws Exception {
@@ -119,7 +121,7 @@ public class IOTest extends junit.framework.TestCase {
 		OtrInputStream ois = new OtrInputStream(bin);
 		DHPublicKey result = ois.readDHPublicKey();
 
-		assertTrue(source.getY().compareTo(result.getY()) == 0);
+		assertEquals(0, source.getY().compareTo(result.getY()));
 	}
 
 	public void testIODHKeyMessage() throws Exception {
@@ -132,7 +134,7 @@ public class IOTest extends junit.framework.TestCase {
 		DHKeyMessage result = (DHKeyMessage) SerializationUtils
 				.toMessage(base64);
 
-		assertTrue(source.equals(result));
+		assertEquals(source, result);
 	}
 
 	public void testIORevealSignature() throws Exception {
@@ -151,6 +153,6 @@ public class IOTest extends junit.framework.TestCase {
 		RevealSignatureMessage result = (RevealSignatureMessage) SerializationUtils
 				.toMessage(base64);
 
-		assertTrue(source.equals(result));
+		assertEquals(source, result);
 	}
 }

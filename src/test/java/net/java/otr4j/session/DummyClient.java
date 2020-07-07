@@ -101,9 +101,10 @@ public class DummyClient {
 	public ProcessedMessage pollReceivedMessage() {
 		synchronized (processedMsgs) {
 			ProcessedMessage m;
-			while ((m = processedMsgs.poll()) == null) {
+			int i = 0;
+			while ((m = processedMsgs.poll()) == null && i++ < 3) {
 				try {
-					processedMsgs.wait();
+					processedMsgs.wait(1000);
 				} catch (InterruptedException e) {
 				}
 			}
@@ -131,7 +132,7 @@ public class DummyClient {
 
 		public void run() {
 			synchronized (messageQueue) {
-				while (true) {
+				while (!stopped) {
 
 					Message m = messageQueue.poll();
 
@@ -139,18 +140,16 @@ public class DummyClient {
 						try {
 							messageQueue.wait();
 						} catch (InterruptedException e) {
-
+							stop();
 						}
 					} else {
 						try {
 							process(m);
 						} catch (OtrException e) {
 							e.printStackTrace();
+							stopped = true;
 						}
 					}
-
-					if (stopped)
-						break;
 				}
 			}
 		}
