@@ -64,9 +64,7 @@ public class OtrCryptoEngineImplTest {
 
     @Test
     public void testDSAConvertSignatures() throws SignatureException, InvalidKeyException, NoSuchAlgorithmException, OtrCryptoException {
-        final KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
-        kg.initialize(1024);
-        final KeyPair keypair = kg.genKeyPair();
+        final KeyPair keypair = CRYPTO.generateDSAKeyPair();
 
         final byte[] data = new byte[20];
         final Signature signerASN = Signature.getInstance("NONEwithDSA");
@@ -100,7 +98,7 @@ public class OtrCryptoEngineImplTest {
             final byte[] convertedP1363 = CRYPTO.convertSignatureASN1ToP1363(signatureASN);
             assertTrue(Util.bytesToHexString(signatureASN) + " failed conversion to P1363: "
                     + Util.bytesToHexString(convertedP1363), verifierP1363.verify(convertedP1363));
-            
+
             final byte[] convertedASN = CRYPTO.convertSignatureP1363ToASN1(signatureP1363);
             assertTrue(Util.bytesToHexString(signatureP1363) + " failed conversion to ASN.1: "
                     + Util.bytesToHexString(convertedASN), verifierASN.verify(convertedASN));
