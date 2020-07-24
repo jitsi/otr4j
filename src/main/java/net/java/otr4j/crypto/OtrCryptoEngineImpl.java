@@ -15,8 +15,10 @@
  */
 package net.java.otr4j.crypto;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.ProtocolException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -280,6 +282,69 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 			throw new OtrCryptoException(e);
 		}
 	}
+        
+        byte[] convertSignatureASN1ToP1363(final byte[] signature) throws OtrCryptoException {
+            final ByteBuffer in = ByteBuffer.wrap(signature);
+            if (in.remaining() < 1 || in.get() != 0x30) {
+                throw new OtrCryptoException(new ProtocolException("Invalid signature content: missing or unsupported type."));
+            }
+            final byte signatureLength = in.remaining() > 0 ? in.get() : 0;
+            if (signatureLength <= 0 || signatureLength != in.remaining()) {
+                throw new OtrCryptoException(new ProtocolException("Invalid signature content: unexpected length for signature."));
+            }
+            if (in.remaining() < 1 || in.get() != 0x02) {
+                throw new OtrCryptoException(new ProtocolException("Invalid signature content: missing or unexpected type for parameter r."));
+            }
+            final byte rLength = in.remaining() > 0 ? in.get() : 0;
+            if (rLength == 0 || rLength > in.remaining()) {
+                throw new OtrCryptoException(new ProtocolException("Invalid signature content: unexpected length or missing bytes for parameter r."));
+            }
+            final byte[] rBytes = new byte[rLength];
+            in.get(rBytes);
+            final BigInteger r = new BigInteger(rBytes);
+            if (in.remaining() < 1 || in.get() != 0x02) {
+                throw new OtrCryptoException(new ProtocolException("Invalid signature content: missing or unexpected type for parameter s."));
+            }
+            final byte sLength = in.remaining() > 0 ? in.get() : 0;
+            if (sLength == 0 || sLength > in.remaining()) {
+                throw new OtrCryptoException(new ProtocolException("Invalid signature content: unexpected length or missing bytes for parameter s."));
+            }
+            final byte[] sBytes = new byte[sLength];
+            in.get(sBytes);
+            final BigInteger s = new BigInteger(sBytes);
+            
+            // Write out P1363-formatted byte-array.
+            final byte[] result = new byte[40];
+            Util.asUnsignedByteArray(r, result, 0, 20);
+            Util.asUnsignedByteArray(s, result, 20, 20);
+            return result;
+        }
+
+        byte[] convertSignatureP1363ToASN1(final byte[] signature) {
+            if (signature.length != 40) {
+                throw new IllegalArgumentException("Expected signature length to be exactly 40 bytes.");
+            }
+            final byte[] rBytes = new BigInteger(1, signature, 0, 20).toByteArray();
+            final byte[] sBytes = new BigInteger(1, signature, 20, 20).toByteArray();
+            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+            out.write(0x30);
+            out.write(2 + rBytes.length + 2 + sBytes.length);
+            out.write(0x02);
+            out.write(rBytes.length);
+            try {
+                out.write(rBytes);
+            } catch (IOException ex) {
+                throw new IllegalStateException("BUG: this situation should not occur.", ex);
+            }
+            out.write(0x02);
+            out.write(sBytes.length);
+            try {
+                out.write(sBytes);
+            } catch (IOException ex) {
+                throw new IllegalStateException("BUG: this situation should not occur.", ex);
+            }
+            return out.toByteArray();
+        }
 
 	private byte[] bytesModQ(final BigInteger q, final byte[] data) {
 		return data.length == DSA_RAW_DATA_LENGTH_BYTES ? data
