@@ -48,6 +48,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import net.java.otr4j.io.SerializationUtils;
 
+import static java.util.Arrays.copyOfRange;
+
 /**
  * 
  * @author George Politis
@@ -296,7 +298,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
             if (signatureLength <= 0 || signatureLength != in.remaining()) {
                 throw new OtrCryptoException(new ProtocolException("Invalid signature content: unexpected length for signature."));
             }
-            if (in.remaining() < 1 || in.get() != 0x02) {
+            if (in.get() != 0x02) {
                 throw new OtrCryptoException(new ProtocolException("Invalid signature content: missing or unexpected type for parameter r."));
             }
             final byte rLength = in.remaining() > 0 ? in.get() : 0;
@@ -328,8 +330,8 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
             if (signature.length != 40) {
                 throw new IllegalArgumentException("Expected signature length to be exactly 40 bytes.");
             }
-            final byte[] rBytes = new BigInteger(1, signature, 0, 20).toByteArray();
-            final byte[] sBytes = new BigInteger(1, signature, 20, 20).toByteArray();
+            final byte[] rBytes = new BigInteger(1, copyOfRange(signature, 0, 20)).toByteArray();
+            final byte[] sBytes = new BigInteger(1, copyOfRange(signature, 20, 40)).toByteArray();
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             out.write(0x30);
             out.write(2 + rBytes.length + 2 + sBytes.length);
