@@ -57,11 +57,15 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 	private static final String CIPHER_ALGORITHM = "AES/CTR/NoPadding";
 	private static final String CIPHER_NAME = "AES";
 
-	private static final String DSA_SIGNATURE_ALGORITHM = "NONEwithDSAinP1363Format";
+        /**
+         * DSA without hashing the provided data first. An ASN.1-formatted signature is produced. Due to P1363-format
+         * being available only in newer JDK versions, we manually convert to and from ASN.1-format while processing.
+         */
+	private static final String DSA_SIGNATURE_ALGORITHM = "NONEwithDSA";
 
 	/**
-	 * DSA signing is used without first computing a digest of the data, so there is a prescribed length for such input
-	 * data.
+	 * DSA signing is used without first computing a digest of the data, so there is a prescribed length for such
+         * input data.
 	 */
 	private static final int DSA_RAW_DATA_LENGTH_BYTES = 20;
 
@@ -259,7 +263,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 			Signature signer = Signature.getInstance(DSA_SIGNATURE_ALGORITHM);
 			signer.initSign(privatekey);
 			signer.update(bytesModQ(((DSAPrivateKey) privatekey).getParams().getQ(), b));
-			return signer.sign();
+			return convertSignatureASN1ToP1363(signer.sign());
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException("DSA signature algorithm is not available.", e);
 		} catch (InvalidKeyException | SignatureException e) {
@@ -275,7 +279,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 			Signature signer = Signature.getInstance(DSA_SIGNATURE_ALGORITHM);
 			signer.initVerify(pubKey);
 			signer.update(bytesModQ(((DSAPublicKey)pubKey).getParams().getQ(), b));
-			return signer.verify(rs);
+			return signer.verify(convertSignatureP1363ToASN1(rs));
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException("DSA signature algorithm is not available.", e);
 		} catch (InvalidKeyException | SignatureException e) {
