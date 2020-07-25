@@ -295,14 +295,14 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
                 throw new OtrCryptoException(new ProtocolException("Invalid signature content: missing or unsupported type."));
             }
             final byte signatureLength = in.remaining() > 0 ? in.get() : 0;
-            if (signatureLength <= 0 || signatureLength != in.remaining()) {
+            if (signatureLength < 0 || signatureLength != in.remaining()) {
                 throw new OtrCryptoException(new ProtocolException("Invalid signature content: unexpected length for signature."));
             }
-            if (in.get() != 0x02) {
+            if (in.remaining() < 1 || in.get() != 0x02) {
                 throw new OtrCryptoException(new ProtocolException("Invalid signature content: missing or unexpected type for parameter r."));
             }
             final byte rLength = in.remaining() > 0 ? in.get() : 0;
-            if (rLength == 0 || rLength > in.remaining()) {
+            if (rLength <= 0 || rLength > in.remaining()) {
                 throw new OtrCryptoException(new ProtocolException("Invalid signature content: unexpected length or missing bytes for parameter r."));
             }
             final byte[] rBytes = new byte[rLength];
@@ -312,7 +312,7 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
                 throw new OtrCryptoException(new ProtocolException("Invalid signature content: missing or unexpected type for parameter s."));
             }
             final byte sLength = in.remaining() > 0 ? in.get() : 0;
-            if (sLength == 0 || sLength > in.remaining()) {
+            if (sLength <= 0 || sLength > in.remaining()) {
                 throw new OtrCryptoException(new ProtocolException("Invalid signature content: unexpected length or missing bytes for parameter s."));
             }
             final byte[] sBytes = new byte[sLength];
@@ -337,18 +337,10 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
             out.write(2 + rBytes.length + 2 + sBytes.length);
             out.write(0x02);
             out.write(rBytes.length);
-            try {
-                out.write(rBytes);
-            } catch (IOException ex) {
-                throw new IllegalStateException("BUG: this situation should not occur.", ex);
-            }
+            out.write(rBytes, 0, rBytes.length);
             out.write(0x02);
             out.write(sBytes.length);
-            try {
-                out.write(sBytes);
-            } catch (IOException ex) {
-                throw new IllegalStateException("BUG: this situation should not occur.", ex);
-            }
+            out.write(sBytes, 0, sBytes.length);
             return out.toByteArray();
         }
 
