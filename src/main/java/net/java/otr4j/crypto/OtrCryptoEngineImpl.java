@@ -56,28 +56,23 @@ import static java.util.Arrays.copyOfRange;
  */
 public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 
-	private static final String CIPHER_ALGORITHM = "AES/CTR/NoPadding";
-	private static final String CIPHER_NAME = "AES";
-
-        /**
-         * DSA without hashing the provided data first. An ASN.1-formatted signature is produced. Due to P1363-format
-         * being available only in newer JDK versions, we manually convert to and from ASN.1-format while processing.
-         */
+    /**
+     * DSA without hashing the provided data first. An ASN.1-formatted signature is produced. Due to P1363-format
+     * being available only in newer JDK versions, we manually convert to and from ASN.1-format while processing.
+     */
 	private static final String DSA_SIGNATURE_ALGORITHM = "NONEwithDSA";
 
 	/**
 	 * DSA signing is used without first computing a digest of the data, so there is a prescribed length for such
-         * input data.
+	 * input data.
 	 */
 	private static final int DSA_RAW_DATA_LENGTH_BYTES = 20;
-
-	private static final int DSA_KEY_LENGTH_BITS = 1024;
 
 	@Override
 	public KeyPair generateDSAKeyPair() {
 		try {
 			final KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
-			kg.initialize(DSA_KEY_LENGTH_BITS);
+			kg.initialize(1024);
 			return kg.genKeyPair();
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException("DSA algorithm is not supported.", e);
@@ -229,8 +224,8 @@ public class OtrCryptoEngineImpl implements OtrCryptoEngine {
 
 	private Cipher aesCipher(final int mode, final byte[] key, final byte[] ctr) throws OtrCryptoException {
 		try {
-			final Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-			cipher.init(mode, new SecretKeySpec(key, CIPHER_NAME),
+			final Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
+			cipher.init(mode, new SecretKeySpec(key, "AES"),
 					new IvParameterSpec(ctr == null ? new byte[AES_CTR_BYTE_LENGTH] : ctr));
 			return cipher;
 		} catch (NoSuchAlgorithmException e) {
