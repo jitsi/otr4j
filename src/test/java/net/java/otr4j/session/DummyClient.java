@@ -16,8 +16,6 @@
 package net.java.otr4j.session;
 
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -103,9 +101,10 @@ public class DummyClient {
 	public ProcessedMessage pollReceivedMessage() {
 		synchronized (processedMsgs) {
 			ProcessedMessage m;
-			while ((m = processedMsgs.poll()) == null) {
+			int i = 0;
+			while ((m = processedMsgs.poll()) == null && i++ < 3) {
 				try {
-					processedMsgs.wait();
+					processedMsgs.wait(1000);
 				} catch (InterruptedException e) {
 				}
 			}
@@ -133,7 +132,7 @@ public class DummyClient {
 
 		public void run() {
 			synchronized (messageQueue) {
-				while (true) {
+				while (!stopped) {
 
 					Message m = messageQueue.poll();
 
@@ -141,18 +140,16 @@ public class DummyClient {
 						try {
 							messageQueue.wait();
 						} catch (InterruptedException e) {
-
+							stop();
 						}
 					} else {
 						try {
 							process(m);
 						} catch (OtrException e) {
 							e.printStackTrace();
+							stopped = true;
 						}
 					}
-
-					if (stopped)
-						break;
 				}
 			}
 		}
@@ -235,14 +232,7 @@ public class DummyClient {
 		}
 
 		public KeyPair getLocalKeyPair(SessionID paramSessionID) {
-			KeyPairGenerator kg;
-			try {
-				kg = KeyPairGenerator.getInstance("DSA");
-			} catch (NoSuchAlgorithmException e) {
-				e.printStackTrace();
-				return null;
-			}
-			return kg.genKeyPair();
+			return new OtrCryptoEngineImpl().generateDSAKeyPair();
 		}
 
 		public OtrPolicy getSessionPolicy(SessionID ctx) {

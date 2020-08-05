@@ -25,11 +25,10 @@ import java.security.interfaces.DSAPublicKey;
 
 import javax.crypto.interfaces.DHPublicKey;
 
+import net.java.otr4j.crypto.Util;
 import net.java.otr4j.io.messages.SignatureM;
 import net.java.otr4j.io.messages.MysteriousT;
 import net.java.otr4j.io.messages.SignatureX;
-
-import org.bouncycastle.util.BigIntegers;
 
 /**
  * @author George Politis
@@ -51,7 +50,7 @@ public class OtrOutputStream extends FilterOutputStream implements
 	}
 
 	public void writeBigInt(BigInteger bi) throws IOException {
-		byte[] b = BigIntegers.asUnsignedByteArray(bi);
+		byte[] b = Util.asUnsignedByteArray(bi);
 		writeData(b);
 	}
 
@@ -95,7 +94,7 @@ public class OtrOutputStream extends FilterOutputStream implements
 	}
 
 	public void writeDHPublicKey(DHPublicKey dhPublicKey) throws IOException {
-		byte[] b = BigIntegers.asUnsignedByteArray(dhPublicKey.getY());
+		byte[] b = Util.asUnsignedByteArray(dhPublicKey.getY());
 		writeData(b);
 	}
 
