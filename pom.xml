@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jitsi</groupId>
     <artifactId>org.otr4j</artifactId>
-    <version>0.23-SNAPSHOT</version>
+    <version>0.23</version>
     <packaging>bundle</packaging>
     <name>otr4j library</name>
     <url>http://github.com/jitsi/otr4j</url>
@@ -42,6 +42,7 @@
         <connection>scm:git:git@github.com:jitsi/otr4j.git</connection>
         <developerConnection>scm:git:git@github.com:jitsi/otr4j.git</developerConnection>
         <url>git@github.com:jitsi/otr4j.git</url>
+        <tag>v0.23</tag>
     </scm>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

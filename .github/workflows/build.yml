@@ -34,7 +34,7 @@ jobs:
         run: echo "::set-env name=BRANCH::$(echo ${GITHUB_REF#refs/heads/})"
 
       - name: Release to Maven Central
-        if: env.BRANCH == 'master'
+        if: env.BRANCH == 'master' && matrix.java == '1.8'
         env:
           SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
           SONATYPE_PW: ${{ secrets.SONATYPE_PW }}

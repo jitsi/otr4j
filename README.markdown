@@ -23,7 +23,7 @@ update your settings!
 <dependency>
     <groupId>org.jitsi</groupId>
     <artifactId>org.otr4j</artifactId>
-    <version>0.22</version>
+    <version>0.23</version>
 </dependency>
 ```
 
