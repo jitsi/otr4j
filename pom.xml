@@ -6,7 +6,7 @@
     <version>0.24-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>otr4j library</name>
-    <url>http://github.com/jitsi/otr4j</url>
+    <url>https://github.com/jitsi/otr4j</url>
     <description>
         otr4j is an implementation of the OTR (Off The Record) protocol in java.
 
@@ -34,7 +34,7 @@
     <licenses>
         <license>
             <name>Apache-2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
