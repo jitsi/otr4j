@@ -42,6 +42,8 @@ import net.java.otr4j.crypto.OtrCryptoException;
 import net.java.otr4j.session.SessionID;
 
 /**
+ * OtrKeyManager that stores the local key chain to local files.
+ *
  * @author George Politis
  */
 public class OtrKeyManagerImpl implements OtrKeyManager {
@@ -49,6 +51,9 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 	private final OtrKeyManagerStore store;
 	private final List<OtrKeyManagerListener> listeners = new ArrayList<>();
 
+	/**
+	* Use this constructor if you want to use your own implementation for key storage.
+	*/
 	public OtrKeyManagerImpl(OtrKeyManagerStore store) {
 		this.store = store;
 	}
@@ -109,7 +114,11 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		@Override
 		public void removeProperty(String id) {
 			properties.remove(id);
-
+			try {
+				this.store();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 		@Override
@@ -130,6 +139,11 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		}
 	}
 
+	/**
+	* Use this constructor if key manager should use his own implementation of key storage.
+	*
+	* @param filepath file where the keys should be stored
+	*/
 	public OtrKeyManagerImpl(String filepath) throws IOException {
 		this.store = new DefaultPropertiesStore(filepath);
 	}
