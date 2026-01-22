@@ -20,6 +20,8 @@ package net.java.otr4j.crypto;
 
 import java.math.BigInteger;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class Util {
 
     /**
@@ -66,7 +68,7 @@ public class Util {
     }
 
     static byte[] hexStringToBytes(String s) {
-        byte[] sbytes = s.getBytes();
+        byte[] sbytes = s.getBytes(UTF_8);
         if (sbytes.length % 2 != 0) {
             return null;
         }

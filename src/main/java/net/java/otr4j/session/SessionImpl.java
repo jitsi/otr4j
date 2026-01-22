@@ -15,10 +15,11 @@
  */
 package net.java.otr4j.session;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.ProtocolException;
 import java.nio.ByteBuffer;
@@ -597,14 +598,8 @@ public class SessionImpl implements Session {
 			byte[] dmc = otrCryptoEngine.aesDecrypt(matchingKeys
 					.getReceivingAESKey(), matchingKeys.getReceivingCtr(),
 					data.encryptedMessage);
-			String decryptedMsgContent;
-			try {
-				// Expect bytes to be text encoded in UTF-8.
-				decryptedMsgContent = new String(dmc, "UTF-8");
-			} catch (UnsupportedEncodingException e) {
-				throw new OtrException(e);
-			}
-
+			// Expect bytes to be text encoded in UTF-8.
+			String decryptedMsgContent = new String(dmc, UTF_8);
 			logger.log(Level.FINEST, "Decrypted message: \"{0}\"", decryptedMsgContent);
 
 			// Rotate keys if necessary.
@@ -828,7 +823,7 @@ public class SessionImpl implements Session {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			if (msgText != null && msgText.length() > 0)
 				try {
-					out.write(msgText.getBytes("UTF8"));
+					out.write(msgText.getBytes(UTF_8));
 				} catch (IOException e) {
 					throw new OtrException(e);
 				}

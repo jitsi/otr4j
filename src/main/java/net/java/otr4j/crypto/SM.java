@@ -21,6 +21,8 @@
 
 package net.java.otr4j.crypto;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -766,7 +768,7 @@ public class SM {
 		String ss = Util.bytesToHexString(res.toByteArray());
 		System.out.println(ss);
 
-		byte[] secret1 = "abcdef".getBytes();
+		byte[] secret1 = "abcdef".getBytes(UTF_8);
 		SMState a = new SMState();
 		SMState b = new SMState();
 

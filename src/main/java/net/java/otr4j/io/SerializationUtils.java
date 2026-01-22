@@ -15,6 +15,8 @@
  */
 package net.java.otr4j.io;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -324,7 +326,7 @@ public class SerializationUtils {
 				 * So in order to decode the content string we have to get rid of the '.' first.
 				 */
 				ByteArrayInputStream bin = new ByteArrayInputStream(Base64
-						.getDecoder().decode(content.substring(0, content.length() - 1).getBytes()));
+						.getDecoder().decode(content.substring(0, content.length() - 1).getBytes(UTF_8)));
 				OtrInputStream otr = new OtrInputStream(bin);
 				// We have an encoded message.
 				int protocolVersion = otr.readShort();
