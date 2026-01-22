@@ -44,10 +44,10 @@ public class Util {
 
     public static void checkBytes(String s, byte[] bytes) {
         final StringBuilder hexString = new StringBuilder();
-        for (int i = 0; i < bytes.length; i++) {
+        for (byte aByte : bytes) {
             hexString
-                    .append(Integer.toHexString((bytes[i] >>> 4) & 0x0F))
-                    .append(Integer.toHexString(0x0F & bytes[i]));
+                .append(Integer.toHexString((aByte >>> 4) & 0x0F))
+                .append(Integer.toHexString(0x0F & aByte));
         }
         System.out.println(s + ": " + hexString.toString());
     }

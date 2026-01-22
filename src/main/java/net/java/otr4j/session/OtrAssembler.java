@@ -130,15 +130,12 @@ public final class OtrAssembler {
 		try {
 			k = Integer.parseInt(params[0]);
 			n = Integer.parseInt(params[1]);
-		} catch (NumberFormatException e) {
-			discard();
-			throw new ProtocolException();
-		} catch (ArrayIndexOutOfBoundsException e) {
+		} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
 			discard();
 			throw new ProtocolException();
 		}
 
-		if (k == 0 || n == 0 || k > n || params.length != 4 || params[3].length() != 0) {
+		if (k == 0 || n == 0 || k > n || params.length != 4 || !params[3].isEmpty()) {
 			discard();
 			throw new ProtocolException();
 		}

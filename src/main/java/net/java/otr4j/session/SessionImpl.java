@@ -137,12 +137,12 @@ public class SessionImpl implements Session {
 
 	private SessionKeys getEncryptionSessionKeys() {
 		logger.finest("Getting encryption keys");
-		return getSessionKeysByIndex(SessionKeys.Previous, SessionKeys.Current);
+		return getSessionKeysByIndex(SessionKeys.PREVIOUS, SessionKeys.CURRENT);
 	}
 
 	private SessionKeys getMostRecentSessionKeys() {
 		logger.finest("Getting most recent keys.");
-		return getSessionKeysByIndex(SessionKeys.Current, SessionKeys.Current);
+		return getSessionKeysByIndex(SessionKeys.CURRENT, SessionKeys.CURRENT);
 	}
 
 	private SessionKeys getSessionKeysByID(int localKeyID, int remoteKeyID) {
@@ -179,30 +179,26 @@ public class SessionImpl implements Session {
 			throws OtrException
 	{
 		logger.finest("Rotating remote keys.");
-		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.Current,
-				SessionKeys.Previous);
+		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.CURRENT, SessionKeys.PREVIOUS);
 		if (sess1.getIsUsedReceivingMACKey()) {
 			logger
 					.finest("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess1.getReceivingMACKey());
 		}
 
-		SessionKeys sess2 = getSessionKeysByIndex(SessionKeys.Previous,
-				SessionKeys.Previous);
+		SessionKeys sess2 = getSessionKeysByIndex(SessionKeys.PREVIOUS, SessionKeys.PREVIOUS);
 		if (sess2.getIsUsedReceivingMACKey()) {
 			logger
 					.finest("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess2.getReceivingMACKey());
 		}
 
-		SessionKeys sess3 = getSessionKeysByIndex(SessionKeys.Current,
-				SessionKeys.Current);
+		SessionKeys sess3 = getSessionKeysByIndex(SessionKeys.CURRENT, SessionKeys.CURRENT);
 		sess1
 				.setRemoteDHPublicKey(sess3.getRemoteKey(), sess3
 						.getRemoteKeyID());
 
-		SessionKeys sess4 = getSessionKeysByIndex(SessionKeys.Previous,
-				SessionKeys.Current);
+		SessionKeys sess4 = getSessionKeysByIndex(SessionKeys.PREVIOUS, SessionKeys.CURRENT);
 		sess2
 				.setRemoteDHPublicKey(sess4.getRemoteKey(), sess4
 						.getRemoteKeyID());
@@ -212,29 +208,24 @@ public class SessionImpl implements Session {
 	}
 
 	private void rotateLocalSessionKeys() throws OtrException {
-
 		logger.finest("Rotating local keys.");
-		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.Previous,
-				SessionKeys.Current);
+		SessionKeys sess1 = getSessionKeysByIndex(SessionKeys.PREVIOUS, SessionKeys.CURRENT);
 		if (sess1.getIsUsedReceivingMACKey()) {
 			logger
 					.finest("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess1.getReceivingMACKey());
 		}
 
-		SessionKeys sess2 = getSessionKeysByIndex(SessionKeys.Previous,
-				SessionKeys.Previous);
+		SessionKeys sess2 = getSessionKeysByIndex(SessionKeys.PREVIOUS, SessionKeys.PREVIOUS);
 		if (sess2.getIsUsedReceivingMACKey()) {
 			logger
 					.finest("Detected used Receiving MAC key. Adding to old MAC keys to reveal it.");
 			getOldMacKeys().add(sess2.getReceivingMACKey());
 		}
 
-		SessionKeys sess3 = getSessionKeysByIndex(SessionKeys.Current,
-				SessionKeys.Current);
+		SessionKeys sess3 = getSessionKeysByIndex(SessionKeys.CURRENT, SessionKeys.CURRENT);
 		sess1.setLocalPair(sess3.getLocalPair(), sess3.getLocalKeyID());
-		SessionKeys sess4 = getSessionKeysByIndex(SessionKeys.Current,
-				SessionKeys.Previous);
+		SessionKeys sess4 = getSessionKeysByIndex(SessionKeys.CURRENT, SessionKeys.PREVIOUS);
 		sess2.setLocalPair(sess4.getLocalPair(), sess4.getLocalKeyID());
 
 		KeyPair newPair = new OtrCryptoEngineImpl().generateDHKeyPair();
@@ -374,7 +365,7 @@ public class SessionImpl implements Session {
 			throw new OtrException(e);
 		}
 		if (m == null)
-			return msgText; // Propably null or empty.
+			return msgText; // Probably null or empty.
 
 		if (m.messageType != AbstractMessage.MESSAGE_PLAINTEXT)
 			offerStatus = OfferStatus.accepted;
@@ -472,7 +463,7 @@ public class SessionImpl implements Session {
 			return null;
 		default:
 			throw new UnsupportedOperationException(
-					"Received an uknown message type.");
+					"Received an unknown message type.");
 		}
 	}
 
@@ -529,7 +520,7 @@ public class SessionImpl implements Session {
 		OtrPolicy policy = getSessionPolicy();
 		if (policy.getErrorStartAKE()) {
 			logger.finest("Error message starts AKE.");
-			List<Integer> versions = new ArrayList<Integer>();
+			List<Integer> versions = new ArrayList<>(3);
 			if (policy.getAllowV1())
 				versions.add(OTRv.ONE);
 
@@ -553,9 +544,8 @@ public class SessionImpl implements Session {
 			logger.finest("Message state is ENCRYPTED. Trying to decrypt message.");
 			// Find matching session keys.
 			int senderKeyID = data.senderKeyID;
-			int receipientKeyID = data.recipientKeyID;
-			SessionKeys matchingKeys = this.getSessionKeysByID(receipientKeyID,
-					senderKeyID);
+			int recipientKeyID = data.recipientKeyID;
+			SessionKeys matchingKeys = this.getSessionKeysByID(recipientKeyID, senderKeyID);
 
 			if (matchingKeys == null) {
 				logger.finest("No matching keys found.");
@@ -604,7 +594,7 @@ public class SessionImpl implements Session {
 
 			// Rotate keys if necessary.
 			SessionKeys mostRecent = this.getMostRecentSessionKeys();
-			if (mostRecent.getLocalKeyID() == receipientKeyID)
+			if (mostRecent.getLocalKeyID() == recipientKeyID)
 				this.rotateLocalSessionKeys();
 
 			if (mostRecent.getRemoteKeyID() == senderKeyID)
@@ -637,7 +627,7 @@ public class SessionImpl implements Session {
 					tlvs.add(new TLV(type, tdata));
 				}
 			}
-			if (tlvs != null && tlvs.size() > 0) {
+			if (tlvs != null && !tlvs.isEmpty()) {
 				for (TLV tlv : tlvs) {
 					switch (tlv.getType()) {
 					case TLV.DISCONNECTED:
@@ -701,7 +691,7 @@ public class SessionImpl implements Session {
 
 		OtrPolicy policy = getSessionPolicy();
 		List<Integer> versions = plainTextMessage.versions;
-		if (versions == null || versions.size() < 1) {
+		if (versions == null || versions.isEmpty()) {
 			logger.finest("Received plaintext message without the whitespace tag.");
 			switch (this.getSessionStatus()) {
 			case ENCRYPTED:
@@ -749,7 +739,7 @@ public class SessionImpl implements Session {
 
 				try {
 					sendingDHCommitMessage(plainTextMessage, false);
-				} catch (OtrException ex) {
+				} catch (OtrException ignored) {
 				}
 			}
 		}
@@ -821,7 +811,7 @@ public class SessionImpl implements Session {
 			byte[] ctr = encryptionKeys.getSendingCtr();
 
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			if (msgText != null && msgText.length() > 0)
+			if (msgText != null && !msgText.isEmpty())
 				try {
 					out.write(msgText.getBytes(UTF_8));
 				} catch (IOException e) {
@@ -829,7 +819,7 @@ public class SessionImpl implements Session {
 				}
 
 			// Append tlvs
-			if (tlvs != null && tlvs.size() > 0) {
+			if (tlvs != null && !tlvs.isEmpty()) {
 				out.write((byte) 0x00);
 
 				OtrOutputStream eoos = new OtrOutputStream(out);

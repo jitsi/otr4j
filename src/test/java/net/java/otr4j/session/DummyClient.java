@@ -32,14 +32,13 @@ import net.java.otr4j.crypto.OtrCryptoException;
  */
 public class DummyClient {
 
-	private static Logger logger = Logger.getLogger(SessionImplTest.class
-			.getName());
+	private static final Logger logger = Logger.getLogger(SessionImplTest.class.getName());
 	private final String account;
 	private Session session;
 	private OtrPolicy policy;
 	private Connection connection;
 	private MessageProcessor processor;
-	private Queue<ProcessedMessage> processedMsgs = new LinkedList<ProcessedMessage>();
+	private final Queue<ProcessedMessage> processedMsgs = new LinkedList<>();
 
 	public DummyClient(String account) {
 		this.account = account;
@@ -63,7 +62,7 @@ public class DummyClient {
 			session = new SessionImpl(sessionID, new DummyOtrEngineHostImpl());
 		}
 
-		String[] outgoingMessage = session.transformSending(s, (List<TLV>) null);
+		String[] outgoingMessage = session.transformSending(s);
 		for (String part : outgoingMessage) {
 			connection.send(recipient, part);
 		}
@@ -100,12 +99,13 @@ public class DummyClient {
 
 	public ProcessedMessage pollReceivedMessage() {
 		synchronized (processedMsgs) {
+			// attempt to receive the message for 3 sec
 			ProcessedMessage m;
 			int i = 0;
 			while ((m = processedMsgs.poll()) == null && i++ < 3) {
 				try {
 					processedMsgs.wait(1000);
-				} catch (InterruptedException e) {
+				} catch (InterruptedException ignored) {
 				}
 			}
 
@@ -114,7 +114,7 @@ public class DummyClient {
 	}
 
 	class MessageProcessor implements Runnable {
-		private final Queue<Message> messageQueue = new LinkedList<Message>();
+		private final Queue<Message> messageQueue = new LinkedList<>();
 		private boolean stopped;
 
 		private void process(Message m) throws OtrException {
@@ -133,9 +133,7 @@ public class DummyClient {
 		public void run() {
 			synchronized (messageQueue) {
 				while (!stopped) {
-
 					Message m = messageQueue.poll();
-
 					if (m == null) {
 						try {
 							messageQueue.wait();
@@ -163,7 +161,6 @@ public class DummyClient {
 
 		public void stop() {
 			stopped = true;
-
 			synchronized (messageQueue) {
 				messageQueue.notify();
 			}
@@ -172,89 +169,69 @@ public class DummyClient {
 
 	class DummyOtrEngineHostImpl implements OtrEngineHost {
 
+		@Override
 		public void injectMessage(SessionID sessionID, String msg) throws OtrException {
-
 			connection.send(sessionID.getUserID(), msg);
-
 			String msgDisplay = (msg.length() > 10) ? msg.substring(0, 10)
 					+ "..." : msg;
 			logger.finest("IM injects message: " + msgDisplay);
 		}
 
+		@Override
 		public void smpError(SessionID sessionID, int tlvType, boolean cheated)
 				throws OtrException {
 			logger.severe("SM verification error with user: " + sessionID);
 		}
 
+		@Override
 		public void smpAborted(SessionID sessionID) throws OtrException {
 			logger.severe("SM verification has been aborted by user: "
 					+ sessionID);
 		}
 
+		@Override
 		public void finishedSessionMessage(SessionID sessionID, String msgText) throws OtrException {
 			logger.severe("SM session was finished. You shouldn't send messages to: "
 					+ sessionID);
 		}
 
-		public void finishedSessionMessage(SessionID sessionID) throws OtrException {
-			logger.severe("SM session was finished. You shouldn't send messages to: "
-					+ sessionID);
-		}
-
+		@Override
 		public void requireEncryptedMessage(SessionID sessionID, String msgText)
 				throws OtrException {
 			logger.severe("Message can't be sent while encrypted session is not established: "
 					+ sessionID);
 		}
 
+		@Override
 		public void unreadableMessageReceived(SessionID sessionID)
 				throws OtrException {
 			logger.warning("Unreadable message received from: " + sessionID);
 		}
 
+		@Override
 		public void unencryptedMessageReceived(SessionID sessionID, String msg)
 				throws OtrException {
 			logger.warning("Unencrypted message received: " + msg + " from "
 					+ sessionID);
 		}
 
+		@Override
 		public void showError(SessionID sessionID, String error)
 				throws OtrException {
 			logger.severe("IM shows error to user: " + error);
 		}
 
-		public String getReplyForUnreadableMessage() {
-			return "You sent me an unreadable encrypted message.";
-		}
-
-		public void sessionStatusChanged(SessionID sessionID) {
-			// don't care.
-		}
-
+		@Override
 		public KeyPair getLocalKeyPair(SessionID paramSessionID) {
 			return new OtrCryptoEngineImpl().generateDSAKeyPair();
 		}
 
+		@Override
 		public OtrPolicy getSessionPolicy(SessionID ctx) {
 			return policy;
 		}
 
-		public void askForSecret(SessionID sessionID, String question) {
-			logger.finest("Ask for secret from: " + sessionID + ", question: "
-					+ question);
-		}
-
-		public void verify(SessionID sessionID, boolean approved) {
-			logger.finest("Session was verified: " + sessionID);
-			if (!approved)
-				logger.finest("Your answer for the question was verified."
-						+ "You should ask your opponent too or check shared secret.");
-		}
-
-		public void unverify(SessionID sessionID) {
-			logger.finest("Session was not verified: " + sessionID);
-		}
-
+		@Override
 		public byte[] getLocalFingerprintRaw(SessionID sessionID) {
 			try {
 				return new OtrCryptoEngineImpl()
@@ -266,38 +243,45 @@ public class DummyClient {
 			return null;
 		}
 
+		@Override
 		public void askForSecret(SessionID sessionID, InstanceTag receiverTag, String question) {
-
+			logger.finest("Ask for secret from: " + sessionID + ", question: "	+ question);
 		}
 
+		@Override
 		public void verify(SessionID sessionID, String fingerprint, boolean approved) {
-
+			logger.finest("Session was verified: " + sessionID);
+			if (!approved)
+				logger.finest("Your answer for the question was verified."
+						+ "You should ask your opponent too or check shared secret.");
 		}
 
+		@Override
 		public void unverify(SessionID sessionID, String fingerprint) {
-
+			logger.finest("Session was not verified: " + sessionID);
 		}
 
+		@Override
 		public String getReplyForUnreadableMessage(SessionID sessionID) {
-			return null;
+			return "You sent me an unreadable encrypted message.";
 		}
 
+		@Override
 		public String getFallbackMessage(SessionID sessionID) {
-			return null;
-		}
-
-		public void messageFromAnotherInstanceReceived(SessionID sessionID) {
-
-		}
-
-		public void multipleInstancesDetected(SessionID sessionID) {
-
-		}
-
-		public String getFallbackMessage() {
 			return "Off-the-Record private conversation has been requested. However, you do not have a plugin to support that.";
 		}
-		
+
+		@Override
+		public void messageFromAnotherInstanceReceived(SessionID sessionID) {
+			logger.finest("Received message from another instance: " + sessionID);
+		}
+
+		@Override
+		public void multipleInstancesDetected(SessionID sessionID) {
+			logger.finest("Detected multiple instances: " + sessionID);
+		}
+
+		@Override
 		public FragmenterInstructions getFragmenterInstructions(SessionID sessionID) {
 			return new FragmenterInstructions(FragmenterInstructions.UNLIMITED,
 					FragmenterInstructions.UNLIMITED);

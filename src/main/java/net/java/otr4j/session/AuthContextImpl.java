@@ -384,7 +384,7 @@ class AuthContextImpl extends AuthContext {
 		if (m1p != null)
 			return m1p;
 
-		byte[] h2 = h2(M1p_START);
+		byte[] h2 = h2(M1P_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
 		byte[] tmpM1p = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
 		buff.get(tmpM1p);
@@ -397,7 +397,7 @@ class AuthContextImpl extends AuthContext {
 		if (m2p != null)
 			return m2p;
 
-		byte[] h2 = h2(M2p_START);
+		byte[] h2 = h2(M2P_START);
 		ByteBuffer buff = ByteBuffer.wrap(h2);
 		byte[] tmpM2p = new byte[OtrCryptoEngine.SHA256_HMAC_KEY_BYTE_LENGTH];
 		buff.get(tmpM2p);

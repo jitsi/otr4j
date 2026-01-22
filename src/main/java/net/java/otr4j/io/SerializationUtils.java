@@ -154,7 +154,7 @@ public class SerializationUtils {
 			case AbstractMessage.MESSAGE_PLAINTEXT:
 				PlainTextMessage plaintxt = (PlainTextMessage) m;
 				writer.write(plaintxt.cleanText);
-				if (plaintxt.versions != null && plaintxt.versions.size() > 0) {
+				if (plaintxt.versions != null && !plaintxt.versions.isEmpty()) {
 					writer.write(" \t  \t\t\t\t \t \t \t  ");
 					for (int version : plaintxt.versions) {
 						if (version == OTRv.ONE)
@@ -269,14 +269,13 @@ public class SerializationUtils {
 	}
 
 	public static AbstractMessage toMessage(String s) throws IOException {
-		if (s == null || s.length() == 0)
+		if (s == null || s.isEmpty())
 			return null;
 
 		int idxHead = s.indexOf(SerializationConstants.HEAD);
 		if (idxHead > -1) {
-			// Message **contains** the string "?OTR". Check to see if it is an error message, a query message or a data
-			// message.
-
+			// Message **contains** the string "?OTR".
+			// Check to see if it is an error message, a query message or a data message.
 			char contentType = s.charAt(idxHead + SerializationConstants.HEAD.length());
 			String content = s
 					.substring(idxHead + SerializationConstants.HEAD.length() + 1);
@@ -285,7 +284,6 @@ public class SerializationUtils {
 					&& content.startsWith(SerializationConstants.ERROR_PREFIX))
 			{
 				// Error tag found.
-
 				content = content.substring(idxHead + SerializationConstants.ERROR_PREFIX
 						.length());
 				return new ErrorMessage(AbstractMessage.MESSAGE_ERROR, content);
@@ -293,8 +291,7 @@ public class SerializationUtils {
 					|| contentType == SerializationConstants.HEAD_QUERY_Q)
 			{
 				// Query tag found.
-
-				List<Integer> versions = new ArrayList<Integer>();
+				List<Integer> versions = new ArrayList<>(3);
 				String versionString = null;
 				if (SerializationConstants.HEAD_QUERY_Q == contentType) {
 					versions.add(OTRv.ONE);
@@ -428,7 +425,7 @@ public class SerializationUtils {
 		String cleanText = matcher.replaceAll("");
 		List<Integer> versions = null;
 		if (v1 || v2 || v3) {
-			versions = new ArrayList<Integer>();
+			versions = new ArrayList<>(3);
 			if (v1)
 				versions.add(OTRv.ONE);
 			if (v2)
@@ -441,13 +438,12 @@ public class SerializationUtils {
 	}
 
 	public static String byteArrayToHexString(byte[] in) {
-
-		if (in == null || in.length <= 0)
+		if (in == null || in.length == 0)
 			return null;
 		StringBuilder out = new StringBuilder(in.length * 2);
-		for (int i = 0; i < in.length; i++) {
-			out.append(HEX_ENCODER[(in[i] >>> 4) & 0x0F]);
-			out.append(HEX_ENCODER[in[i] & 0x0F]);
+		for (byte b : in) {
+			out.append(HEX_ENCODER[(b >>> 4) & 0x0F]);
+			out.append(HEX_ENCODER[b & 0x0F]);
 		}
 		return out.toString();
 	}
