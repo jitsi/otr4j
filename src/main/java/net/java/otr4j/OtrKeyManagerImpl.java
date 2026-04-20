@@ -62,7 +62,7 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		private final String filepath;
 
 		public DefaultPropertiesStore(String filepath) throws IOException {
-			if (filepath == null || filepath.length() < 1)
+			if (filepath == null || filepath.isEmpty())
 				throw new IllegalArgumentException();
 			this.filepath = filepath;
 			properties.clear();
