@@ -157,7 +157,9 @@ public class OtrKeyManagerImpl implements OtrKeyManager {
 		String accountID = sessionID.getAccountID();
 		KeyPair keyPair;
 		try {
-			keyPair = KeyPairGenerator.getInstance("DSA").genKeyPair();
+			final KeyPairGenerator kg = KeyPairGenerator.getInstance("DSA");
+			kg.initialize(1024);
+			keyPair = kg.genKeyPair();
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			return;
